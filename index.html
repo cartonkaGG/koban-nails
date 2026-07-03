@@ -1,0 +1,1709 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070806">
+  <title>Koban nails | Курси манікюру онлайн та офлайн</title>
+  <meta name="description" content="Koban nails: мінімалістичні курси манікюру онлайн та офлайн для старту, практики і підвищення кваліфікації.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #070806;
+      --panel: #0d100d;
+      --green: #102f23;
+      --green-soft: #1f4d39;
+      --gold: #d7b46a;
+      --gold-bright: #e4c780;
+      --cream: #f4eddf;
+      --cream-body: #ded6c7;
+      --muted: #a9a190;
+      --line: rgba(215, 180, 106, .24);
+      --soft-line: rgba(244, 237, 223, .1);
+      --glass: rgba(13, 16, 13, .72);
+      --glass-strong: rgba(7, 8, 6, .88);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --nav-h: 68px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --ease: cubic-bezier(.4, 0, .2, 1);
+      --ease-out: cubic-bezier(0, 0, .2, 1);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 4px 20px rgba(215, 180, 106, .2); }
+      50% { box-shadow: 0 4px 28px rgba(215, 180, 106, .38); }
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+      .hero-loaded .hero-line { animation: none; opacity: 1; }
+      .card:hover, .trust-item:hover { transform: none; }
+    }
+
+    body {
+      margin: 0;
+      color: var(--cream);
+      background: var(--black);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: -.01em;
+      -webkit-font-smoothing: antialiased;
+      touch-action: manipulation;
+      overscroll-behavior-y: contain;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, rgba(31, 77, 57, .35), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 95% 20%, rgba(215, 180, 106, .08), transparent 50%),
+        var(--black);
+    }
+
+    body.menu-open { overflow: hidden; }
+
+    a { color: inherit; text-decoration: none; }
+
+    button, input, select, textarea {
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 3px;
+    }
+
+    .shell {
+      width: min(1120px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      padding: calc(10px + var(--safe-top)) 16px 0;
+      pointer-events: none;
+    }
+
+    .topbar-inner {
+      pointer-events: auto;
+      max-width: 1120px;
+      margin: 0 auto;
+      border: 1px solid var(--soft-line);
+      border-radius: calc(var(--radius) + 4px);
+      background: rgba(7, 8, 6, .78);
+      backdrop-filter: blur(20px) saturate(1.4);
+      -webkit-backdrop-filter: blur(20px) saturate(1.4);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .35);
+      transition: padding .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
+    }
+
+    .topbar.scrolled .topbar-inner {
+      border-color: var(--line);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
+    }
+
+    .topbar.scrolled .nav {
+      min-height: 60px;
+    }
+
+    .nav {
+      min-height: var(--nav-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: var(--gold);
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 17px;
+      background: rgba(215, 180, 106, .06);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .nav-links a {
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      transition: color .2s var(--ease), background .2s var(--ease);
+      cursor: pointer;
+    }
+
+    .nav-links a:hover,
+    .nav-links a:focus-visible {
+      color: var(--cream);
+      background: rgba(244, 237, 223, .06);
+    }
+
+    .nav-links a.active {
+      color: var(--gold);
+      background: rgba(215, 180, 106, .1);
+    }
+
+    .menu-btn {
+      display: none;
+      width: 44px;
+      height: 44px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      color: var(--cream);
+      background: rgba(215, 180, 106, .04);
+      cursor: pointer;
+      transition: background .2s var(--ease), border-color .2s var(--ease);
+    }
+
+    .menu-btn:hover { background: rgba(215, 180, 106, .1); }
+
+    .menu-btn .icon-close { display: none; }
+
+    body.menu-open .menu-btn .icon-open { display: none; }
+    body.menu-open .menu-btn .icon-close { display: block; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 0 22px;
+      border: 1px solid var(--gold);
+      border-radius: var(--radius-sm);
+      color: #080907;
+      background: var(--gold);
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: .02em;
+      cursor: pointer;
+      transition: background .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease);
+      white-space: nowrap;
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      background: var(--gold-bright);
+      border-color: var(--gold-bright);
+      box-shadow: 0 4px 20px rgba(215, 180, 106, .25);
+    }
+
+    .btn.sell {
+      position: relative;
+      overflow: hidden;
+      animation: glowPulse 3s var(--ease) infinite;
+    }
+
+    .btn.sell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.22) 50%, transparent 60%);
+      background-size: 200% 100%;
+      animation: shimmer 4s var(--ease) infinite;
+      pointer-events: none;
+    }
+
+    .btn.ghost {
+      color: var(--cream);
+      background: transparent;
+      border-color: var(--line);
+      box-shadow: none;
+    }
+
+    .btn.ghost:hover,
+    .btn.ghost:focus-visible {
+      color: var(--gold);
+      background: rgba(215, 180, 106, .08);
+      border-color: var(--gold);
+      box-shadow: none;
+    }
+
+    .btn svg { flex-shrink: 0; }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      isolation: isolate;
+      min-height: 100svh;
+      display: flex;
+      align-items: center;
+      padding: calc(100px + var(--safe-top)) 0 72px;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background:
+        linear-gradient(105deg, rgba(7,8,6,.92) 0%, rgba(7,8,6,.78) 40%, rgba(7,8,6,.35) 68%, rgba(16,47,35,.15) 100%),
+        url("manicure-hero.png") center right / cover no-repeat;
+      filter: saturate(.8);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 200px;
+      z-index: 1;
+      background: linear-gradient(180deg, transparent, var(--black));
+      pointer-events: none;
+    }
+
+    .hero .shell {
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-inner {
+      max-width: 680px;
+    }
+
+    .hero-loaded .hero-line {
+      animation: fadeUp .7s var(--ease-out) both;
+    }
+
+    .hero-loaded .hero-line:nth-child(1) { animation-delay: .05s; }
+    .hero-loaded .hero-line:nth-child(2) { animation-delay: .15s; }
+    .hero-loaded .hero-line:nth-child(3) { animation-delay: .25s; }
+    .hero-loaded .hero-line:nth-child(4) { animation-delay: .35s; }
+    .hero-loaded .hero-line:nth-child(5) { animation-delay: .45s; }
+
+    .hero-proof {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px 20px;
+      margin-top: 28px;
+      padding-top: 22px;
+      border-top: 1px solid var(--soft-line);
+    }
+
+    .hero-proof-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--cream-body);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .hero-proof-item svg { color: var(--gold); flex-shrink: 0; }
+
+    .hero-proof-item strong {
+      color: var(--gold);
+      font-size: 18px;
+      font-weight: 800;
+      font-family: "Playfair Display", Georgia, serif;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 6px 14px 6px 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--gold);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      background: rgba(215, 180, 106, .06);
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 10px var(--gold);
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 22px;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: clamp(42px, 9vw, 96px);
+      line-height: .95;
+      font-weight: 500;
+      letter-spacing: -.02em;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .lead {
+      max-width: 520px;
+      color: var(--cream-body);
+      font-size: clamp(16px, 2.2vw, 19px);
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .hero-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      margin-top: 48px;
+      max-width: 640px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--soft-line);
+    }
+
+    .hero-strip div {
+      padding: 20px 18px;
+      background: rgba(7, 8, 6, .65);
+      backdrop-filter: blur(8px);
+    }
+
+    .hero-strip strong {
+      display: block;
+      color: var(--gold);
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .hero-strip span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    /* ── Sections ── */
+    section {
+      padding: 88px 0;
+      border-top: 1px solid var(--soft-line);
+    }
+
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 400px);
+      gap: 32px;
+      align-items: end;
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      margin-bottom: 0;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: clamp(32px, 5.5vw, 54px);
+      font-weight: 500;
+      line-height: 1.05;
+      letter-spacing: -.02em;
+    }
+
+    .section-head p,
+    .muted {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .segment {
+      width: fit-content;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin-top: 18px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(7, 8, 6, .5);
+    }
+
+    .segment button {
+      min-height: 44px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: color .2s var(--ease), background .2s var(--ease);
+    }
+
+    .segment button:hover { color: var(--cream); }
+
+    .segment button.active {
+      color: #080907;
+      background: var(--gold);
+      box-shadow: 0 2px 12px rgba(215, 180, 106, .3);
+    }
+
+    /* ── Cards ── */
+    .course-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      position: relative;
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: var(--glass);
+      backdrop-filter: blur(12px);
+      cursor: pointer;
+      transition: border-color .25s var(--ease), background .25s var(--ease), box-shadow .25s var(--ease), transform .25s var(--ease);
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: var(--line);
+      background: rgba(16, 47, 35, .45);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, .35);
+    }
+
+    .card.featured {
+      border-color: var(--line);
+      background: linear-gradient(160deg, rgba(16, 47, 35, .55), rgba(13, 16, 13, .78));
+      box-shadow: 0 0 0 1px rgba(215, 180, 106, .12), 0 12px 40px rgba(0, 0, 0, .25);
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: #080907;
+      background: var(--gold);
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .card-enroll {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 46px;
+      margin-top: 14px;
+      border: 1px solid var(--gold);
+      border-radius: var(--radius-sm);
+      color: #080907;
+      background: var(--gold);
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background .2s var(--ease), box-shadow .2s var(--ease);
+    }
+
+    .card-enroll:hover {
+      background: var(--gold-bright);
+      box-shadow: 0 4px 16px rgba(215, 180, 106, .3);
+    }
+
+    .card.featured .card-enroll {
+      animation: glowPulse 3s var(--ease) infinite;
+    }
+
+    .course-visual {
+      height: 160px;
+      margin: 0 0 20px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--soft-line);
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    .course-visual img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: saturate(.88) brightness(.92);
+      transition: transform .4s var(--ease), filter .4s var(--ease);
+    }
+
+    .card:hover .course-visual img {
+      transform: scale(1.04);
+      filter: saturate(.95) brightness(1);
+    }
+
+    .tag {
+      width: fit-content;
+      margin-bottom: 14px;
+      padding: 4px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--gold);
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      background: rgba(215, 180, 106, .06);
+    }
+
+    .card h3 {
+      margin-bottom: 10px;
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 26px;
+      font-weight: 500;
+    }
+
+    .card p {
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      margin: 16px 0 20px;
+      padding: 0;
+      list-style: none;
+      color: var(--cream-body);
+      font-size: 14px;
+    }
+
+    .list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .list li svg {
+      flex-shrink: 0;
+      margin-top: 2px;
+      color: var(--gold);
+    }
+
+    .price-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: auto;
+      padding-top: 18px;
+      border-top: 1px solid var(--soft-line);
+    }
+
+    .price {
+      color: var(--cream);
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -.02em;
+    }
+
+    .arrow {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      color: var(--gold);
+      background: rgba(215, 180, 106, .04);
+      cursor: pointer;
+      transition: background .2s var(--ease), border-color .2s var(--ease);
+    }
+
+    .arrow:hover {
+      background: rgba(215, 180, 106, .12);
+      border-color: var(--gold);
+    }
+
+    /* ── About ── */
+    .about-grid {
+      display: grid;
+      grid-template-columns: .95fr 1.05fr;
+      gap: 36px;
+      align-items: start;
+    }
+
+    .about-panel {
+      padding: 28px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, rgba(16, 47, 35, .65), rgba(13, 16, 13, .72));
+      backdrop-filter: blur(12px);
+    }
+
+    .about-photo {
+      min-height: 280px;
+      margin-top: 28px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    .about-photo img {
+      width: 100%;
+      height: 100%;
+      min-height: 280px;
+      object-fit: cover;
+      display: block;
+      filter: saturate(.88);
+    }
+
+    .steps { display: grid; gap: 0; }
+
+    .step {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 18px;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--soft-line);
+    }
+
+    .step:last-child { border-bottom: 0; }
+
+    .num {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: var(--gold);
+      font-weight: 800;
+      font-size: 14px;
+      background: rgba(215, 180, 106, .06);
+    }
+
+    .step h3 {
+      margin-bottom: 6px;
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .step p {
+      margin-bottom: 0;
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 14px;
+    }
+
+    /* ── Reviews ── */
+    .review-scroll-wrap {
+      margin: 0 calc(-1 * min(20px, 5vw));
+      padding: 4px min(20px, 5vw) 12px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .review-scroll-wrap::-webkit-scrollbar { display: none; }
+
+    .review-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .quote {
+      padding: 24px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      transition: border-color .2s var(--ease);
+    }
+
+    .quote:hover { border-color: var(--line); }
+
+    .quote-mark {
+      margin-bottom: 14px;
+      color: var(--gold);
+      opacity: .6;
+    }
+
+    .quote p {
+      color: var(--cream-body);
+      line-height: 1.7;
+      font-size: 15px;
+      font-style: italic;
+      font-family: "Playfair Display", Georgia, serif;
+    }
+
+    .quote-footer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--soft-line);
+    }
+
+    .quote-avatar {
+      width: 36px;
+      height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 13px;
+      background: rgba(215, 180, 106, .08);
+    }
+
+    .quote b {
+      color: var(--cream);
+      font-weight: 600;
+      font-size: 14px;
+      font-style: normal;
+      font-family: Inter, sans-serif;
+    }
+
+    .stars {
+      display: flex;
+      gap: 2px;
+      margin-bottom: 12px;
+      color: var(--gold);
+    }
+
+    .quote-role {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    /* ── Trust ── */
+    .trust-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 48px;
+    }
+
+    .trust-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+      min-width: 0;
+      padding: 22px;
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: rgba(13, 16, 13, .5);
+      transition: border-color .2s var(--ease), transform .2s var(--ease);
+    }
+
+    .trust-item:hover {
+      border-color: var(--line);
+      transform: translateY(-3px);
+    }
+
+    .trust-icon {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      color: var(--gold);
+      background: rgba(215, 180, 106, .06);
+    }
+
+    .trust-body { min-width: 0; }
+
+    .trust-item h3 {
+      margin-bottom: 6px;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .trust-item p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    /* ── FAQ ── */
+    .faq-list {
+      display: grid;
+      gap: 10px;
+      max-width: 720px;
+    }
+
+    .faq-item {
+      border: 1px solid var(--soft-line);
+      border-radius: var(--radius);
+      background: rgba(13, 16, 13, .5);
+      overflow: hidden;
+      transition: border-color .2s var(--ease);
+    }
+
+    .faq-item.open { border-color: var(--line); }
+
+    .faq-q {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px;
+      border: 0;
+      color: var(--cream);
+      background: transparent;
+      text-align: left;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: color .2s var(--ease);
+    }
+
+    .faq-q:hover { color: var(--gold); }
+
+    .faq-q svg {
+      flex-shrink: 0;
+      color: var(--gold);
+      transition: transform .25s var(--ease);
+    }
+
+    .faq-item.open .faq-q svg { transform: rotate(180deg); }
+
+    .faq-a {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .35s var(--ease-out);
+    }
+
+    .faq-item.open .faq-a { max-height: 200px; }
+
+    .faq-a p {
+      margin: 0;
+      padding: 0 20px 18px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    /* ── Closing CTA ── */
+    .closing {
+      padding: 0 0 88px;
+      border-top: 0;
+    }
+
+    .closing-box {
+      position: relative;
+      padding: 48px 40px;
+      border: 1px solid var(--line);
+      border-radius: calc(var(--radius) + 6px);
+      text-align: center;
+      background:
+        radial-gradient(ellipse 70% 80% at 50% 120%, rgba(31, 77, 57, .45), transparent 60%),
+        linear-gradient(145deg, rgba(16, 47, 35, .5), rgba(7, 8, 6, .85));
+      overflow: hidden;
+    }
+
+    .closing-box::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 40%, rgba(215, 180, 106, .04) 50%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .closing-box h2 {
+      margin-bottom: 14px;
+      font-size: clamp(28px, 5vw, 44px);
+    }
+
+    .closing-box p {
+      max-width: 480px;
+      margin: 0 auto 28px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .closing-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .urgency {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding: 6px 14px;
+      border: 1px solid rgba(215, 180, 106, .3);
+      border-radius: 999px;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(215, 180, 106, .08);
+    }
+
+    .urgency-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gold);
+      animation: glowPulse 2s var(--ease) infinite;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      padding: 36px 0 calc(36px + var(--safe-bottom));
+      border-top: 1px solid var(--soft-line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .footer a {
+      color: var(--gold);
+      transition: opacity .2s var(--ease);
+      cursor: pointer;
+    }
+
+    .footer a:hover { opacity: .8; }
+
+    /* ── Mobile sticky CTA ── */
+    .mobile-cta {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 35;
+      padding: 12px 16px calc(12px + var(--safe-bottom));
+      border-top: 1px solid var(--soft-line);
+      background: rgba(7, 8, 6, .94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transform: translateY(110%);
+      transition: transform .3s var(--ease);
+    }
+
+    .mobile-cta.visible { transform: translateY(0); }
+
+    .mobile-cta .btn { width: 100%; }
+
+    /* ── Reveal animation ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity .6s var(--ease), transform .6s var(--ease);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-stagger.visible .reveal-child {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-child {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity .5s var(--ease-out), transform .5s var(--ease-out);
+    }
+
+    .reveal-stagger.visible .reveal-child:nth-child(1) { transition-delay: .05s; }
+    .reveal-stagger.visible .reveal-child:nth-child(2) { transition-delay: .12s; }
+    .reveal-stagger.visible .reveal-child:nth-child(3) { transition-delay: .19s; }
+    .reveal-stagger.visible .reveal-child:nth-child(4) { transition-delay: .26s; }
+
+    /* ── Mobile overlay menu ── */
+    .menu-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background: rgba(0, 0, 0, .6);
+      opacity: 0;
+      transition: opacity .25s var(--ease);
+      pointer-events: none;
+    }
+
+    body.menu-open .menu-backdrop {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ── Tablet ── */
+    @media (max-width: 920px) {
+      .menu-backdrop { display: block; }
+
+      .nav-links {
+        position: fixed;
+        top: calc(78px + var(--safe-top));
+        left: 16px;
+        right: 16px;
+        z-index: 35;
+        display: grid;
+        gap: 4px;
+        padding: 12px;
+        border: 1px solid var(--soft-line);
+        border-radius: var(--radius);
+        background: var(--glass-strong);
+        backdrop-filter: blur(20px);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-12px) scale(.98);
+        transition: opacity .25s var(--ease), transform .25s var(--ease), visibility .25s;
+      }
+
+      body.menu-open .nav-links {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+      }
+
+      .nav-links a {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        font-size: 15px;
+      }
+
+      .nav-cta-mobile {
+        display: flex !important;
+        margin-top: 8px;
+        min-height: 48px;
+        justify-content: center;
+        background: var(--gold) !important;
+        color: #080907 !important;
+        font-weight: 700;
+        border-radius: var(--radius-sm);
+      }
+
+      .menu-btn { display: grid; place-items: center; }
+      .nav > .btn { display: none; }
+
+      .section-head,
+      .about-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .course-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .trust-grid {
+        grid-template-columns: 1fr;
+        margin-top: 36px;
+      }
+
+      .review-grid {
+        display: flex;
+        gap: 14px;
+        width: max-content;
+      }
+
+      .quote {
+        flex: 0 0 min(300px, 82vw);
+        scroll-snap-align: start;
+      }
+
+      .mobile-cta { display: block; }
+
+      .footer {
+        padding-bottom: calc(88px + var(--safe-bottom));
+      }
+    }
+
+  @media (max-width: 620px) {
+      .topbar { padding-left: 12px; padding-right: 12px; }
+
+      .shell { width: min(100% - 24px, 1120px); }
+
+      .hero {
+        min-height: auto;
+        padding-top: calc(96px + var(--safe-top));
+        padding-bottom: 56px;
+      }
+
+      .hero::before {
+        background:
+          linear-gradient(180deg, rgba(7,8,6,.88) 0%, rgba(7,8,6,.72) 50%, rgba(7,8,6,.55) 100%),
+          url("manicure-hero.png") 70% 25% / cover no-repeat;
+      }
+
+      h1 { font-size: clamp(38px, 11vw, 56px); }
+
+      .hero-actions { flex-direction: column; }
+      .hero-actions .btn { width: 100%; min-height: 52px; }
+
+      .hero-strip { grid-template-columns: 1fr; border-radius: var(--radius); }
+      .hero-strip div + div { border-top: 1px solid var(--soft-line); }
+
+      .segment { width: 100%; }
+      .segment button { padding: 0 10px; font-size: 12px; }
+
+      section { padding: 64px 0; }
+
+      .closing { padding-bottom: 64px; }
+
+      .closing-box { padding: 32px 20px; }
+
+      .closing-actions { flex-direction: column; }
+      .closing-actions .btn { width: 100%; }
+
+      .card { min-height: auto; }
+
+      .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+      }
+    }
+
+    @media (min-width: 921px) {
+      .nav-cta-mobile { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <div class="topbar-inner">
+      <nav class="nav shell" aria-label="Головна навігація" style="width:100%;margin:0;">
+        <a class="brand" href="#top" aria-label="Koban nails">
+          <span class="brand-mark">K</span>
+          <span>Koban nails</span>
+        </a>
+        <div class="nav-links" id="navLinks">
+          <a href="#courses" data-nav="courses">Курси</a>
+          <a href="#format" data-nav="format">Формат</a>
+          <a href="#reviews" data-nav="reviews">Відгуки</a>
+          <a href="#faq" data-nav="faq">Питання</a>
+          <a class="nav-cta-mobile" href="#courses">Обрати курс</a>
+        </div>
+        <a class="btn sell" href="#courses">Обрати курс</a>
+        <button class="menu-btn" id="menuBtn" type="button" aria-label="Відкрити меню" aria-expanded="false" aria-controls="navLinks">
+          <svg class="icon-open" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <svg class="icon-close" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="menu-backdrop" id="menuBackdrop" aria-hidden="true"></div>
+
+  <main id="top">
+    <section class="hero">
+      <div class="shell">
+        <div class="hero-inner" id="heroInner">
+          <div class="hero-line eyebrow">курси манікюру онлайн та офлайн</div>
+          <h1 class="hero-line">Koban <em>nails</em></h1>
+          <p class="hero-line lead">Від нуля до першого клієнта за 4 тижні. Практика з наставником, сертифікат і підтримка після курсу — онлайн у своєму темпі або офлайн у студії.</p>
+          <div class="hero-line hero-actions">
+            <a class="btn sell" href="#courses">
+              Обрати курс
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <a class="btn ghost" href="https://instagram.com/koban.nails" target="_blank" rel="noopener noreferrer">Безкоштовна консультація</a>
+          </div>
+          <div class="hero-line hero-proof" aria-label="Переваги та довіра">
+            <div class="hero-proof-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+              <span><strong>4.9</strong> середній рейтинг</span>
+            </div>
+            <div class="hero-proof-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              <span><strong>200+</strong> випускниць</span>
+            </div>
+            <div class="hero-proof-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+              <span>Сертифікат після курсу</span>
+            </div>
+          </div>
+          <div class="hero-line hero-strip" aria-label="Формати навчання">
+            <div><strong>Online</strong><span>доступ до уроків у власному темпі</span></div>
+            <div><strong>Studio</strong><span>жива практика з моделями</span></div>
+            <div><strong>Pro</strong><span>підвищення для діючих майстрів</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="courses">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div>
+            <div class="eyebrow">програми</div>
+            <h2>Курси</h2>
+          </div>
+          <div>
+            <p>Оберіть формат під свій графік. Кожна програма — це шлях до впевненої роботи з клієнтами та стабільного доходу.</p>
+            <div class="segment" role="tablist" aria-label="Формат курсу">
+              <button class="active" type="button" role="tab" aria-selected="true" data-format="all">Усі</button>
+              <button type="button" role="tab" aria-selected="false" data-format="online">Онлайн</button>
+              <button type="button" role="tab" aria-selected="false" data-format="offline">Офлайн</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="course-grid reveal-stagger">
+          <article class="card course-card reveal-child" data-kind="offline">
+            <div class="course-visual">
+              <img src="course-basic.png" alt="Офлайн навчання манікюру в студії Koban nails" width="640" height="360" loading="lazy">
+            </div>
+            <span class="tag">офлайн</span>
+            <h3>Basic</h3>
+            <p>Старт з нуля у студії з практикою на моделях.</p>
+            <ul class="list">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Комбінований манікюр</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Вирівнювання та покриття</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Стерилізація та робоче місце</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Сертифікат після практики</li>
+            </ul>
+            <div class="price-row">
+              <span class="price">12 900 грн</span>
+            </div>
+            <a class="card-enroll" href="https://instagram.com/koban.nails" target="_blank" rel="noopener noreferrer">Записатися на Basic</a>
+          </article>
+
+          <article class="card course-card featured reveal-child" data-kind="online">
+            <span class="card-badge">Популярний</span>
+            <div class="course-visual">
+              <img src="course-online.png" alt="Онлайн курс манікюру з відеоуроками" width="640" height="360" loading="lazy">
+            </div>
+            <span class="tag">онлайн</span>
+            <h3>Online</h3>
+            <p>Навчання у власному темпі з перевіркою робіт.</p>
+            <ul class="list">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Відеоуроки на 6 місяців</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Домашні завдання</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Коментарі куратора</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Фінальна робота</li>
+            </ul>
+            <div class="price-row">
+              <span class="price">7 900 грн</span>
+            </div>
+            <a class="card-enroll" href="https://instagram.com/koban.nails" target="_blank" rel="noopener noreferrer">Записатися на Online</a>
+          </article>
+
+          <article class="card course-card reveal-child" data-kind="offline">
+            <div class="course-visual">
+              <img src="course-pro.png" alt="Професійний курс підвищення кваліфікації" width="640" height="360" loading="lazy">
+            </div>
+            <span class="tag">підвищення</span>
+            <h3>Pro</h3>
+            <p>Для майстрів, які хочуть працювати швидше і чистіше.</p>
+            <ul class="list">
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Корекція техніки</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Тонке покриття</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Швидкий френч</li>
+              <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Розбір ваших робіт</li>
+            </ul>
+            <div class="price-row">
+              <span class="price">9 500 грн</span>
+            </div>
+            <a class="card-enroll" href="https://instagram.com/koban.nails" target="_blank" rel="noopener noreferrer">Записатися на Pro</a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="format">
+      <div class="shell about-grid">
+        <div class="about-panel reveal">
+          <div class="eyebrow">навчання</div>
+          <h2>Від першого руху до готової роботи.</h2>
+          <p class="muted">У Koban nails ви вивчаєте техніку манікюру поетапно: підготовка нігтя, робота з апаратом, покриття, вирівнювання, дизайн і правильна подача своїх робіт клієнтам.</p>
+          <div class="about-photo">
+            <img src="about-training.png" alt="Навчання манікюру в студії Koban nails" width="800" height="500" loading="lazy">
+          </div>
+        </div>
+        <div class="steps">
+          <article class="step reveal">
+            <span class="num">1</span>
+            <div><h3>Теорія без зайвого</h3><p>Пояснюємо матеріали, інструменти, стерилізацію та послідовність процедури простими словами.</p></div>
+          </article>
+          <article class="step reveal">
+            <span class="num">2</span>
+            <div><h3>Відпрацювання техніки</h3><p>Тренуємо чистий зріз, рівне покриття, акуратну архітектуру і роботу без травмування клієнта.</p></div>
+          </article>
+          <article class="step reveal">
+            <span class="num">3</span>
+            <div><h3>Готовність до клієнтів</h3><p>Після навчання ви маєте зрозумілий алгоритм роботи, перші фото для портфоліо і впевненість у своїх діях.</p></div>
+          </article>
+        </div>
+      </div>
+      <div class="shell trust-grid reveal">
+        <article class="trust-item">
+          <span class="trust-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.5"/></svg>
+          </span>
+          <div class="trust-body">
+            <h3>Безпека</h3>
+            <p>Стерилізація, правильна техніка та робота без травмування клієнта.</p>
+          </div>
+        </article>
+        <article class="trust-item">
+          <span class="trust-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </span>
+          <div class="trust-body">
+            <h3>Практика</h3>
+            <p>Реальні моделі, перевірка робіт і зворотний зв'язок від наставника.</p>
+          </div>
+        </article>
+        <article class="trust-item">
+          <span class="trust-icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.5"/></svg>
+          </span>
+          <div class="trust-body">
+            <h3>Сертифікат</h3>
+            <p>Офіційне підтвердження навичок для портфоліо та роботи з клієнтами.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section id="reviews">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div>
+            <div class="eyebrow">відгуки</div>
+            <h2>Після курсу</h2>
+          </div>
+          <p>Короткі програми без перевантаження, але з достатньою практикою, щоб впевнено рухатися далі.</p>
+        </div>
+        <div class="review-scroll-wrap">
+          <div class="review-grid">
+            <article class="quote reveal">
+              <div class="stars" aria-label="5 з 5 зірок">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+              <svg class="quote-mark" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z"/></svg>
+              <p>Після Basic я нарешті зрозуміла послідовність і перестала боятися моделей.</p>
+              <div class="quote-footer">
+                <span class="quote-avatar">М</span>
+                <div><b>Марія</b><span class="quote-role">Курс Basic</span></div>
+              </div>
+            </article>
+            <article class="quote reveal">
+              <div class="stars" aria-label="5 з 5 зірок">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+              <svg class="quote-mark" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z"/></svg>
+              <p>Онлайн зручний: уроки короткі, перевірка робіт конкретна, без зайвої води.</p>
+              <div class="quote-footer">
+                <span class="quote-avatar">О</span>
+                <div><b>Олена</b><span class="quote-role">Курс Online</span></div>
+              </div>
+            </article>
+            <article class="quote reveal">
+              <div class="stars" aria-label="5 з 5 зірок">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+              <svg class="quote-mark" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.583 17.321C3.553 16.227 3 15 3 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179zm10 0C13.553 16.227 13 15 13 13.011c0-3.5 2.457-6.637 6.03-8.188l.893 1.378c-3.335 1.804-3.987 4.145-4.247 5.621.537-.278 1.24-.375 1.929-.311 1.804.167 3.226 1.648 3.226 3.489a3.5 3.5 0 01-3.5 3.5c-1.073 0-2.099-.49-2.748-1.179z"/></svg>
+              <p>На Pro поправили мою техніку і показали, як скоротити час процедури.</p>
+              <div class="quote-footer">
+                <span class="quote-avatar">І</span>
+                <div><b>Ірина</b><span class="quote-role">Курс Pro</span></div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <div class="shell">
+        <div class="section-head reveal">
+          <div>
+            <div class="eyebrow">часті питання</div>
+            <h2>Все, що важливо перед стартом</h2>
+          </div>
+          <p>Відповіді на питання, які найчастіше ставлять перед записом на курс.</p>
+        </div>
+        <div class="faq-list reveal">
+          <article class="faq-item">
+            <button class="faq-q" type="button" aria-expanded="false">
+              Чи підійде курс, якщо я ніколи не робила манікюр?
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="faq-a"><p>Так. Basic створений саме для старту з нуля: від інструментів і стерилізації до першої роботи на моделі.</p></div>
+          </article>
+          <article class="faq-item">
+            <button class="faq-q" type="button" aria-expanded="false">
+              Скільки триває навчання?
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="faq-a"><p>Офлайн Basic — 4 тижні з практикою в студії. Online — 6 місяців доступу до уроків у власному темпі. Pro — інтенсив на 2 тижні.</p></div>
+          </article>
+          <article class="faq-item">
+            <button class="faq-q" type="button" aria-expanded="false">
+              Чи отримаю сертифікат?
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="faq-a"><p>Так, після успішного завершення практики та фінальної роботи ви отримуєте сертифікат Koban nails.</p></div>
+          </article>
+          <article class="faq-item">
+            <button class="faq-q" type="button" aria-expanded="false">
+              Як записатися на курс?
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="faq-a"><p>Напишіть нам в Instagram @koban.nails — допоможемо обрати програму та забронювати місце в найближчій групі.</p></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing" id="contact">
+      <div class="shell">
+        <div class="closing-box reveal">
+          <div class="urgency"><span class="urgency-dot" aria-hidden="true"></span>Місця в групах обмежені</div>
+          <h2>Почніть заробляти на манікюрі вже цього місяця</h2>
+          <p>Оберіть курс або напишіть нам — відповімо протягом дня і допоможемо з вибором програми.</p>
+          <div class="closing-actions">
+            <a class="btn sell" href="#courses">Обрати курс</a>
+            <a class="btn ghost" href="https://instagram.com/koban.nails" target="_blank" rel="noopener noreferrer">Написати в Instagram</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="shell footer-inner">
+      <span>Koban nails © 2026</span>
+      <span>Онлайн та офлайн навчання · <a href="https://instagram.com/koban.nails" target="_blank" rel="noopener noreferrer">Instagram @koban.nails</a></span>
+    </div>
+  </footer>
+
+  <div class="mobile-cta" id="mobileCta">
+    <a class="btn sell" href="#courses">Обрати курс</a>
+  </div>
+
+  <script>
+    const menuBtn = document.querySelector("#menuBtn");
+    const navLinks = document.querySelector("#navLinks");
+    const menuBackdrop = document.querySelector("#menuBackdrop");
+    const segmentButtons = document.querySelectorAll("[data-format]");
+    const cards = document.querySelectorAll(".course-card");
+    const mobileCta = document.querySelector("#mobileCta");
+    const navAnchors = document.querySelectorAll("[data-nav]");
+    const topbar = document.querySelector("#topbar");
+    const heroInner = document.querySelector("#heroInner");
+
+    heroInner.classList.add("hero-loaded");
+
+    function closeMenu() {
+      document.body.classList.remove("menu-open");
+      menuBtn.setAttribute("aria-expanded", "false");
+      menuBtn.setAttribute("aria-label", "Відкрити меню");
+    }
+
+    function openMenu() {
+      document.body.classList.add("menu-open");
+      menuBtn.setAttribute("aria-expanded", "true");
+      menuBtn.setAttribute("aria-label", "Закрити меню");
+    }
+
+    menuBtn.addEventListener("click", () => {
+      document.body.classList.contains("menu-open") ? closeMenu() : openMenu();
+    });
+
+    menuBackdrop.addEventListener("click", closeMenu);
+
+    navLinks.addEventListener("click", (event) => {
+      if (event.target.tagName === "A") closeMenu();
+    });
+
+    document.querySelectorAll('a[href^="#"]').forEach((link) => {
+      link.addEventListener("click", () => closeMenu());
+    });
+
+    segmentButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const selected = button.dataset.format;
+        segmentButtons.forEach((item) => {
+          const active = item === button;
+          item.classList.toggle("active", active);
+          item.setAttribute("aria-selected", String(active));
+        });
+        cards.forEach((card) => {
+          const show = selected === "all" || card.dataset.kind === selected;
+          card.style.display = show ? "flex" : "none";
+        });
+      });
+    });
+
+    const revealEls = document.querySelectorAll(".reveal, .reveal-stagger");
+    const revealObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    );
+    revealEls.forEach((el) => revealObserver.observe(el));
+
+    document.querySelectorAll(".faq-q").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const item = btn.closest(".faq-item");
+        const isOpen = item.classList.contains("open");
+        document.querySelectorAll(".faq-item").forEach((i) => {
+          i.classList.remove("open");
+          i.querySelector(".faq-q").setAttribute("aria-expanded", "false");
+        });
+        if (!isOpen) {
+          item.classList.add("open");
+          btn.setAttribute("aria-expanded", "true");
+        }
+      });
+    });
+
+    const sections = ["courses", "format", "reviews", "faq", "contact"];
+    const sectionEls = sections.map((id) => document.getElementById(id)).filter(Boolean);
+
+    function updateActiveNav() {
+      const scrollY = window.scrollY + 120;
+      let current = "";
+      sectionEls.forEach((section) => {
+        if (section.offsetTop <= scrollY) current = section.id;
+      });
+      navAnchors.forEach((link) => {
+        link.classList.toggle("active", link.dataset.nav === current);
+      });
+    }
+
+    window.addEventListener("scroll", updateActiveNav, { passive: true });
+    updateActiveNav();
+
+    window.addEventListener("scroll", () => {
+      topbar.classList.toggle("scrolled", window.scrollY > 40);
+    }, { passive: true });
+
+    function updateMobileCta() {
+      const heroBottom = document.querySelector(".hero").offsetHeight;
+      const show = window.scrollY > heroBottom * 0.5 && window.innerWidth <= 920;
+      mobileCta.classList.toggle("visible", show);
+    }
+
+    window.addEventListener("scroll", updateMobileCta, { passive: true });
+    window.addEventListener("resize", updateMobileCta, { passive: true });
+    updateMobileCta();
+  </script>
+</body>
+</html>
