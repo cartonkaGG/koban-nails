@@ -54,7 +54,13 @@ alter database postgres set app.admin_email = 'your@email.com';
 ## Деплой на Vercel
 
 1. Підключіть репозиторій
-2. Додайте env змінні Supabase
-3. Framework Preset: **Next.js**
+2. **Framework Preset: Next.js** (не Static HTML)
+3. Build Command: `npm run build` (за замовчуванням)
+4. Output Directory: **залишити порожнім** (не `.` і не `public`)
+5. Node.js: 20.x
+6. Додайте env змінні Supabase (або залиште порожніми для демо-режиму)
+7. Після зміни налаштувань — **Redeploy**
 
-Старий статичний `index.html` збережено в корені як архів; основний сайт тепер Next.js.
+Якщо бачите `404: NOT_FOUND` — у Settings → General перевірте Framework Preset і Output Directory.
+
+Старий статичний лендинг збережено в `legacy/index.html`.
