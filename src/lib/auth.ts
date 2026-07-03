@@ -1,14 +1,10 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { DEMO_ADMIN, DEMO_PROFILE } from "@/lib/demo-data";
 import type { Profile } from "@/lib/types";
 
-export function isSupabaseConfigured() {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  );
-}
+export { isSupabaseConfigured };
 
 export async function getSessionUser() {
   if (!isSupabaseConfigured()) {
