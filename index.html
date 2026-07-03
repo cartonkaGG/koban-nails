@@ -407,6 +407,42 @@
       line-height: 1.7;
     }
 
+    .lead-short { display: none; }
+
+    .mobile-only { display: none; }
+
+    .hero-meta {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .hero-meta span { color: var(--gold); }
+
+    .hero-instagram {
+      display: none;
+      margin: 16px 0 0;
+      font-size: 14px;
+    }
+
+    .hero-instagram a {
+      color: var(--muted);
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    .hero-instagram a:hover { color: var(--gold); }
+
+    .section-intro {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
     .hero-actions {
       display: flex;
       flex-wrap: wrap;
@@ -452,6 +488,7 @@
     section {
       padding: 88px 0;
       border-top: 1px solid var(--soft-line);
+      scroll-margin-top: 110px;
     }
 
     .section-head {
@@ -1035,33 +1072,6 @@
       animation: glowPulse 2s var(--ease) infinite;
     }
 
-    .lead-short { display: none; }
-
-    .hero-instagram {
-      display: none;
-      margin: 14px 0 0;
-      text-align: center;
-      font-size: 14px;
-    }
-
-    .hero-instagram a {
-      color: var(--muted);
-      text-decoration: underline;
-      text-underline-offset: 3px;
-      transition: color .2s var(--ease);
-    }
-
-    .hero-instagram a:hover { color: var(--gold); }
-
-    .desktop-only { display: block; }
-
-    .section-intro {
-      color: var(--muted);
-      line-height: 1.7;
-      font-size: 15px;
-      margin: 0;
-    }
-
     /* ── Footer ── */
     .footer {
       padding: 36px 0 calc(36px + var(--safe-bottom));
@@ -1172,6 +1182,9 @@
       .menu-btn { display: grid; place-items: center; }
       .nav > .btn { display: none; }
 
+      .hero-proof,
+      .hero-strip { display: none; }
+
       .section-head,
       .about-grid {
         grid-template-columns: 1fr;
@@ -1199,86 +1212,343 @@
     }
 
   @media (max-width: 620px) {
-      .topbar { padding: calc(6px + var(--safe-top)) 10px 0; }
+      body {
+        background:
+          linear-gradient(180deg, #050604 0%, #0a0d0a 48%, #050604 100%);
+      }
 
-      .topbar-inner { border-radius: var(--radius); }
+      .topbar {
+        padding: calc(8px + var(--safe-top)) 10px 0;
+      }
 
-      .nav { min-height: 56px; padding: 0 12px; }
+      .topbar-inner {
+        border-radius: 14px;
+        background: rgba(7, 8, 6, .78);
+        box-shadow: 0 12px 36px rgba(0, 0, 0, .36);
+      }
 
-      .brand { font-size: 12px; }
+      .nav {
+        min-height: 58px;
+        padding: 0 12px;
+      }
 
-      .brand-mark { width: 32px; height: 32px; font-size: 15px; }
+      .brand {
+        gap: 10px;
+        font-size: 12px;
+        letter-spacing: .03em;
+      }
 
-      .shell { width: min(100% - 20px, 1120px); }
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+      }
+
+      .menu-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+      }
+
+      .nav-links {
+        top: calc(78px + var(--safe-top));
+        left: 10px;
+        right: 10px;
+        padding: 10px;
+        border-radius: 16px;
+      }
+
+      .nav-links a {
+        min-height: 50px;
+        border-radius: 12px;
+      }
+
+      .shell {
+        width: min(100% - 24px, 1120px);
+      }
 
       .hero {
-        min-height: auto;
-        padding-top: calc(80px + var(--safe-top));
-        padding-bottom: 40px;
+        min-height: 84svh;
+        align-items: end;
+        padding-top: calc(96px + var(--safe-top));
+        padding-bottom: 34px;
       }
 
       .hero::before {
         background:
-          linear-gradient(180deg, rgba(7,8,6,.92) 0%, rgba(7,8,6,.85) 100%),
-          url("manicure-hero.png") 70% 20% / cover no-repeat;
+          linear-gradient(180deg, rgba(7,8,6,.88) 0%, rgba(7,8,6,.76) 42%, rgba(7,8,6,.96) 100%),
+          linear-gradient(90deg, rgba(7,8,6,.78), rgba(7,8,6,.28)),
+          url("manicure-hero.png") 64% 18% / cover no-repeat;
+        filter: saturate(.7) brightness(.92);
+      }
+
+      .hero::after {
+        height: 110px;
+      }
+
+      .hero-inner {
+        max-width: 100%;
       }
 
       .eyebrow {
-        margin-bottom: 14px;
+        width: fit-content;
+        max-width: 100%;
+        margin-bottom: 16px;
+        padding: 8px 12px;
+        border: 1px solid rgba(215, 180, 106, .22);
+        border-radius: 999px;
+        background: rgba(7, 8, 6, .45);
+        backdrop-filter: blur(8px);
         font-size: 10px;
-        letter-spacing: .1em;
+        line-height: 1.2;
       }
 
-      h1 { font-size: clamp(36px, 10vw, 48px); margin-bottom: 16px; }
+      h1 {
+        max-width: 330px;
+        margin-bottom: 14px;
+        font-size: clamp(46px, 15vw, 58px);
+        line-height: .92;
+      }
+
+      .lead {
+        max-width: 330px;
+        color: rgba(244, 237, 223, .78);
+        font-size: 15px;
+        line-height: 1.58;
+      }
+
+      .hero-proof,
+      .hero-strip {
+        display: none !important;
+      }
+
+      .hero-actions {
+        margin-top: 24px;
+        gap: 10px;
+      }
+
+      .hero-actions .btn {
+        min-height: 52px;
+        border-radius: 14px;
+      }
+
+      .hero-consult {
+        display: none !important;
+      }
+
+      section {
+        padding: 54px 0;
+        scroll-margin-top: 96px;
+      }
+
+      .section-head {
+        gap: 14px;
+        margin-bottom: 22px;
+      }
+
+      .section-head h2,
+      h2 {
+        font-size: clamp(34px, 11vw, 44px);
+      }
+
+      .section-head p {
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .segment {
+        width: 100%;
+        padding: 4px;
+        border-radius: 14px;
+        background: rgba(7, 8, 6, .48);
+      }
+
+      .segment button {
+        min-height: 42px;
+        border-radius: 10px;
+        font-size: 12px;
+      }
+
+      .course-grid {
+        gap: 16px;
+      }
+
+      .card {
+        min-height: auto;
+        padding: 14px;
+        border-radius: 16px;
+        background: rgba(13, 16, 13, .82);
+        box-shadow: 0 18px 46px rgba(0, 0, 0, .24);
+      }
+
+      .card.featured {
+        box-shadow: 0 0 0 1px rgba(215, 180, 106, .13), 0 18px 48px rgba(0, 0, 0, .3);
+      }
+
+      .card-badge {
+        top: 12px;
+        right: 12px;
+        border-radius: 999px;
+      }
+
+      .course-visual {
+        height: 190px;
+        margin-bottom: 18px;
+        border-radius: 13px;
+      }
+
+      .tag {
+        margin-bottom: 12px;
+      }
+
+      .card h3 {
+        margin-bottom: 8px;
+        font-size: 28px;
+      }
+
+      .card p {
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .list {
+        gap: 9px;
+        margin: 14px 0 18px;
+        font-size: 14px;
+      }
+
+      .price-row {
+        padding-top: 16px;
+      }
+
+      .price {
+        font-size: 22px;
+      }
+
+      .card-enroll {
+        min-height: 50px;
+        border-radius: 13px;
+      }
+
+      .list li:nth-child(n+4) {
+        display: none;
+      }
+
+      .about-panel,
+      .quote,
+      .faq-item,
+      .closing-box {
+        border-radius: 16px;
+      }
+
+      .about-panel {
+        padding: 18px;
+      }
+
+      .about-photo {
+        height: 230px;
+        border-radius: 13px;
+      }
+
+      .step {
+        grid-template-columns: 36px 1fr;
+        gap: 14px;
+        padding: 18px 0;
+      }
+
+      .num {
+        width: 36px;
+        height: 36px;
+      }
+
+      .step h3 {
+        font-size: 17px;
+      }
+
+      .step p {
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .trust-grid {
+        gap: 10px;
+      }
+
+      .trust-item {
+        border-radius: 14px;
+      }
+
+      .closing {
+        padding-bottom: 86px;
+      }
+
+      .closing-box {
+        padding: 28px 18px;
+      }
+
+      .closing-actions {
+        flex-direction: column;
+      }
 
       .lead-full { display: none; }
       .lead-short { display: block; }
 
-      .hero-actions { margin-top: 22px; }
-      .hero-actions .btn { width: 100%; min-height: 50px; }
-      .hero-actions .btn.sell { animation: none; }
-      .hero-actions .btn.sell::after { display: none; }
-      .hero-consult { display: none !important; }
+      .mobile-only { display: block; }
+
+      .hero-proof,
+      .hero-strip,
+      .hero-consult,
+      .eyebrow { display: none !important; }
 
       .hero-instagram { display: block; }
 
-      .desktop-only { display: none !important; }
+      .hero-actions .btn.sell {
+        width: 100%;
+        animation: none;
+        box-shadow: 0 8px 28px rgba(215, 180, 106, .22);
+      }
 
-      .section-head p.section-intro { display: none; }
+      .hero-actions .btn.sell::after { display: none; }
 
-      .section-head { margin-bottom: 24px; gap: 16px; }
+      .section-head .section-intro { display: none; }
 
-      .segment { width: 100%; }
+      .closing .urgency,
+      .closing-actions .btn.sell { display: none; }
 
-      section { padding: 48px 0; }
+      .closing h2 { font-size: clamp(28px, 8vw, 34px); }
 
-      .closing { padding-bottom: 48px; }
-
-      .closing-box { padding: 28px 18px; }
-
-      .closing-actions { flex-direction: column; }
-      .closing-actions .btn { width: 100%; }
-      .closing-actions .btn.sell { animation: none; }
-      .closing-actions .btn.sell::after { display: none; }
-
-      .urgency { font-size: 11px; margin-bottom: 14px; }
-
-      .card { min-height: auto; }
-
-      .card-enroll { min-height: 48px; }
+      .footer { padding-bottom: calc(28px + var(--safe-bottom)); }
 
       .footer-inner {
         flex-direction: column;
         align-items: flex-start;
         text-align: left;
       }
-
-      .footer { padding-bottom: calc(24px + var(--safe-bottom)); }
     }
 
     @media (min-width: 621px) {
-      .lead-short { display: none; }
-      .hero-instagram { display: none; }
+      .mobile-only { display: none !important; }
+      .list li:nth-child(n+4) { display: flex; }
+    }
+
+    @media (max-width: 380px) {
+      h1 {
+        font-size: 44px;
+      }
+
+      .lead {
+        font-size: 14px;
+      }
+
+      .course-visual {
+        height: 170px;
+      }
+    }
+
+    @media (min-width: 921px) {
+      .hero-proof,
+      .hero-strip { display: flex; }
+
+      .hero-strip { display: grid; }
     }
   </style>
 </head>
@@ -1318,7 +1588,8 @@
           <div class="hero-line eyebrow">курси манікюру онлайн та офлайн</div>
           <h1 class="hero-line">Koban <em>nails</em></h1>
           <p class="hero-line lead lead-full">Від нуля до першого клієнта за 4 тижні. Практика з наставником, сертифікат і підтримка після курсу — онлайн у своєму темпі або офлайн у студії.</p>
-          <p class="hero-line lead lead-short">Курси манікюру з нуля. Онлайн або в студії.</p>
+          <p class="hero-line lead lead-short">Старт з нуля. Перший клієнт за 4 тижні.</p>
+          <p class="hero-line hero-meta mobile-only" aria-hidden="true"><span>Онлайн</span> · <span>Студія</span> · <span>Сертифікат</span></p>
           <div class="hero-line hero-actions">
             <a class="btn sell" href="#courses">
               Обрати курс
@@ -1327,9 +1598,9 @@
             <a class="btn ghost hero-consult" href="https://instagram.com/koban.nails" target="_blank" rel="noopener noreferrer">Безкоштовна консультація</a>
           </div>
           <p class="hero-line hero-instagram">
-            <a href="https://instagram.com/koban.nails" target="_blank" rel="noopener noreferrer">Питання? @koban.nails</a>
+            <a href="https://instagram.com/koban.nails" target="_blank" rel="noopener noreferrer">Питання? Напишіть @koban.nails</a>
           </p>
-          <div class="hero-line hero-proof desktop-only" aria-label="Переваги та довіра">
+          <div class="hero-line hero-proof" aria-label="Переваги та довіра">
             <div class="hero-proof-item">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
               <span><strong>4.9</strong> середній рейтинг</span>
@@ -1343,7 +1614,7 @@
               <span>Сертифікат після курсу</span>
             </div>
           </div>
-          <div class="hero-line hero-strip desktop-only" aria-label="Формати навчання">
+          <div class="hero-line hero-strip" aria-label="Формати навчання">
             <div><strong>Online</strong><span>доступ до уроків у власному темпі</span></div>
             <div><strong>Studio</strong><span>жива практика з моделями</span></div>
             <div><strong>Pro</strong><span>підвищення для діючих майстрів</span></div>
