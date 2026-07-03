@@ -1,6 +1,17 @@
 /* Original Koban nails landing — hero & topbar */
 
 :root {
+  --color-black: #070806;
+  --color-panel: #0d100d;
+  --color-green: #102f23;
+  --color-green-soft: #1f4d39;
+  --color-gold: #d7b46a;
+  --color-gold-bright: #e4c780;
+  --color-cream: #f4eddf;
+  --color-cream-body: #ded6c7;
+  --color-muted: #a9a190;
+  --color-line: rgba(215, 180, 106, 0.24);
+  --font-display: "Playfair Display", Georgia, serif;
   --soft-line: rgba(244, 237, 223, 0.1);
   --radius: 12px;
   --radius-sm: 8px;
@@ -29,6 +40,11 @@
 body.menu-open { overflow: hidden; }
 
 .mobile-only { display: none; }
+
+.landing-topbar,
+.landing-hero {
+  color: var(--color-cream);
+}
 
 /* Topbar */
 .landing-topbar {
@@ -215,7 +231,7 @@ body.menu-open .landing-menu-btn .icon-close { display: block; }
   inset: 0;
   z-index: 0;
   background:
-    linear-gradient(105deg, rgba(7, 8, 6, 0.92) 0%, rgba(7, 8, 6, 0.78) 40%, rgba(7, 8, 6, 0.35) 68%, rgba(16, 47, 35, 0.15) 100%),
+    linear-gradient(105deg, rgba(7, 8, 6, 0.98) 0%, rgba(7, 8, 6, 0.9) 42%, rgba(7, 8, 6, 0.45) 70%, rgba(16, 47, 35, 0.18) 100%),
     url("/manicure-hero.png") center right / cover no-repeat;
   filter: saturate(0.8);
 }
@@ -236,18 +252,20 @@ body.menu-open .landing-menu-btn .icon-close { display: block; }
 }
 
 .landing-hero-inner {
+  position: relative;
+  z-index: 3;
   max-width: 680px;
+  padding: 28px;
+  margin-left: -28px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, rgba(7, 8, 6, 0.72), rgba(7, 8, 6, 0.24) 72%, transparent);
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
 }
 
-.hero-loaded .hero-line {
-  animation: landingFadeUp 0.7s var(--ease-out) both;
+.hero-line {
+  opacity: 1;
+  transform: none;
 }
-
-.hero-loaded .hero-line:nth-child(1) { animation-delay: 0.05s; }
-.hero-loaded .hero-line:nth-child(2) { animation-delay: 0.15s; }
-.hero-loaded .hero-line:nth-child(3) { animation-delay: 0.25s; }
-.hero-loaded .hero-line:nth-child(4) { animation-delay: 0.35s; }
-.hero-loaded .hero-line:nth-child(5) { animation-delay: 0.45s; }
 
 .landing-eyebrow {
   display: inline-flex;
@@ -441,6 +459,26 @@ body.menu-open .landing-menu-btn .icon-close { display: block; }
   .mobile-only { display: block; }
   .landing-hero-instagram { display: block; }
   .landing-hero-consult { display: none; }
+
+  .landing-hero-inner {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    padding: 18px 0 0;
+    background: transparent;
+  }
+
+  .landing-h1 {
+    max-width: 100%;
+    font-size: clamp(44px, 14vw, 58px);
+    line-height: 0.95;
+  }
+
+  .landing-lead {
+    max-width: 100%;
+    font-size: 15px;
+    line-height: 1.55;
+  }
 
   .landing-hero-actions {
     flex-direction: column;

@@ -13,7 +13,7 @@ type Props = {
 
 export function CourseGrid({ courses }: Props) {
   const [filter, setFilter] = useState<"all" | "online" | "offline">("all");
-  const visible = courses.filter((c) => filter === "all" || c.format === filter);
+  const visible = courses.filter((course) => filter === "all" || course.format === filter);
 
   return (
     <section id="courses" className="py-16 sm:py-20">
@@ -54,27 +54,28 @@ export function CourseGrid({ courses }: Props) {
           {visible.map((course) => (
             <article
               key={course.id}
-              className={`card relative overflow-hidden ${course.featured ? "border-gold/40 ring-1 ring-gold/20" : ""}`}
+              className={`card overflow-hidden ${course.featured ? "border-gold/40 ring-1 ring-gold/20" : ""}`}
             >
               {course.featured && (
-                <span className="absolute right-4 top-4 z-10 rounded-full bg-gold px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-black">
+                <span className="mb-3 inline-flex w-fit rounded-full bg-gold px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-black">
                   Популярний
                 </span>
               )}
-              <div className="relative -mx-5 -mt-5 mb-4 aspect-[16/10] overflow-hidden">
-                {course.image_url && (
+              {course.image_url && (
+                <div className="-mx-5 -mt-5 mb-4 overflow-hidden rounded-t-xl border-b border-line bg-black/30">
                   <Image
                     src={course.image_url}
                     alt={course.title}
-                    fill
-                    className="object-cover"
+                    width={720}
+                    height={450}
+                    className="block h-auto w-full"
                     sizes="(max-width: 768px) 100vw, 33vw"
                   />
-                )}
-              </div>
+                </div>
+              )}
               {course.badge && <span className="badge">{course.badge}</span>}
               <h3 className="mt-3 font-[family-name:var(--font-playfair)] text-2xl">{course.title}</h3>
-              <p className="mt-2 text-sm text-cream-body">{course.description}</p>
+              <p className="mt-2 text-sm leading-relaxed text-cream-body">{course.description}</p>
               <ul className="mt-4 space-y-2">
                 {course.features.map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-cream-body">
