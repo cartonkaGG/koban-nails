@@ -34,7 +34,10 @@ ADMIN_EMAILS=your@email.com
 
 ## 3. Налаштувати вхід по email і паролю
 
-У Supabase відкрийте Authentication -> Providers -> Email і перевірте, що Email provider увімкнений.
+У Supabase відкрийте Authentication -> Providers -> Email:
+
+1. Email provider має бути увімкнений.
+2. Вимкніть `Confirm email`, щоб після реєстрації користувач одразу входив у кабінет без листа.
 
 Потім відкрийте Authentication -> URL Configuration:
 
@@ -69,8 +72,7 @@ ADMIN_EMAILS
 1. Відкрийте `/login`.
 2. Якщо акаунта ще немає, відкрийте вкладку `Реєстрація`.
 3. Введіть email і пароль.
-4. Якщо Supabase просить підтвердити email, відкрийте лист і підтвердіть пошту.
-5. Поверніться на `/login` і увійдіть з email та паролем.
+4. Після створення акаунта сайт автоматично відкриє кабінет.
 
 Якщо email є в `ADMIN_EMAILS`, сайт покаже доступ до `/admin`.
 

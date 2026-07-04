@@ -54,7 +54,7 @@ export default function LoginForm() {
       const supabase = createClient();
 
       if (mode === "register") {
-        const { error: authError } = await supabase.auth.signUp({
+        const { data, error: authError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -70,7 +70,23 @@ export default function LoginForm() {
           return;
         }
 
-        setStatus("success");
+        if (data.session) {
+          window.location.href = next;
+          return;
+        }
+
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (!signInError) {
+          window.location.href = next;
+          return;
+        }
+
+        setStatus("error");
+        setError("Акаунт створено, але Supabase ще просить підтвердження email. Вимкніть Confirm email у Supabase Auth, щоб вхід був автоматичним.");
         return;
       }
 
@@ -165,7 +181,7 @@ export default function LoginForm() {
 
         {status === "success" && (
           <p className="mt-4 rounded-lg border border-gold/30 bg-gold/10 p-3 text-sm text-cream">
-            Акаунт створено. Якщо в Supabase увімкнене підтвердження email, перевірте пошту. Після підтвердження увійдіть з цим паролем.
+            Акаунт створено. Зараз відкриваємо кабінет.
           </p>
         )}
         {error && <p className="mt-4 text-sm text-red-300">{error}</p>}
