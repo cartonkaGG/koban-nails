@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Profile } from "@/lib/types";
 import { CabinetShell } from "@/components/cabinet/cabinet-shell";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export function ProfileForm({ profile }: { profile: Profile }) {
   const [fullName, setFullName] = useState(profile.full_name ?? "");
@@ -19,7 +20,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   }
 
   async function logout() {
-    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    if (isSupabaseConfigured()) {
       const { createClient } = await import("@/lib/supabase/client");
       await createClient().auth.signOut();
     } else {

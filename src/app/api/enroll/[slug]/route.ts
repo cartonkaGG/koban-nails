@@ -38,13 +38,13 @@ export async function POST(
     await supabase.from("enrollments").insert({
       user_id: profile.id,
       course_id: course.id,
-      status: course.format === "online" ? "active" : "pending",
-      purchased_at: new Date().toISOString(),
+      status: "pending",
+      purchased_at: null,
     });
   }
 
   return NextResponse.json({
     ok: true,
-    redirect: course.format === "online" ? `/cabinet/courses/${slug}` : "/cabinet",
+    redirect: "/cabinet",
   });
 }

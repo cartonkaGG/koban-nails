@@ -128,8 +128,31 @@ begin
 end;
 $$;
 
+create or replace function public.prevent_profile_privilege_escalation()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_admin() then
+    if new.role is distinct from old.role then
+      raise exception 'Only admins can change profile roles';
+    end if;
+
+    if new.email is distinct from old.email then
+      raise exception 'Only admins can change profile emails';
+    end if;
+  end if;
+
+  return new;
+end;
+$$;
+
 create trigger profiles_updated_at before update on public.profiles
 for each row execute function public.set_updated_at();
+create trigger profiles_prevent_privilege_escalation before update on public.profiles
+for each row execute function public.prevent_profile_privilege_escalation();
 create trigger courses_updated_at before update on public.courses
 for each row execute function public.set_updated_at();
 create trigger lessons_updated_at before update on public.lessons
@@ -139,7 +162,8 @@ for each row execute function public.set_updated_at();
 create policy "profiles_select_own_or_admin" on public.profiles
   for select using (auth.uid() = id or public.is_admin());
 create policy "profiles_update_own_or_admin" on public.profiles
-  for update using (auth.uid() = id or public.is_admin());
+  for update using (auth.uid() = id or public.is_admin())
+  with check (auth.uid() = id or public.is_admin());
 
 -- Courses: public read published, admin full
 create policy "courses_select_published" on public.courses
@@ -157,14 +181,9 @@ create policy "lessons_select_enrolled_or_admin" on public.lessons
     public.is_admin()
     or exists (
       select 1 from public.enrollments e
-      join public.courses c on c.id = e.course_id
       where e.course_id = lessons.course_id
         and e.user_id = auth.uid()
         and e.status in ('active', 'completed')
-    )
-    or exists (
-      select 1 from public.courses c
-      where c.id = lessons.course_id and c.published = true
     )
   );
 create policy "lessons_admin_write" on public.lessons
@@ -174,9 +193,13 @@ create policy "lessons_admin_write" on public.lessons
 create policy "enrollments_select_own_or_admin" on public.enrollments
   for select using (auth.uid() = user_id or public.is_admin());
 create policy "enrollments_insert_own" on public.enrollments
-  for insert with check (auth.uid() = user_id);
+  for insert with check (
+    auth.uid() = user_id
+    and status = 'pending'
+    and purchased_at is null
+  );
 create policy "enrollments_admin_update" on public.enrollments
-  for update using (public.is_admin() or auth.uid() = user_id);
+  for update using (public.is_admin()) with check (public.is_admin());
 
 -- Lesson progress
 create policy "progress_select_own_or_admin" on public.lesson_progress

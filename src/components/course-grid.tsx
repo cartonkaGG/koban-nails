@@ -54,10 +54,10 @@ export function CourseGrid({ courses }: Props) {
           {visible.map((course) => (
             <article
               key={course.id}
-              className={`card overflow-hidden ${course.featured ? "border-gold/40 ring-1 ring-gold/20" : ""}`}
+              className={`card relative overflow-hidden ${course.featured ? "border-gold/40 ring-1 ring-gold/20" : ""}`}
             >
               {course.featured && (
-                <span className="mb-3 inline-flex w-fit rounded-full bg-gold px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-black">
+                <span className="absolute left-5 top-5 z-10 inline-flex w-fit rounded-full bg-gold px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-black shadow-lg shadow-black/30">
                   Популярний
                 </span>
               )}
