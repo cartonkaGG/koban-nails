@@ -6,12 +6,17 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
+type Mode = "login" | "register";
+type Status = "idle" | "loading" | "success" | "error";
+
 export default function LoginForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/cabinet";
 
+  const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
+  const [password, setPassword] = useState("");
+  const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const supabaseReady = isSupabaseConfigured();
 
@@ -47,31 +52,43 @@ export default function LoginForm() {
 
     try {
       const supabase = createClient();
-      const { error: authError } = await supabase.auth.signInWithOtp({
+
+      if (mode === "register") {
+        const { error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: email.split("@")[0],
+            },
+          },
+        });
+
+        if (authError) {
+          setStatus("error");
+          setError(authError.message);
+          return;
+        }
+
+        setStatus("success");
+        return;
+      }
+
+      const { error: authError } = await supabase.auth.signInWithPassword({
         email,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-        },
+        password,
       });
 
       if (authError) {
         setStatus("error");
-        setError(authError.message);
+        setError("Невірний email або пароль. Якщо акаунта ще немає, створіть його нижче.");
         return;
       }
 
-      setStatus("sent");
+      window.location.href = next;
     } catch {
-      try {
-        await demoLogin();
-      } catch (err) {
-        setStatus("error");
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Не вдалося увійти. Перевірте Supabase або спробуйте ще раз.",
-        );
-      }
+      setStatus("error");
+      setError("Не вдалося увійти. Перевірте Supabase або спробуйте ще раз.");
     }
   }
 
@@ -79,12 +96,39 @@ export default function LoginForm() {
     <div className="flex min-h-dvh items-center justify-center px-4 py-10">
       <div className="w-full max-w-md rounded-2xl border border-line bg-panel/80 p-6 backdrop-blur-xl sm:p-8">
         <Link href="/" className="eyebrow">Koban nails</Link>
-        <h1 className="mt-2 font-[family-name:var(--font-playfair)] text-3xl">Вхід по email</h1>
+        <h1 className="mt-2 font-[family-name:var(--font-playfair)] text-3xl">
+          {mode === "login" ? "Вхід" : "Створити акаунт"}
+        </h1>
         <p className="mt-3 text-sm leading-relaxed text-cream-body">
           {supabaseReady
-            ? "Надішлемо безпечне посилання для входу на вашу пошту."
-            : "Демо-режим: введіть email і одразу відкриється кабінет (admin у email — адмін-панель)."}
+            ? "Увійдіть через email і пароль. Після авторизації відкриється ваш кабінет з курсами."
+            : "Демо-режим: введіть email і будь-який пароль. Email зі словом admin відкриє адмін-панель."}
         </p>
+
+        <div className="mt-6 grid grid-cols-2 rounded-xl border border-line bg-black/25 p-1 text-sm">
+          <button
+            type="button"
+            className={`rounded-lg px-3 py-2 transition ${mode === "login" ? "bg-gold text-black" : "text-cream-body hover:text-cream"}`}
+            onClick={() => {
+              setMode("login");
+              setStatus("idle");
+              setError("");
+            }}
+          >
+            Увійти
+          </button>
+          <button
+            type="button"
+            className={`rounded-lg px-3 py-2 transition ${mode === "register" ? "bg-gold text-black" : "text-cream-body hover:text-cream"}`}
+            onClick={() => {
+              setMode("register");
+              setStatus("idle");
+              setError("");
+            }}
+          >
+            Реєстрація
+          </button>
+        </div>
 
         <form className="mt-6 space-y-4" onSubmit={onSubmit}>
           <label className="block text-sm">
@@ -98,20 +142,30 @@ export default function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
             />
           </label>
-          <button type="submit" className="btn btn-primary w-full" disabled={status === "loading" || status === "sent"}>
+          <label className="block text-sm">
+            <span className="mb-2 block text-muted">Пароль</span>
+            <input
+              type="password"
+              required
+              minLength={6}
+              className="field"
+              placeholder="Мінімум 6 символів"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </label>
+          <button type="submit" className="btn btn-primary w-full" disabled={status === "loading"}>
             {status === "loading"
               ? "Зачекайте..."
-              : status === "sent"
-                ? "Посилання надіслано"
-                : supabaseReady
-                  ? "Отримати посилання"
-                  : "Увійти"}
+              : mode === "login"
+                ? "Увійти"
+                : "Створити акаунт"}
           </button>
         </form>
 
-        {status === "sent" && (
+        {status === "success" && (
           <p className="mt-4 rounded-lg border border-gold/30 bg-gold/10 p-3 text-sm text-cream">
-            Перевірте пошту та перейдіть за посиланням.
+            Акаунт створено. Якщо в Supabase увімкнене підтвердження email, перевірте пошту. Після підтвердження увійдіть з цим паролем.
           </p>
         )}
         {error && <p className="mt-4 text-sm text-red-300">{error}</p>}

@@ -32,9 +32,11 @@ ADMIN_EMAILS=your@email.com
 `service_role` key можна додавати тільки в `SUPABASE_SERVICE_ROLE_KEY` як server-only env без `NEXT_PUBLIC_`.
 У Vercel позначте його як Sensitive.
 
-## 3. Налаштувати вхід по email
+## 3. Налаштувати вхід по email і паролю
 
-У Supabase відкрийте Authentication -> URL Configuration:
+У Supabase відкрийте Authentication -> Providers -> Email і перевірте, що Email provider увімкнений.
+
+Потім відкрийте Authentication -> URL Configuration:
 
 ```txt
 Site URL: http://localhost:3000
@@ -65,10 +67,10 @@ ADMIN_EMAILS
 ## 5. Як залогінитися
 
 1. Відкрийте `/login`.
-2. Введіть email.
-3. Supabase надішле magic link на пошту.
-4. Перейдіть за посиланням з листа.
-5. Після входу відкриється кабінет.
+2. Якщо акаунта ще немає, відкрийте вкладку `Реєстрація`.
+3. Введіть email і пароль.
+4. Якщо Supabase просить підтвердити email, відкрийте лист і підтвердіть пошту.
+5. Поверніться на `/login` і увійдіть з email та паролем.
 
 Якщо email є в `ADMIN_EMAILS`, сайт покаже доступ до `/admin`.
 
