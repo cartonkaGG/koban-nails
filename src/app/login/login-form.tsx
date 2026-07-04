@@ -35,6 +35,14 @@ export default function LoginForm() {
     window.location.href = role === "admin" ? "/admin" : next;
   }
 
+  async function confirmExistingAccount() {
+    await fetch("/api/auth/confirm-user", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("loading");
@@ -100,8 +108,20 @@ export default function LoginForm() {
       });
 
       if (authError) {
+        await confirmExistingAccount();
+
+        const { error: retryError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (!retryError) {
+          window.location.href = next;
+          return;
+        }
+
         setStatus("error");
-        setError("Невірний email або пароль. Якщо акаунта ще немає, створіть його нижче.");
+        setError("Невірний email або пароль.");
         return;
       }
 
