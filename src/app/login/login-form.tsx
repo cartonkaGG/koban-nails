@@ -66,7 +66,11 @@ export default function LoginForm() {
 
         if (authError) {
           setStatus("error");
-          setError(authError.message);
+          setError(
+            authError.message.toLowerCase().includes("already")
+              ? "Акаунт вже зареєстрований, увійдіть."
+              : authError.message,
+          );
           return;
         }
 
@@ -86,7 +90,7 @@ export default function LoginForm() {
         }
 
         setStatus("error");
-        setError("Акаунт створено, але Supabase ще просить підтвердження email. Вимкніть Confirm email у Supabase Auth, щоб вхід був автоматичним.");
+        setError("Акаунт вже зареєстрований, увійдіть.");
         return;
       }
 
