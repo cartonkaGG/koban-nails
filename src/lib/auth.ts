@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isAdminEmail, isSupabaseConfigured } from "@/lib/supabase/config";
 import { DEMO_ADMIN, DEMO_PROFILE } from "@/lib/demo-data";
 import type { Profile } from "@/lib/types";
 
@@ -39,7 +39,10 @@ export async function getProfile(): Promise<Profile | null> {
     .eq("id", user.id)
     .single();
 
-  return data as Profile | null;
+  if (!data) return null;
+
+  const profile = data as Profile;
+  return isAdminEmail(profile.email) ? { ...profile, role: "admin" } : profile;
 }
 
 export async function requireProfile() {

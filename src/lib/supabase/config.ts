@@ -4,6 +4,22 @@ export function getSupabaseEnv() {
   return { url, key };
 }
 
+export function getSupabaseServiceRoleKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? "";
+}
+
+export function getAdminEmails() {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function isAdminEmail(email?: string | null) {
+  if (!email) return false;
+  return getAdminEmails().includes(email.trim().toLowerCase());
+}
+
 /** True only when Supabase is fully configured (not empty placeholders). */
 export function isSupabaseConfigured() {
   const { url, key } = getSupabaseEnv();
@@ -13,4 +29,9 @@ export function isSupabaseConfigured() {
     url.startsWith("https://") &&
     url.includes("supabase.co")
   );
+}
+
+export function isSupabaseAdminConfigured() {
+  const serviceRoleKey = getSupabaseServiceRoleKey();
+  return isSupabaseConfigured() && serviceRoleKey.length > 40;
 }

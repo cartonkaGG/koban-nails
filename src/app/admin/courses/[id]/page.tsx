@@ -20,7 +20,7 @@ export default async function EditCoursePage({
   const course = await getCourseById(id);
   if (!course) notFound();
 
-  const lessons = await getLessonsForCourse(course.id);
+  const lessons = await getLessonsForCourse(course.id, true);
 
   return (
     <AdminShell profile={profile}>

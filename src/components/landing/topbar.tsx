@@ -51,8 +51,11 @@ export function LandingTopbar({ profile }: Props) {
               )}
             </div>
 
-            <Link className="landing-btn landing-btn-sell landing-nav-cta" href="/#courses">
-              Обрати курс
+            <Link
+              className="landing-btn landing-btn-sell landing-nav-cta"
+              href={profile ? "/cabinet/profile" : "/login"}
+            >
+              {profile ? "Профіль" : "Увійти"}
             </Link>
 
             <button

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, isSupabaseConfigured } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function PATCH(request: Request) {
   try {
@@ -15,7 +15,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ ok: true, demo: true });
   }
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { error } = await supabase
     .from("enrollments")
     .update({

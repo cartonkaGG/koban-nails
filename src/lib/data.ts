@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/auth";
 import {
   DEMO_COURSES,
@@ -32,7 +33,7 @@ export async function getPublishedCourses(): Promise<Course[]> {
 export async function getAllCourses(): Promise<Course[]> {
   if (!isSupabaseConfigured()) return DEMO_COURSES;
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data } = await supabase
     .from("courses")
     .select("*")
@@ -61,7 +62,7 @@ export async function getCourseById(id: string): Promise<Course | null> {
     return DEMO_COURSES.find((c) => c.id === id) ?? null;
   }
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data } = await supabase
     .from("courses")
     .select("*")
@@ -71,12 +72,12 @@ export async function getCourseById(id: string): Promise<Course | null> {
   return data ? mapCourse(data) : null;
 }
 
-export async function getLessonsForCourse(courseId: string): Promise<Lesson[]> {
+export async function getLessonsForCourse(courseId: string, admin = false): Promise<Lesson[]> {
   if (!isSupabaseConfigured()) {
     return DEMO_LESSONS.filter((l) => l.course_id === courseId);
   }
 
-  const supabase = await createClient();
+  const supabase = admin ? await createAdminClient() : await createClient();
   const { data } = await supabase
     .from("lessons")
     .select("*")
@@ -132,7 +133,7 @@ export async function getAdminStats() {
     };
   }
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const [courses, students, enrollments] = await Promise.all([
     supabase.from("courses").select("id", { count: "exact", head: true }),
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("role", "student"),
@@ -157,7 +158,7 @@ export async function getAllProfiles() {
     return [DEMO_PROFILE, DEMO_ADMIN];
   }
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data } = await supabase
     .from("profiles")
     .select("*")
@@ -174,7 +175,7 @@ export async function getAllEnrollmentsAdmin() {
     }));
   }
 
-  const supabase = await createClient();
+  const supabase = await createAdminClient();
   const { data } = await supabase
     .from("enrollments")
     .select("*, course:courses(*), profile:profiles(*)")

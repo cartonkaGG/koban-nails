@@ -22,11 +22,15 @@ supabase/migrations/20260704_harden_rls.sql
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-public-key
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+ADMIN_EMAILS=your@email.com
 ```
 
 Беріть ці значення в Supabase: Project Settings -> API.
 
-Важливо: вставляйте тільки `anon public` key. Не вставляйте `service_role` key у цей сайт.
+Важливо: для `NEXT_PUBLIC_SUPABASE_ANON_KEY` вставляйте тільки `anon public` key.
+`service_role` key можна додавати тільки в `SUPABASE_SERVICE_ROLE_KEY` як server-only env без `NEXT_PUBLIC_`.
+У Vercel позначте його як Sensitive.
 
 ## 3. Налаштувати вхід по email
 
@@ -52,11 +56,23 @@ Redirect URL: https://koban-nails.vercel.app/auth/callback
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 NEXT_PUBLIC_SITE_URL
+SUPABASE_SERVICE_ROLE_KEY
+ADMIN_EMAILS
 ```
 
 Після цього зробіть Redeploy.
 
-## 5. Зробити першого адміна
+## 5. Як залогінитися
+
+1. Відкрийте `/login`.
+2. Введіть email.
+3. Supabase надішле magic link на пошту.
+4. Перейдіть за посиланням з листа.
+5. Після входу відкриється кабінет.
+
+Якщо email є в `ADMIN_EMAILS`, сайт покаже доступ до `/admin`.
+
+## 6. Зробити першого адміна через SQL
 
 Спочатку увійдіть на сайт через свій email, щоб Supabase створив профіль.
 
