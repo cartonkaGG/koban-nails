@@ -31,17 +31,29 @@ const LAYOUT = {
   nameX: 0.08,
   nameWidth: 0.52,
   /** Date on the right sleeve area — left of the QR code. */
-  dateY: 0.835,
+  dateY: 0.862,
   dateBoxX: 0.42,
   dateBoxWidth: 0.24,
-  gold: rgb(0.85, 0.7, 0.51),
-  cream: rgb(0.92, 0.88, 0.82),
+  nameColor: rgb(1, 1, 1),
+  dateColor: rgb(0.92, 0.88, 0.82),
+  nameSizeRatio: 0.042,
+  nameSizeMinRatio: 0.024,
+  dateSizeRatio: 0.024,
+  dateSizeMinRatio: 0.016,
 };
 
-type FontBytesBundle = {
+type FontFamilyBundle = {
   cyrillic: Uint8Array;
   latin: Uint8Array;
 };
+
+type CertificateFontSets = {
+  name: CertificateFonts;
+  body: CertificateFonts;
+};
+
+let nameFontBytes: FontFamilyBundle | null = null;
+let bodyFontBytes: FontFamilyBundle | null = null;
 
 type TextSegment = {
   text: string;
@@ -52,8 +64,6 @@ type CertificateFonts = {
   cyrillic: PDFFont;
   latin: PDFFont;
 };
-
-let fontBytesBundle: FontBytesBundle | null = null;
 
 function fontKindForChar(char: string): "latin" | "cyrillic" {
   const code = char.codePointAt(0) ?? 0;
@@ -98,11 +108,35 @@ function readFontFile(candidates: string[]) {
   throw new Error(`Certificate font file not found (${candidates[0]})`);
 }
 
-function loadFontBytesBundle(): FontBytesBundle {
-  if (fontBytesBundle) return fontBytesBundle;
+function loadNameFontBytes(): FontFamilyBundle {
+  if (nameFontBytes) return nameFontBytes;
 
   const root = process.cwd();
-  fontBytesBundle = {
+  nameFontBytes = {
+    cyrillic: readFontFile([
+      path.join(root, "src/assets/fonts/playfair-display-cyrillic-400-normal.woff2"),
+      path.join(
+        root,
+        "node_modules/@fontsource/playfair-display/files/playfair-display-cyrillic-400-normal.woff2",
+      ),
+    ]),
+    latin: readFontFile([
+      path.join(root, "src/assets/fonts/playfair-display-latin-400-normal.woff2"),
+      path.join(
+        root,
+        "node_modules/@fontsource/playfair-display/files/playfair-display-latin-400-normal.woff2",
+      ),
+    ]),
+  };
+
+  return nameFontBytes;
+}
+
+function loadBodyFontBytes(): FontFamilyBundle {
+  if (bodyFontBytes) return bodyFontBytes;
+
+  const root = process.cwd();
+  bodyFontBytes = {
     cyrillic: readFontFile([
       path.join(root, "src/assets/fonts/noto-serif-cyrillic-400-normal.woff2"),
       path.join(
@@ -119,19 +153,24 @@ function loadFontBytesBundle(): FontBytesBundle {
     ]),
   };
 
-  return fontBytesBundle;
+  return bodyFontBytes;
 }
 
-async function embedCertificateFonts(pdfDoc: PDFDocument): Promise<CertificateFonts> {
-  const bundle = loadFontBytesBundle();
+async function embedCertificateFonts(pdfDoc: PDFDocument): Promise<CertificateFontSets> {
+  const [nameBytes, bodyBytes] = [loadNameFontBytes(), loadBodyFontBytes()];
   pdfDoc.registerFontkit(fontkit);
 
-  const [cyrillic, latin] = await Promise.all([
-    pdfDoc.embedFont(bundle.cyrillic),
-    pdfDoc.embedFont(bundle.latin),
+  const [nameCyrillic, nameLatin, bodyCyrillic, bodyLatin] = await Promise.all([
+    pdfDoc.embedFont(nameBytes.cyrillic),
+    pdfDoc.embedFont(nameBytes.latin),
+    pdfDoc.embedFont(bodyBytes.cyrillic),
+    pdfDoc.embedFont(bodyBytes.latin),
   ]);
 
-  return { cyrillic, latin };
+  return {
+    name: { cyrillic: nameCyrillic, latin: nameLatin },
+    body: { cyrillic: bodyCyrillic, latin: bodyLatin },
+  };
 }
 
 async function fetchTemplateBytes(templateUrl: string) {
@@ -297,10 +336,25 @@ export async function generateCourseCertificatePdf(input: {
   const nameSegments = splitTextByFont(name);
   const nameBoxX = width * LAYOUT.nameX;
   const nameBoxWidth = width * LAYOUT.nameWidth;
-  const nameSize = fitMixedSize(nameSegments, fonts, nameBoxWidth, height * 0.036, height * 0.02);
+  const nameSize = fitMixedSize(
+    nameSegments,
+    fonts.name,
+    nameBoxWidth,
+    height * LAYOUT.nameSizeRatio,
+    height * LAYOUT.nameSizeMinRatio,
+  );
   const nameY = height * (1 - LAYOUT.nameY);
 
-  drawSegmentsCentered(page, nameSegments, fonts, nameBoxX, nameBoxWidth, nameY, nameSize, LAYOUT.gold);
+  drawSegmentsCentered(
+    page,
+    nameSegments,
+    fonts.name,
+    nameBoxX,
+    nameBoxWidth,
+    nameY,
+    nameSize,
+    LAYOUT.nameColor,
+  );
 
   const dateSegments = getDateSegments(input.completedAt);
   const dateBoxX = width * LAYOUT.dateBoxX;
@@ -308,18 +362,40 @@ export async function generateCourseCertificatePdf(input: {
   const dateY = height * (1 - LAYOUT.dateY);
 
   if (dateSegments) {
-    const dateSize = fitMixedSize(dateSegments, fonts, dateBoxWidth, height * 0.02, height * 0.013);
-    drawSegmentsRightAligned(page, dateSegments, fonts, dateBoxX, dateBoxWidth, dateY, dateSize, LAYOUT.cream);
+    const dateSize = fitMixedSize(
+      dateSegments,
+      fonts.body,
+      dateBoxWidth,
+      height * LAYOUT.dateSizeRatio,
+      height * LAYOUT.dateSizeMinRatio,
+    );
+    drawSegmentsRightAligned(
+      page,
+      dateSegments,
+      fonts.body,
+      dateBoxX,
+      dateBoxWidth,
+      dateY,
+      dateSize,
+      LAYOUT.dateColor,
+    );
   } else {
     const fallback = formatDate(input.completedAt);
-    const dateSize = fitFontSize(fallback, fonts.latin, dateBoxWidth, height * 0.02, height * 0.013);
-    const dateX = dateBoxX + Math.max(0, dateBoxWidth - fonts.latin.widthOfTextAtSize(fallback, dateSize));
+    const dateSize = fitFontSize(
+      fallback,
+      fonts.body.latin,
+      dateBoxWidth,
+      height * LAYOUT.dateSizeRatio,
+      height * LAYOUT.dateSizeMinRatio,
+    );
+    const dateX =
+      dateBoxX + Math.max(0, dateBoxWidth - fonts.body.latin.widthOfTextAtSize(fallback, dateSize));
     page.drawText(fallback, {
       x: dateX,
       y: dateY,
       size: dateSize,
-      font: fonts.latin,
-      color: LAYOUT.cream,
+      font: fonts.body.latin,
+      color: LAYOUT.dateColor,
     });
   }
 
