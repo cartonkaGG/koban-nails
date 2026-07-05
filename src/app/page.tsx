@@ -2,15 +2,19 @@ import Link from "next/link";
 import { LandingHero } from "@/components/landing/hero";
 import { LandingTopbar } from "@/components/landing/topbar";
 import { CourseGrid } from "@/components/course-grid";
+import { FooterAuthLink } from "@/components/auth/site-auth-button";
+import { getProfile } from "@/lib/auth";
 import { DEMO_COURSES } from "@/lib/demo-data";
 
 export default async function HomePage() {
+  const profile = await getProfile();
+
   return (
     <>
-      <LandingTopbar />
+      <LandingTopbar profile={profile} />
       <main id="top">
         <LandingHero />
-        <CourseGrid courses={DEMO_COURSES} />
+        <CourseGrid courses={DEMO_COURSES} isLoggedIn={Boolean(profile)} />
 
         <section id="format" className="border-y border-line/60 py-16">
           <div className="shell grid gap-8 lg:grid-cols-2">
@@ -49,7 +53,7 @@ export default async function HomePage() {
             <h2 className="mt-2 font-[family-name:var(--font-playfair)] text-3xl">Після курсу</h2>
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               {[
-                "Після Basic я нарешті зрозуміла послідовність і перестала боятися моделей.",
+                "Після Online я нарешті зрозуміла послідовність і перестала боятися перших клієнтів.",
                 "Онлайн-формат зручний: дивлюсь уроки ввечері, а куратор коментує мої роботи.",
                 "Pro допоміг прибрати зайві рухи — стала швидше і чистіше працювати.",
               ].map((text) => (
@@ -69,7 +73,7 @@ export default async function HomePage() {
               {[
                 ["Як отримати доступ після оплати?", "Увійдіть на email після покупки. Онлайн-курс з'явиться в кабінеті після підтвердження оплати."],
                 ["Чи можна проходити уроки у своєму темпі?", "Так. Уроки відкриті 24/7, прогрес зберігається у профілі."],
-                ["Що якщо я купила офлайн-курс?", "У кабінеті буде інформація про запис і підготовку до заняття."],
+                ["Чи є підтримка під час навчання?", "Так. Куратор перевіряє домашні роботи та відповідає на питання у кабінеті."],
               ].map(([q, a]) => (
                 <details key={q} className="card">
                   <summary className="cursor-pointer list-none font-medium">{q}</summary>
@@ -84,7 +88,7 @@ export default async function HomePage() {
           <div className="shell">
             <div className="card text-center">
               <h2 className="font-[family-name:var(--font-playfair)] text-3xl">
-                Почніть заробляти на манікюрі вже цього місяця
+                Почніть заробляти на манікюрі одразу після проходження курсу
               </h2>
               <p className="mx-auto mt-3 max-w-lg text-sm text-cream-body">
                 Оберіть курс і оплатіть онлайн — доступ до матеріалів відкриється в кабінеті.
@@ -99,10 +103,11 @@ export default async function HomePage() {
 
       <footer className="border-t border-line/60 py-8">
         <div className="shell flex flex-col gap-3 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>Koban nails © {new Date().getFullYear()}</p>
-          <div className="flex gap-4">
-            <Link href="/login" className="hover:text-gold">Увійти</Link>
+          <p>Галина Кобан © {new Date().getFullYear()}</p>
+          <div className="flex flex-wrap gap-4">
+            <FooterAuthLink />
             <Link href="/cabinet" className="hover:text-gold">Кабінет</Link>
+            <Link href="/terms" className="hover:text-gold">Умови використання</Link>
           </div>
         </div>
       </footer>

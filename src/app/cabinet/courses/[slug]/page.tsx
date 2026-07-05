@@ -14,10 +14,9 @@ export default async function CourseLearnPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const profile = await getProfile();
-  if (!profile) redirect(`/login?next=/cabinet/courses/${(await params).slug}`);
-
   const { slug } = await params;
+  const profile = await getProfile();
+  if (!profile) redirect(`/?auth=login&next=/cabinet/courses/${slug}`);
   const course = await getCourseBySlug(slug);
   if (!course) notFound();
 

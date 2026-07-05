@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getProfile } from "@/lib/auth";
+import { SiteAuthOrCabinet } from "@/components/auth/site-auth-button";
 
 export async function SiteHeader() {
   const profile = await getProfile();
@@ -18,16 +19,7 @@ export async function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          {profile ? (
-            <>
-              {profile.role === "admin" && (
-                <Link href="/admin" className="btn btn-ghost hidden sm:inline-flex">Адмін</Link>
-              )}
-              <Link href="/cabinet" className="btn btn-primary">Кабінет</Link>
-            </>
-          ) : (
-            <Link href="/login" className="btn btn-primary">Увійти</Link>
-          )}
+          <SiteAuthOrCabinet profile={profile} />
         </div>
       </div>
     </header>

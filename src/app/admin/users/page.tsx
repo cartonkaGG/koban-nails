@@ -9,7 +9,7 @@ export default async function AdminUsersPage() {
   try {
     profile = await requireAdmin();
   } catch {
-    redirect("/login?next=/admin/users");
+    redirect("/?auth=login&next=/admin/users");
   }
 
   const [profiles, enrollments] = await Promise.all([

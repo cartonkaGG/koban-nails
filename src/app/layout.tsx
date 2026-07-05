@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
+import { AuthModalProvider } from "@/components/auth/auth-modal-context";
 import "./globals.css";
 
 const inter = Inter({
@@ -13,9 +14,9 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Koban nails | Курси манікюру",
+  title: "Галина Кобан | Курси манікюру",
   description:
-    "Курси манікюру онлайн та офлайн. Навчання, кабінет учня та запис на програми Koban nails.",
+    "Онлайн-курси манікюру від нуля до першого клієнта. Навчання, кабінет учня та підтримка наставника.",
 };
 
 export default function RootLayout({
@@ -25,7 +26,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="uk" className={`${inter.variable} ${playfair.variable}`}>
-      <body>{children}</body>
+      <body>
+        <AuthModalProvider>{children}</AuthModalProvider>
+      </body>
     </html>
   );
 }

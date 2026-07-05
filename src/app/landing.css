@@ -128,7 +128,21 @@ body.menu-open { overflow: hidden; }
   transition: color 0.2s var(--ease), background 0.2s var(--ease);
 }
 
-.landing-nav-links a:hover {
+.landing-nav-links button.landing-nav-auth-btn {
+  padding: 10px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s var(--ease), background 0.2s var(--ease);
+}
+
+.landing-nav-links a:hover,
+.landing-nav-links button.landing-nav-auth-btn:hover {
   color: var(--color-cream);
   background: rgba(244, 237, 223, 0.06);
 }
@@ -224,9 +238,9 @@ body.menu-open .landing-menu-btn .icon-close { display: block; }
   inset: 0;
   z-index: 0;
   background:
-    linear-gradient(105deg, rgba(7, 8, 6, 0.98) 0%, rgba(7, 8, 6, 0.9) 42%, rgba(7, 8, 6, 0.45) 70%, rgba(16, 47, 35, 0.18) 100%),
-    url("/manicure-hero.png") center right / cover no-repeat;
-  filter: saturate(0.8);
+    linear-gradient(105deg, rgba(7, 8, 6, 0.92) 0%, rgba(7, 8, 6, 0.7) 42%, rgba(7, 8, 6, 0.18) 72%, rgba(16, 47, 35, 0.1) 100%),
+    url("/hero-koban-owner.webp") center right / cover no-repeat;
+  filter: saturate(0.94);
 }
 
 .landing-hero::after {
@@ -300,11 +314,11 @@ body.menu-open .landing-menu-btn .icon-close { display: block; }
 }
 
 .landing-lead {
-  max-width: 520px;
-  margin: 0;
+  max-width: 720px;
+  margin: 0 0 24px;
   color: var(--color-cream-body);
-  font-size: clamp(16px, 2.2vw, 19px);
-  line-height: 1.7;
+  font-size: clamp(15px, 2vw, 18px);
+  line-height: 1.65;
 }
 
 .landing-lead-short { display: none; }
@@ -369,7 +383,7 @@ body.menu-open .landing-menu-btn .icon-close { display: block; }
 
 .landing-hero-strip {
   display: none;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   margin-top: 28px;
 }
@@ -428,7 +442,8 @@ body.menu-open .landing-menu-btn .icon-close { display: block; }
     transform: translateY(0);
   }
 
-  .landing-nav-links a {
+  .landing-nav-links a,
+  .landing-nav-links button.landing-nav-auth-btn {
     padding: 14px 16px;
   }
 }
@@ -443,8 +458,8 @@ body.menu-open .landing-menu-btn .icon-close { display: block; }
 
   .landing-hero::before {
     background:
-      linear-gradient(180deg, rgba(7, 8, 6, 0.55) 0%, rgba(7, 8, 6, 0.92) 72%),
-      url("/manicure-hero.png") center 28% / cover no-repeat;
+      linear-gradient(180deg, rgba(7, 8, 6, 0.24) 0%, rgba(7, 8, 6, 0.42) 42%, rgba(7, 8, 6, 0.95) 82%),
+      url("/hero-koban-owner-mobile.webp") center top / cover no-repeat;
   }
 
   .landing-lead-full { display: none; }

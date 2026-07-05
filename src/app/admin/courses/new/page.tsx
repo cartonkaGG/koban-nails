@@ -8,7 +8,7 @@ export default async function NewCoursePage() {
   try {
     profile = await requireAdmin();
   } catch {
-    redirect("/login?next=/admin/courses/new");
+    redirect("/?auth=login&next=/admin/courses/new");
   }
 
   return (

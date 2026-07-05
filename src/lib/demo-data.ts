@@ -22,26 +22,6 @@ export const DEMO_ADMIN: Profile = {
 
 export const DEMO_COURSES: Course[] = [
   {
-    id: "1",
-    slug: "basic",
-    title: "Basic",
-    description: "Старт з нуля у студії з практикою на моделях.",
-    format: "offline",
-    price_uah: 12900,
-    image_url: "/course-basic.png",
-    badge: "офлайн",
-    featured: false,
-    published: true,
-    features: [
-      "Комбінований манікюр",
-      "Вирівнювання та покриття",
-      "Стерилізація та робоче місце",
-      "Сертифікат після практики",
-    ],
-    payment_url: null,
-    sort_order: 1,
-  },
-  {
     id: "2",
     slug: "online",
     title: "Online",
@@ -59,14 +39,14 @@ export const DEMO_COURSES: Course[] = [
       "Фінальна робота",
     ],
     payment_url: null,
-    sort_order: 2,
+    sort_order: 1,
   },
   {
     id: "3",
     slug: "pro",
     title: "Pro",
-    description: "Для майстрів, які хочуть працювати швидше і чистіше.",
-    format: "offline",
+    description: "Для майстрів, які хочуть працювати швидше і чистіше — онлайн.",
+    format: "online",
     price_uah: 9500,
     image_url: "/course-pro.png",
     badge: "підвищення",
@@ -79,7 +59,7 @@ export const DEMO_COURSES: Course[] = [
       "Розбір ваших робіт",
     ],
     payment_url: null,
-    sort_order: 3,
+    sort_order: 2,
   },
 ];
 
@@ -149,6 +129,6 @@ export const DEMO_ENROLLMENTS: Enrollment[] = [
     status: "active",
     purchased_at: new Date().toISOString(),
     created_at: new Date().toISOString(),
-    course: DEMO_COURSES[1],
+    course: DEMO_COURSES[0],
   },
 ];

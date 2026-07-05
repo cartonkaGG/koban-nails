@@ -7,7 +7,9 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:clean": "node --eval \"require('fs').rmSync('.next',{recursive:true,force:true})\" && next dev",
     "build": "next build",
+    "build:clean": "node --eval \"require('fs').rmSync('.next',{recursive:true,force:true})\" && next build",
     "cleanup:unconfirmed-users": "node scripts/cleanup-unconfirmed-users.mjs",
     "start": "next start",
     "lint": "next lint"
@@ -17,7 +19,8 @@
     "@supabase/supabase-js": "^2.49.8",
     "next": "^15.3.3",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "resend": "^6.17.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.8",

@@ -8,7 +8,7 @@ import { formatDate, formatPrice } from "@/lib/types";
 
 export default async function CabinetPage() {
   const profile = await getProfile();
-  if (!profile) redirect("/login?next=/cabinet");
+  if (!profile) redirect("/?auth=login&next=/cabinet");
 
   const enrollments = await getUserEnrollments(profile.id);
 

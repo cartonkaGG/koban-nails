@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import type { Course } from "@/lib/types";
 import { formatPrice } from "@/lib/types";
+import { useAuthModal } from "@/components/auth/auth-modal-context";
 
 export function CheckoutForm({ course }: { course: Course }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { openAuth } = useAuthModal();
 
   async function buy() {
     setLoading(true);
@@ -18,7 +20,7 @@ export function CheckoutForm({ course }: { course: Course }) {
 
     if (!res.ok) {
       if (res.status === 401) {
-        window.location.href = `/login?next=/checkout/${course.slug}`;
+        openAuth({ mode: "login", next: `/checkout/${course.slug}` });
         return;
       }
       setError(data.error ?? "Помилка оформлення");
@@ -47,9 +49,14 @@ export function CheckoutForm({ course }: { course: Course }) {
         </div>
       </div>
       <p className="text-sm text-cream-body">
-        {course.format === "online"
-          ? "Після оплати курс відкриється у вашому кабінеті з уроками та прогресом."
-          : "Після оплати ми підтвердимо запис у студію та надішлемо деталі в кабінет."}
+        Після оплати курс відкриється у вашому кабінеті з уроками та прогресом.
+      </p>
+      <p className="text-xs leading-relaxed text-muted">
+        Натискаючи «Підтвердити покупку», ви автоматично погоджуєтесь з{" "}
+        <Link href="/terms" className="text-gold hover:underline">
+          умовами використання
+        </Link>
+        . Цифрові продукти (онлайн-курси) поверненню не підлягають.
       </p>
       {error && <p className="text-sm text-red-300">{error}</p>}
       <div className="flex flex-wrap gap-3">

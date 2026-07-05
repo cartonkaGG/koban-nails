@@ -4,6 +4,6 @@ import { ProfileForm } from "@/components/cabinet/profile-form";
 
 export default async function ProfilePage() {
   const profile = await getProfile();
-  if (!profile) redirect("/login?next=/cabinet/profile");
+  if (!profile) redirect("/?auth=login&next=/cabinet/profile");
   return <ProfileForm profile={profile} />;
 }

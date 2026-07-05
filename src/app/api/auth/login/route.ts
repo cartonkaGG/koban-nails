@@ -49,7 +49,10 @@ export async function POST(request: NextRequest) {
   });
 
   if (error || !data.user) {
-    return NextResponse.json({ error: "Невірний email або пароль." }, { status: 400 });
+    const message = error?.message?.toLowerCase().includes("email not confirmed")
+      ? "Підтвердіть email — перевірте пошту або зареєструйтесь знову."
+      : "Невірний email або пароль.";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
   if (isSupabaseAdminConfigured()) {

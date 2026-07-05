@@ -1,10 +1,24 @@
-import { Suspense } from "react";
-import LoginForm from "./login-form";
+"use client";
 
-export default function LoginPage() {
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
+
+function LoginRedirectInner() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const next = searchParams.get("next") ?? "/cabinet";
+    router.replace(`/?auth=login&next=${encodeURIComponent(next)}`);
+  }, [router, searchParams]);
+
+  return null;
+}
+
+export default function LoginRedirect() {
   return (
-    <Suspense fallback={<div className="flex min-h-dvh items-center justify-center text-muted">Завантаження...</div>}>
-      <LoginForm />
+    <Suspense fallback={null}>
+      <LoginRedirectInner />
     </Suspense>
   );
 }

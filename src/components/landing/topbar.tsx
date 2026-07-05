@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { AuthTrigger } from "@/components/auth/auth-trigger";
 import type { Profile } from "@/lib/types";
 
 type Props = {
@@ -50,16 +51,27 @@ export function LandingTopbar({ profile = null }: Props) {
                   <Link href="/cabinet" onClick={() => setMenuOpen(false)}>Кабінет</Link>
                 </>
               ) : (
-                <Link href="/login" onClick={() => setMenuOpen(false)}>Увійти</Link>
+                <AuthTrigger className="landing-nav-auth-btn" onClick={() => setMenuOpen(false)}>
+                  Увійти
+                </AuthTrigger>
               )}
             </div>
 
-            <Link
-              className="landing-btn landing-btn-sell landing-nav-cta"
-              href={profile ? "/cabinet/profile" : "/login"}
-            >
-              {profile ? "Профіль" : "Увійти"}
-            </Link>
+            {profile ? (
+              <Link
+                className="landing-btn landing-btn-sell landing-nav-cta"
+                href="/cabinet/profile"
+              >
+                Профіль
+              </Link>
+            ) : (
+              <AuthTrigger
+                className="landing-btn landing-btn-sell landing-nav-cta"
+                onClick={() => setMenuOpen(false)}
+              >
+                Увійти
+              </AuthTrigger>
+            )}
 
             <button
               className="landing-menu-btn"

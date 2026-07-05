@@ -1,7 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { CheckoutForm } from "@/components/checkout-form";
 import { SiteHeader } from "@/components/site-header";
+import { getProfile } from "@/lib/auth";
 import { getCourseBySlug } from "@/lib/data";
 
 export default async function CheckoutPage({
@@ -13,6 +14,11 @@ export default async function CheckoutPage({
   const course = await getCourseBySlug(slug);
   if (!course) notFound();
 
+  const profile = await getProfile();
+  if (!profile) {
+    redirect(`/?auth=login&next=${encodeURIComponent(`/checkout/${slug}`)}`);
+  }
+
   return (
     <>
       <SiteHeader />
@@ -22,6 +28,9 @@ export default async function CheckoutPage({
           <div className="mt-4">
             <CheckoutForm course={course} />
           </div>
+          <p className="mt-6 text-center text-xs text-muted">
+            <Link href="/terms" className="hover:text-gold">Умови використання</Link>
+          </p>
         </div>
       </main>
     </>

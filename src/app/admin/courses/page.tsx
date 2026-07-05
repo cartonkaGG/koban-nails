@@ -10,7 +10,7 @@ export default async function AdminCoursesPage() {
   try {
     profile = await requireAdmin();
   } catch {
-    redirect("/login?next=/admin/courses");
+    redirect("/?auth=login&next=/admin/courses");
   }
 
   const courses = await getAllCourses();

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
+import { sendEmail } from "@/lib/emails/send";
+import { renderPurchaseThankYouEmail } from "@/lib/emails/templates";
 import { getCourseBySlug } from "@/lib/data";
+import { getSiteOrigin } from "@/lib/site-url";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(
@@ -34,17 +37,43 @@ export async function POST(
     return NextResponse.json({ ok: true, redirect: course.payment_url });
   }
 
+  const isNewPurchase = !existing;
+
   if (!existing) {
     await supabase.from("enrollments").insert({
       user_id: profile.id,
       course_id: course.id,
-      status: "pending",
-      purchased_at: null,
+      status: "active",
+      purchased_at: new Date().toISOString(),
+    });
+  } else if (existing.status !== "active") {
+    await supabase
+      .from("enrollments")
+      .update({
+        status: "active",
+        purchased_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id);
+  }
+
+  if (isNewPurchase || existing?.status !== "active") {
+    const origin = getSiteOrigin(request);
+    const firstName = profile.full_name?.split(" ")[0] ?? "Друже";
+    const template = renderPurchaseThankYouEmail({
+      firstName,
+      courseTitle: course.title,
+      cabinetUrl: `${origin}/cabinet`,
+    });
+
+    await sendEmail({
+      to: profile.email,
+      subject: template.subject,
+      html: template.html,
     });
   }
 
   return NextResponse.json({
     ok: true,
-    redirect: "/cabinet",
+    redirect: `/cabinet/courses/${slug}`,
   });
 }

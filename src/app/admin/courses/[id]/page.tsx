@@ -13,7 +13,7 @@ export default async function EditCoursePage({
   try {
     profile = await requireAdmin();
   } catch {
-    redirect("/login?next=/admin");
+    redirect("/?auth=login&next=/admin");
   }
 
   const { id } = await params;

@@ -14,19 +14,19 @@ export function LandingHero() {
     <section className="landing-hero">
       <div className="shell">
         <div className="landing-hero-inner" id="heroInner">
-          <div className="hero-line landing-eyebrow">курси манікюру онлайн та офлайн</div>
           <h1 className="hero-line landing-h1">
-            Koban <em>nails</em>
+            Галина <em>Кобан</em>
           </h1>
           <p className="hero-line landing-lead landing-lead-full">
-            Від нуля до першого клієнта за 4 тижні. Практика з наставником, сертифікат і підтримка
-            після курсу — онлайн у своєму темпі або офлайн у студії.
+            Галина Кобан — інструктор базових онлайн та офлайн курсів з манікюру та педикюру, та
+            підвищення кваліфікації майстрів, топ-майстер, спікер б&apos;юті-марафонів, помічник
+            судді чемпіонату та багаторазова призерка чемпіонату України
           </p>
           <p className="hero-line landing-lead landing-lead-short">
-            Старт з нуля. Перший клієнт за 4 тижні.
+            Інструктор курсів з манікюру та педикюру. Топ-майстер і спікер б&apos;юті-марафонів.
           </p>
           <p className="hero-line landing-hero-meta mobile-only" aria-hidden="true">
-            <span>Онлайн</span> · <span>Студія</span> · <span>Сертифікат</span>
+            <span>Онлайн</span> · <span>Сертифікат</span> · <span>Підтримка</span>
           </p>
           <div className="hero-line landing-hero-actions">
             <Link className="landing-btn landing-btn-sell" href="/#courses">
@@ -62,8 +62,7 @@ export function LandingHero() {
           </div>
           <div className="hero-line landing-hero-strip" aria-label="Формати навчання">
             <div><strong>Online</strong><span>доступ до уроків у власному темпі</span></div>
-            <div><strong>Studio</strong><span>жива практика з моделями</span></div>
-            <div><strong>Pro</strong><span>підвищення для діючих майстрів</span></div>
+            <div><strong>Сертифікат</strong><span>з вашим ім&apos;ям після завершення</span></div>
           </div>
         </div>
       </div>

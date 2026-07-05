@@ -1,19 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
 import type { Course } from "@/lib/types";
 import { formatPrice } from "@/lib/types";
-import { IconArrowRight, IconCheck } from "@/components/icons";
+import { IconCheck } from "@/components/icons";
+import { CourseBuyButton } from "@/components/course-buy-button";
 
 type Props = {
   courses: Course[];
+  isLoggedIn?: boolean;
 };
 
-export function CourseGrid({ courses }: Props) {
-  const [filter, setFilter] = useState<"all" | "online" | "offline">("all");
-  const visible = courses.filter((course) => filter === "all" || course.format === filter);
+export function CourseGrid({ courses, isLoggedIn = false }: Props) {
+  const visible = courses.filter((course) => course.format === "online");
 
   return (
     <section id="courses" className="py-16 sm:py-20">
@@ -25,28 +24,8 @@ export function CourseGrid({ courses }: Props) {
           </div>
           <div className="max-w-xl">
             <p className="text-sm leading-relaxed text-cream-body">
-              Оберіть формат під свій графік. Після оплати онлайн-курс відкривається у вашому кабінеті.
+              Навчайтесь у власному темпі. Після оплати курс відкривається у вашому кабінеті.
             </p>
-            <div className="mt-4 inline-flex rounded-lg border border-line p-1" role="tablist" aria-label="Формат курсу">
-              {[
-                ["all", "Усі"],
-                ["online", "Онлайн"],
-                ["offline", "Офлайн"],
-              ].map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  role="tab"
-                  aria-selected={filter === key}
-                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                    filter === key ? "bg-gold text-black" : "text-cream-body hover:text-cream"
-                  }`}
-                  onClick={() => setFilter(key as typeof filter)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
@@ -86,10 +65,7 @@ export function CourseGrid({ courses }: Props) {
               </ul>
               <div className="mt-5 flex items-center justify-between gap-3">
                 <span className="text-xl font-bold text-gold">{formatPrice(course.price_uah)}</span>
-                <Link href={`/checkout/${course.slug}`} className="btn btn-primary">
-                  Купити
-                  <IconArrowRight />
-                </Link>
+                <CourseBuyButton slug={course.slug} isLoggedIn={isLoggedIn} />
               </div>
             </article>
           ))}
