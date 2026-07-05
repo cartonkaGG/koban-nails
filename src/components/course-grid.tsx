@@ -2,10 +2,11 @@
 
 import Image from "next/image";
 import type { Course } from "@/lib/types";
-import { formatPrice } from "@/lib/types";
 import { IconCheck, IconArrowRight } from "@/components/icons";
 import { CourseBuyButton } from "@/components/course-buy-button";
+import { CoursePrice } from "@/components/course-price";
 import { resolveCourseImageUrl } from "@/lib/images";
+import { isCourseOnSale } from "@/lib/types";
 import { MotionFadeUp, MotionStagger, MotionItem, MotionCard } from "@/components/motion";
 
 type Props = {
@@ -17,8 +18,9 @@ export function CourseGrid({ courses }: Props) {
 
   return (
     <section id="courses" className="course-section py-16 sm:py-20">
-      <div className="shell">
-        <MotionFadeUp className="mb-10 max-w-3xl">
+      <div className="course-section-bg" aria-hidden="true" />
+      <div className="shell relative z-[1]">
+        <MotionFadeUp className="mb-10 max-w-3xl mx-auto text-center md:text-left md:mx-0">
           <div className="eyebrow">програми</div>
           <h2 className="mt-2 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl">Курси</h2>
           <p className="mt-3 text-left text-sm leading-relaxed text-cream-body">
@@ -26,7 +28,9 @@ export function CourseGrid({ courses }: Props) {
           </p>
         </MotionFadeUp>
 
-        <MotionStagger className="course-grid">
+        <MotionStagger
+          className={`course-grid ${visible.length === 1 ? "course-grid-single" : ""}`}
+        >
           {visible.map((course) => (
             <MotionItem key={course.id}>
               <CourseCard course={course} />
@@ -64,10 +68,13 @@ function CourseCard({ course }: { course: Course }) {
           {course.badge && (
             <span className="course-card-badge">{course.badge}</span>
           )}
+          {isCourseOnSale(course) && (
+            <span className="course-card-badge course-card-badge-sale">Акція</span>
+          )}
         </div>
 
         <div className="course-card-price-tag">
-          <span className="course-card-price">{formatPrice(course.price_uah)}</span>
+          <CoursePrice course={course} />
         </div>
       </div>
 

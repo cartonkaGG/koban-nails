@@ -15,7 +15,8 @@ import type { Course, Enrollment, Lesson } from "@/lib/types";
 function mapCourse(row: Record<string, unknown>): Course {
   return {
     ...row,
-    features: Array.isArray(row.features) ? row.features as string[] : [],
+    sale_price_uah: (row.sale_price_uah as number | null | undefined) ?? null,
+    features: Array.isArray(row.features) ? (row.features as string[]) : [],
   } as Course;
 }
 

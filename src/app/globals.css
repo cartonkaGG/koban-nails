@@ -1528,9 +1528,47 @@ body.support-chat-open {
 }
 
 /* Course cards — pro layout */
+.course-section {
+  position: relative;
+  isolation: isolate;
+}
+
+.course-section-bg {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 0%, rgb(212 175 55 / 0.07), transparent 65%),
+    radial-gradient(ellipse 50% 40% at 85% 100%, rgb(212 175 55 / 0.04), transparent 60%);
+}
+
+.course-section-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+  background-size: 4rem 4rem;
+  mask-image: radial-gradient(ellipse 90% 70% at 50% 40%, #000 20%, transparent 75%);
+}
+
 .course-grid {
   display: grid;
   gap: 1.25rem;
+}
+
+.course-grid-single {
+  max-width: 22rem;
+  margin-inline: auto;
+}
+
+@media (min-width: 640px) {
+  .course-grid-single {
+    max-width: 24rem;
+  }
 }
 
 @media (min-width: 768px) {
@@ -1620,14 +1658,77 @@ body.support-chat-open {
   color: #000;
 }
 
+.course-card-badge-sale {
+  border-color: rgb(248 113 113 / 0.45);
+  background: rgb(248 113 113 / 0.18);
+  color: #fecaca;
+}
+
 .course-card-price-tag {
   position: absolute;
   right: 0.875rem;
   bottom: 0.875rem;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
 }
 
-.course-card-price {
+.course-price-sm {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+
+.course-price-lg {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.5rem 0.75rem;
+}
+
+.course-price-regular,
+.course-price-sale {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1.2;
+}
+
+.course-price-old {
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-decoration: line-through;
+  line-height: 1;
+}
+
+.course-price-sm .course-price-old {
+  border-radius: 0.4rem;
+  background: rgb(0 0 0 / 0.55);
+  padding: 0.15rem 0.45rem;
+}
+
+.course-card-price-sale {
+  border-color: rgb(248 113 113 / 0.45);
+  color: #fecaca;
+}
+
+.course-price-sale-badge {
+  border-radius: 999px;
+  background: rgb(248 113 113 / 0.2);
+  border: 1px solid rgb(248 113 113 / 0.35);
+  padding: 0.15rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fecaca;
+}
+
+.course-price-sm {
   display: inline-block;
   border-radius: 0.65rem;
   background: rgb(0 0 0 / 0.65);

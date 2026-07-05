@@ -24,6 +24,7 @@ create table if not exists public.courses (
   description text not null default '',
   format course_format not null default 'online',
   price_uah integer not null default 0,
+  sale_price_uah integer,
   image_url text,
   badge text,
   featured boolean not null default false,

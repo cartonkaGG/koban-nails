@@ -172,6 +172,25 @@ export function CourseEditor({ course, lessons: initialLessons }: Props) {
               />
             </label>
             <label className="block text-sm">
+              <span className="mb-2 block text-muted">Акційна ціна (грн)</span>
+              <input
+                type="number"
+                className="field"
+                placeholder="Без знижки"
+                value={courseState.sale_price_uah ?? ""}
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  setCourseState({
+                    ...courseState,
+                    sale_price_uah: raw === "" ? null : Number(raw),
+                  });
+                }}
+              />
+              <span className="mt-1 block text-xs text-muted">
+                Менша за звичайну ціну — показується як акція на сайті та при покупці
+              </span>
+            </label>
+            <label className="block text-sm">
               <span className="mb-2 block text-muted">Бейдж (опційно)</span>
               <input
                 className="field"

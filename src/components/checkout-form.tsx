@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { CoursePrice } from "@/components/course-price";
 import type { Course } from "@/lib/types";
-import { formatPrice } from "@/lib/types";
 import { useAuthModal } from "@/components/auth/auth-modal-context";
 
 export function CheckoutForm({ course }: { course: Course }) {
@@ -43,9 +43,9 @@ export function CheckoutForm({ course }: { course: Course }) {
         <p className="mt-2 text-sm text-cream-body">{course.description}</p>
       </div>
       <div className="rounded-xl border border-line bg-black/30 p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <span className="text-muted">До сплати</span>
-          <span className="text-2xl font-bold text-gold">{formatPrice(course.price_uah)}</span>
+          <CoursePrice course={course} size="lg" />
         </div>
       </div>
       <p className="text-sm text-cream-body">

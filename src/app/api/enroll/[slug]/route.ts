@@ -5,6 +5,7 @@ import { sendEmail } from "@/lib/emails/send";
 import { renderPurchaseThankYouEmail } from "@/lib/emails/templates";
 import { activateEnrollment } from "@/lib/enrollments";
 import { getCourseBySlug, getEnrollment } from "@/lib/data";
+import { getEffectiveCoursePrice } from "@/lib/types";
 import { getSiteOrigin } from "@/lib/site-url";
 import { notifyPurchase } from "@/lib/telegram/send";
 
@@ -27,13 +28,15 @@ export async function POST(
     return NextResponse.json({ ok: true, redirect: course.payment_url });
   }
 
+  const payPrice = getEffectiveCoursePrice(course);
+
   if (!isSupabaseConfigured()) {
     await addDemoEnrollment(slug);
     await notifyPurchase({
       userName: profile.full_name ?? profile.email,
       email: profile.email,
       courseTitle: course.title,
-      priceUah: course.price_uah,
+      priceUah: payPrice,
     });
     return NextResponse.json({
       ok: true,
@@ -69,7 +72,7 @@ export async function POST(
       userName: profile.full_name ?? profile.email,
       email: profile.email,
       courseTitle: course.title,
-      priceUah: course.price_uah,
+      priceUah: payPrice,
     });
   }
 

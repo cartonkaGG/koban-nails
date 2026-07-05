@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { Course } from "@/lib/types";
-import { formatPrice } from "@/lib/types";
+import { formatPrice, getEffectiveCoursePrice, isCourseOnSale } from "@/lib/types";
 import { resolveCourseImageUrl } from "@/lib/images";
 import { MotionPage, MotionStagger, MotionItem } from "@/components/motion";
 
@@ -120,7 +120,14 @@ function AdminCourseCard({ course }: { course: Course }) {
           </div>
           <p className="mt-1 line-clamp-2 text-xs text-muted">{course.description}</p>
           <div className="admin-course-card-meta">
-            <span className="text-gold font-semibold">{formatPrice(course.price_uah)}</span>
+            {isCourseOnSale(course) ? (
+              <>
+                <span className="text-xs text-muted line-through">{formatPrice(course.price_uah)}</span>
+                <span className="text-gold font-semibold">{formatPrice(getEffectiveCoursePrice(course))}</span>
+              </>
+            ) : (
+              <span className="text-gold font-semibold">{formatPrice(course.price_uah)}</span>
+            )}
             <span className="text-xs text-muted">/{course.slug}</span>
           </div>
         </div>

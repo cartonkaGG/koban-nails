@@ -28,6 +28,7 @@ export async function PUT(
       description: body.description,
       format: body.format,
       price_uah: body.price_uah,
+      sale_price_uah: body.sale_price_uah ?? null,
       badge: body.badge,
       featured: body.featured,
       published: body.published,

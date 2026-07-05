@@ -19,6 +19,7 @@ export type Course = {
   description: string;
   format: CourseFormat;
   price_uah: number;
+  sale_price_uah: number | null;
   image_url: string | null;
   badge: string | null;
   featured: boolean;
@@ -59,6 +60,22 @@ export type LessonProgress = {
 
 export function formatPrice(uah: number) {
   return new Intl.NumberFormat("uk-UA").format(uah) + " грн";
+}
+
+/** Active sale price when set and lower than the regular price. */
+export function getEffectiveCoursePrice(course: Pick<Course, "price_uah" | "sale_price_uah">) {
+  if (
+    course.sale_price_uah != null &&
+    course.sale_price_uah > 0 &&
+    course.sale_price_uah < course.price_uah
+  ) {
+    return course.sale_price_uah;
+  }
+  return course.price_uah;
+}
+
+export function isCourseOnSale(course: Pick<Course, "price_uah" | "sale_price_uah">) {
+  return getEffectiveCoursePrice(course) < course.price_uah;
 }
 
 export function formatDate(value: string) {
