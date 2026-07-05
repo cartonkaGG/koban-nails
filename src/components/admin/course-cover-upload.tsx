@@ -8,9 +8,10 @@ type Props = {
   courseId: string;
   value: string | null;
   onChange: (url: string | null) => void;
+  onSaved?: (url: string | null) => void;
 };
 
-export function CourseCoverUpload({ courseId, value, onChange }: Props) {
+export function CourseCoverUpload({ courseId, value, onChange, onSaved }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState("");
@@ -25,48 +26,39 @@ export function CourseCoverUpload({ courseId, value, onChange }: Props) {
       return;
     }
 
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Файл занадто великий (макс. 10 МБ)");
+      return;
+    }
+
     setError("");
     setUploading(true);
-    setProgress("0%");
+    setProgress("Завантаження...");
 
     try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("courseId", courseId);
+
       const res = await fetch("/api/admin/course-image", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          courseId,
-          fileName: file.name,
-          contentType: file.type || "image/jpeg",
-        }),
+        body: formData,
       });
 
-      const data = await res.json();
+      const data = (await res.json()) as {
+        error?: string;
+        storagePath?: string;
+        publicUrl?: string;
+      };
+
       if (!res.ok) {
-        setError(data.error ?? "Помилка підготовки завантаження");
+        setError(data.error ?? "Помилка завантаження");
         return;
       }
 
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("PUT", data.signedUrl);
-        xhr.setRequestHeader("Content-Type", file.type || "image/jpeg");
-
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const pct = Math.round((event.loaded / event.total) * 100);
-            setProgress(`${pct}%`);
-          }
-        };
-
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve();
-          else reject(new Error("Upload failed"));
-        };
-        xhr.onerror = () => reject(new Error("Upload failed"));
-        xhr.send(file);
-      });
-
-      onChange(data.publicUrl);
+      const storedUrl = data.storagePath ?? data.publicUrl ?? null;
+      onChange(storedUrl);
+      onSaved?.(storedUrl);
       setProgress("Готово");
     } catch {
       setError("Не вдалося завантажити зображення");
@@ -118,7 +110,7 @@ export function CourseCoverUpload({ courseId, value, onChange }: Props) {
           <div className="course-cover-preview">
             <Image src={preview} alt="Обкладинка курсу" fill className="object-cover" sizes="(max-width: 768px) 100vw, 480px" />
             <div className="course-cover-overlay">
-              <span>{uploading ? `Завантаження ${progress}` : "Натисніть або перетягніть нове фото"}</span>
+              <span>{uploading ? progress : "Натисніть або перетягніть нове фото"}</span>
             </div>
           </div>
         ) : (

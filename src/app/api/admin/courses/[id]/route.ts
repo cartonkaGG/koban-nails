@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, isSupabaseConfigured } from "@/lib/auth";
+import { buildCourseUpdatePayload, humanizeAdminDbError } from "@/lib/courses-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { removeCourseStorage } from "@/lib/course-storage";
 
 export async function GET(
@@ -52,27 +54,23 @@ export async function PUT(
     return NextResponse.json({ ok: true, demo: true });
   }
 
-  const supabase = await createAdminClient();
-  const { error } = await supabase
-    .from("courses")
-    .update({
-      title: body.title,
-      slug: body.slug,
-      description: body.description,
-      format: body.format,
-      price_uah: body.price_uah,
-      sale_price_uah: body.sale_price_uah ?? null,
-      badge: body.badge,
-      featured: body.featured,
-      published: body.published,
-      features: body.features,
-      payment_url: body.payment_url,
-      sort_order: body.sort_order,
-      image_url: body.image_url ?? null,
-    })
-    .eq("id", id);
+  if (!isSupabaseAdminConfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "SUPABASE_SERVICE_ROLE_KEY не налаштований на сервері. Додайте ключ у Vercel → Settings → Environment Variables.",
+      },
+      { status: 503 },
+    );
+  }
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  const supabase = await createAdminClient();
+  const payload = buildCourseUpdatePayload(body);
+  const { error } = await supabase.from("courses").update(payload).eq("id", id);
+
+  if (error) {
+    return NextResponse.json({ error: humanizeAdminDbError(error.message) }, { status: 400 });
+  }
   return NextResponse.json({ ok: true });
 }
 

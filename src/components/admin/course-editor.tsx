@@ -44,19 +44,28 @@ export function CourseEditor({ course, lessons: initialLessons, enrollmentCount 
     (t) => !t.onlineOnly || courseState.format === "online",
   );
 
-  async function saveCourse() {
+  async function saveCourse(partial?: Partial<Course>) {
     setSaving(true);
     setMessage("");
+    const payload = { ...courseState, ...partial, features: courseState.features };
     const res = await fetch(`/api/admin/courses/${course.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...courseState,
-        features: courseState.features,
-      }),
+      body: JSON.stringify(payload),
     });
+    const data = (await res.json()) as { error?: string };
     setSaving(false);
-    setMessage(res.ok ? "✓ Збережено" : "Помилка збереження");
+
+    if (!res.ok) {
+      setMessage(data.error ?? "Помилка збереження");
+      return false;
+    }
+
+    if (partial) {
+      setCourseState((prev) => ({ ...prev, ...partial }));
+    }
+    setMessage("✓ Збережено");
+    return true;
   }
 
   async function restoreCourse() {
@@ -277,7 +286,8 @@ export function CourseEditor({ course, lessons: initialLessons, enrollmentCount 
           <CourseCoverUpload
             courseId={course.id}
             value={courseState.image_url}
-            onChange={(url) => setCourseState({ ...courseState, image_url: url })}
+            onChange={(url) => setCourseState((prev) => ({ ...prev, image_url: url }))}
+            onSaved={(url) => void saveCourse({ image_url: url })}
           />
         </section>
       )}
@@ -525,8 +535,12 @@ export function CourseEditor({ course, lessons: initialLessons, enrollmentCount 
 
       <div className="admin-editor-savebar">
         <div className="admin-editor-savebar-inner">
-          {message && <span className="text-sm text-gold">{message}</span>}
-          <button type="button" className="btn btn-primary" onClick={saveCourse} disabled={saving}>
+          {message && (
+            <span className={`text-sm ${message.startsWith("✓") ? "text-gold" : "text-red-300"}`}>
+              {message}
+            </span>
+          )}
+          <button type="button" className="btn btn-primary" onClick={() => void saveCourse()} disabled={saving}>
             {saving ? "Збереження..." : "Зберегти курс"}
           </button>
         </div>
