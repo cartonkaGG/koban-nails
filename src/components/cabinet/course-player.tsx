@@ -19,10 +19,12 @@ export function CoursePlayer({
   const [activeId, setActiveId] = useState(lessons[0]?.id ?? "");
   const [saving, setSaving] = useState(false);
   const [completedLessonIds, setCompletedLessonIds] = useState(initialCompleted);
+  const [lessonsOpen, setLessonsOpen] = useState(false);
 
+  const activeIndex = lessons.findIndex((lesson) => lesson.id === activeId);
   const activeLesson = useMemo(
-    () => lessons.find((lesson) => lesson.id === activeId) ?? lessons[0],
-    [activeId, lessons],
+    () => lessons[activeIndex] ?? lessons[0],
+    [activeIndex, lessons],
   );
 
   const progress = lessons.length
@@ -55,24 +57,80 @@ export function CoursePlayer({
   }
 
   const done = completedLessonIds.includes(activeLesson.id);
+  const hasPrev = activeIndex > 0;
+  const hasNext = activeIndex < lessons.length - 1;
 
   return (
     <div className="cabinet-player">
       <div className="cabinet-player-head">
-        <div>
+        <div className="cabinet-player-head-main">
           <p className="cabinet-player-eyebrow">{course.title}</p>
           <h1 className="cabinet-player-title">{activeLesson.title}</h1>
         </div>
         <div className="cabinet-player-progress">
-          <span>{progress}%</span>
+          <span>{progress}% · {activeIndex + 1}/{lessons.length}</span>
           <div className="cabinet-progress-bar">
             <span style={{ width: `${progress}%` }} />
           </div>
         </div>
       </div>
 
+      <div className="cabinet-lesson-mobile-nav">
+        <button
+          type="button"
+          className="cabinet-lesson-nav-btn"
+          disabled={!hasPrev}
+          onClick={() => setActiveId(lessons[activeIndex - 1].id)}
+        >
+          ←
+        </button>
+        <button
+          type="button"
+          className="cabinet-lesson-nav-current"
+          onClick={() => setLessonsOpen((v) => !v)}
+        >
+          Урок {activeIndex + 1} з {lessons.length}
+        </button>
+        <button
+          type="button"
+          className="cabinet-lesson-nav-btn"
+          disabled={!hasNext}
+          onClick={() => setActiveId(lessons[activeIndex + 1].id)}
+        >
+          →
+        </button>
+      </div>
+
+      {lessonsOpen && (
+        <div className="cabinet-lessons-mobile-picker">
+          {lessons.map((lesson, index) => {
+            const lessonDone = completedLessonIds.includes(lesson.id);
+            const active = lesson.id === activeLesson.id;
+            return (
+              <button
+                key={lesson.id}
+                type="button"
+                onClick={() => {
+                  setActiveId(lesson.id);
+                  setLessonsOpen(false);
+                }}
+                className={`cabinet-lesson-btn${active ? " active" : ""}${lessonDone ? " done" : ""}`}
+              >
+                <span className="cabinet-lesson-index">
+                  {lessonDone ? <IconCheck className="h-3.5 w-3.5" /> : index + 1}
+                </span>
+                <span className="cabinet-lesson-text">
+                  <span>{lesson.title}</span>
+                  <span>{lesson.duration_min} хв</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="cabinet-player-layout">
-        <aside className="cabinet-lessons">
+        <aside className="cabinet-lessons cabinet-lessons-desktop">
           {lessons.map((lesson, index) => {
             const lessonDone = completedLessonIds.includes(lesson.id);
             const active = lesson.id === activeLesson.id;
@@ -105,14 +163,18 @@ export function CoursePlayer({
           </div>
 
           <div className="cabinet-lesson-content">
-            <p className="cabinet-lesson-summary">{activeLesson.summary}</p>
-            <div className="cabinet-lesson-body">{activeLesson.content}</div>
+            {activeLesson.summary && (
+              <p className="cabinet-lesson-summary">{activeLesson.summary}</p>
+            )}
+            {activeLesson.content && (
+              <div className="cabinet-lesson-body">{activeLesson.content}</div>
+            )}
           </div>
 
           {!done && (
             <button
               type="button"
-              className="btn btn-primary w-full sm:w-auto"
+              className="btn btn-primary cabinet-lesson-complete-btn"
               onClick={markComplete}
               disabled={saving}
             >

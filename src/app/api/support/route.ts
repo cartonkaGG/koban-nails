@@ -2,6 +2,12 @@ import { NextResponse } from "next/server";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifySupportMessage } from "@/lib/telegram/send";
+import {
+  closeThread,
+  getThreadStatus,
+  linkTelegramMessage,
+  openThread,
+} from "@/lib/support/threads";
 
 export async function GET() {
   const profile = await getProfile();
@@ -10,10 +16,12 @@ export async function GET() {
   }
 
   if (!isSupabaseConfigured()) {
-    return NextResponse.json({ messages: [] });
+    return NextResponse.json({ messages: [], unreadCount: 0, status: "open" });
   }
 
   const supabase = await createAdminClient();
+  const status = await getThreadStatus(profile.id);
+
   const [{ data, error }, { count: unreadCount }] = await Promise.all([
     supabase
       .from("support_messages")
@@ -30,12 +38,15 @@ export async function GET() {
   ]);
 
   if (error) {
-    return NextResponse.json({ messages: [], unreadCount: 0 });
+    return NextResponse.json({ messages: [], unreadCount: 0, status });
   }
 
+  const messages = (data ?? []).filter((m) => !m.body.startsWith("— Чат завершено"));
+
   return NextResponse.json({
-    messages: data ?? [],
+    messages,
     unreadCount: unreadCount ?? 0,
+    status,
   });
 }
 
@@ -61,6 +72,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, demo: true });
   }
 
+  const status = await getThreadStatus(profile.id);
+  if (status === "closed") {
+    await openThread(profile.id);
+  }
+
   const supabase = await createAdminClient();
   const { data: saved, error } = await supabase
     .from("support_messages")
@@ -76,6 +92,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
+  await openThread(profile.id);
+
   const telegram = await notifySupportMessage({
     userId: profile.id,
     userName: profile.full_name ?? profile.email,
@@ -83,12 +101,15 @@ export async function POST(request: Request) {
     body: text,
   });
 
-  if (telegram.messageId && saved?.id) {
-    await supabase
-      .from("support_messages")
-      .update({ telegram_message_id: telegram.messageId })
-      .eq("id", saved.id);
+  if (telegram.messageId) {
+    await linkTelegramMessage(telegram.messageId, profile.id);
+    if (saved?.id) {
+      await supabase
+        .from("support_messages")
+        .update({ telegram_message_id: telegram.messageId })
+        .eq("id", saved.id);
+    }
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, status: "open" });
 }

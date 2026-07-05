@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { isSupabaseConfigured } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  closeThread,
+  linkTelegramMessage,
+  resolveUserFromTelegramReply,
+} from "@/lib/support/threads";
 import { isTelegramConfigured } from "@/lib/telegram/config";
+import { sendTelegramMessage } from "@/lib/telegram/send";
 
 type TelegramUpdate = {
   message?: {
@@ -13,34 +19,6 @@ type TelegramUpdate = {
     };
   };
 };
-
-function extractUserIdFromText(text?: string) {
-  if (!text) return null;
-
-  const tagged = text.match(/#user:([0-9a-f-]{36})/i);
-  if (tagged?.[1]) return tagged[1];
-
-  const uuid = text.match(/[0-9a-f]{8}-[0-9a-f-]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-  return uuid?.[0] ?? null;
-}
-
-async function resolveUserId(
-  supabase: Awaited<ReturnType<typeof createAdminClient>>,
-  replyToMessageId?: number,
-  replyText?: string,
-) {
-  if (replyToMessageId) {
-    const { data } = await supabase
-      .from("support_messages")
-      .select("user_id")
-      .eq("telegram_message_id", replyToMessageId)
-      .maybeSingle();
-
-    if (data?.user_id) return data.user_id;
-  }
-
-  return extractUserIdFromText(replyText);
-}
 
 export async function POST(request: Request) {
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
@@ -58,8 +36,9 @@ export async function POST(request: Request) {
   const update = (await request.json()) as TelegramUpdate;
   const replyText = update.message?.text?.trim();
   const replyTo = update.message?.reply_to_message;
+  const messageId = update.message?.message_id;
 
-  if (!replyText || replyText.startsWith("/")) {
+  if (!replyText || !messageId) {
     return NextResponse.json({ ok: true });
   }
 
@@ -67,24 +46,47 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const supabase = await createAdminClient();
-  const userId = await resolveUserId(supabase, replyTo?.message_id, replyTo?.text);
-
+  const userId = await resolveUserFromTelegramReply(replyTo?.message_id, replyTo?.text);
   if (!userId) {
     return NextResponse.json({ ok: true });
   }
 
+  const normalized = replyText.toLowerCase();
+
+  if (normalized === "/close" || normalized === "close" || normalized === "закрити") {
+    await closeThread(userId, "admin");
+
+    const supabase = await createAdminClient();
+    await supabase.from("support_messages").insert({
+      user_id: userId,
+      body: "— Чат завершено підтримкою —",
+      direction: "admin",
+      read_at: null,
+    });
+
+    await sendTelegramMessage("✅ Чат з учнем завершено.");
+    return NextResponse.json({ ok: true });
+  }
+
+  if (replyText.startsWith("/")) {
+    return NextResponse.json({ ok: true });
+  }
+
+  const supabase = await createAdminClient();
   const { error } = await supabase.from("support_messages").insert({
     user_id: userId,
     body: replyText,
     direction: "admin",
-    telegram_message_id: update.message?.message_id ?? null,
+    telegram_message_id: messageId,
     read_at: null,
   });
 
   if (error) {
     console.error("telegram webhook insert:", error.message);
+    return NextResponse.json({ ok: true });
   }
+
+  await linkTelegramMessage(messageId, userId);
 
   return NextResponse.json({ ok: true });
 }

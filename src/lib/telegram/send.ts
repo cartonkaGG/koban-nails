@@ -70,7 +70,8 @@ export async function notifySupportMessage(params: {
     "",
     escapeHtml(params.body),
     "",
-    "↩️ Reply на це повідомлення — можна відповідати кілька разів",
+    "↩️ Reply на це повідомлення",
+    "/close — завершити чат",
   ].join("\n");
 
   return sendTelegramMessage(text);

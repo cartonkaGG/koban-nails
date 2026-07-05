@@ -580,27 +580,119 @@ body.auth-modal-open {
     justify-content: center;
   }
 
-  .cabinet-lesson-media {
-    aspect-ratio: 9 / 16;
-    max-height: 70vh;
+  .cabinet-player-head {
+    margin-bottom: 12px;
+    gap: 10px;
   }
 
-  .cabinet-player-layout {
-    grid-template-columns: 1fr;
+  .cabinet-player-head-main {
+    width: 100%;
   }
 
-  .cabinet-lessons {
+  .cabinet-player-title {
+    font-size: 1.25rem;
+    line-height: 1.25;
+  }
+
+  .cabinet-player-progress {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .cabinet-player-progress > span {
+    text-align: left;
+  }
+
+  .cabinet-lessons-desktop {
+    display: none;
+  }
+
+  .cabinet-lesson-mobile-nav {
     display: flex;
-    flex-direction: row;
+    align-items: center;
     gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch;
+    margin-bottom: 12px;
+  }
+
+  .cabinet-lesson-nav-btn {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border: 1px solid rgba(215, 180, 106, 0.24);
+    border-radius: 10px;
+    background: rgba(13, 16, 13, 0.8);
+    color: var(--color-cream);
+    font-size: 1.125rem;
+    cursor: pointer;
+  }
+
+  .cabinet-lesson-nav-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .cabinet-lesson-nav-current {
+    flex: 1;
+    min-height: 44px;
+    border: 1px solid rgba(215, 180, 106, 0.24);
+    border-radius: 10px;
+    background: rgba(215, 180, 106, 0.08);
+    color: var(--color-gold);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .cabinet-lessons-mobile-picker {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+    max-height: 220px;
+    overflow-y: auto;
+  }
+
+  .cabinet-lesson-view {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .cabinet-lesson-media {
+    aspect-ratio: 16 / 9;
+    max-height: min(52dvh, 360px);
+    border-radius: 10px;
+  }
+
+  .cabinet-lesson-body {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+  }
+
+  .cabinet-lesson-complete-btn {
+    width: 100%;
+    min-height: 48px;
   }
 
   .cabinet-lesson-btn {
-    min-width: 220px;
-    flex-shrink: 0;
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+.cabinet-lesson-mobile-nav,
+.cabinet-lessons-mobile-picker {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .cabinet-lesson-mobile-nav,
+  .cabinet-lessons-mobile-picker {
+    display: flex;
+  }
+
+  .cabinet-lessons-mobile-picker {
+    display: grid;
   }
 }
 
@@ -656,8 +748,8 @@ body.auth-modal-open {
   right: 16px;
   bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   z-index: 46;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
+  display: flex;
+  flex-direction: column;
   width: min(360px, calc(100vw - 32px));
   height: min(480px, calc(100dvh - 120px));
   border: 1px solid rgba(215, 180, 106, 0.24);
@@ -685,6 +777,8 @@ body.auth-modal-open {
 }
 
 .support-chat-messages {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 12px;
   display: flex;
@@ -768,6 +862,55 @@ body.auth-modal-open {
 .support-chat-input {
   display: flex;
   gap: 8px;
+}
+
+.support-chat-footer {
+  flex-shrink: 0;
+  display: grid;
+  gap: 8px;
   padding: 10px;
   border-top: 1px solid rgba(215, 180, 106, 0.16);
+}
+
+.support-chat-close-thread {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  text-align: center;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.support-chat-closed-banner {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(215, 180, 106, 0.16);
+  background: rgba(229, 57, 53, 0.12);
+  color: #ffb4b0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .support-chat-panel {
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: min(72dvh, 560px);
+    border-radius: 16px 16px 0 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  .support-chat-fab {
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .support-chat-input .field {
+    font-size: 16px;
+  }
 }

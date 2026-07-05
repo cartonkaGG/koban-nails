@@ -11,7 +11,7 @@ type Message = {
 };
 
 const POLL_OPEN_MS = 3000;
-const POLL_CLOSED_MS = 10000;
+const POLL_CLOSED_MS = 15000;
 
 function formatTime(iso: string) {
   try {
@@ -29,8 +29,10 @@ export function SupportChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [threadStatus, setThreadStatus] = useState<"open" | "closed">("open");
   const listRef = useRef<HTMLDivElement>(null);
   const { openAuth } = useAuthModal();
 
@@ -61,6 +63,7 @@ export function SupportChat() {
     const data = await res.json();
     setMessages(data.messages ?? []);
     setUnreadCount(data.unreadCount ?? 0);
+    setThreadStatus(data.status === "closed" ? "closed" : "open");
   }, []);
 
   const markRead = useCallback(async () => {
@@ -87,7 +90,7 @@ export function SupportChat() {
     if (open && listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
     }
-  }, [messages, open]);
+  }, [messages, open, threadStatus]);
 
   async function send() {
     const body = text.trim();
@@ -108,8 +111,18 @@ export function SupportChat() {
 
     if (res.ok) {
       setText("");
+      setThreadStatus("open");
       await loadMessages();
     }
+  }
+
+  async function closeChat() {
+    if (closing || loggedIn === false) return;
+    setClosing(true);
+    await fetch("/api/support/close", { method: "POST" });
+    setClosing(false);
+    setThreadStatus("closed");
+    await loadMessages();
   }
 
   function toggleOpen() {
@@ -122,6 +135,8 @@ export function SupportChat() {
       return next;
     });
   }
+
+  const isClosed = threadStatus === "closed";
 
   return (
     <>
@@ -155,13 +170,19 @@ export function SupportChat() {
             </button>
           </div>
 
+          {isClosed && (
+            <div className="support-chat-closed-banner">
+              Чат завершено. Напишіть нове повідомлення, щоб почати знову.
+            </div>
+          )}
+
           <div className="support-chat-messages" ref={listRef}>
             {loggedIn === false && (
               <p className="support-chat-hint">
                 Увійдіть, щоб написати в підтримку. Відповідь прийде сюди.
               </p>
             )}
-            {messages.length === 0 && loggedIn !== false && (
+            {messages.length === 0 && loggedIn !== false && !isClosed && (
               <p className="support-chat-hint">Напишіть питання — відповімо якнайшвидше.</p>
             )}
             {messages.map((msg) => {
@@ -183,22 +204,35 @@ export function SupportChat() {
             })}
           </div>
 
-          <div className="support-chat-input">
-            <input
-              className="field"
-              placeholder={loggedIn === false ? "Спочатку увійдіть..." : "Ваше повідомлення..."}
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  void send();
+          <div className="support-chat-footer">
+            {!isClosed && loggedIn !== false && (
+              <button type="button" className="support-chat-close-thread" onClick={closeChat} disabled={closing}>
+                {closing ? "..." : "Завершити чат"}
+              </button>
+            )}
+            <div className="support-chat-input">
+              <input
+                className="field"
+                placeholder={
+                  loggedIn === false
+                    ? "Спочатку увійдіть..."
+                    : isClosed
+                      ? "Нове звернення..."
+                      : "Ваше повідомлення..."
                 }
-              }}
-            />
-            <button type="button" className="btn btn-primary min-h-10 px-4" onClick={send} disabled={sending}>
-              {sending ? "..." : "→"}
-            </button>
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void send();
+                  }
+                }}
+              />
+              <button type="button" className="btn btn-primary min-h-10 px-4" onClick={send} disabled={sending}>
+                {sending ? "..." : "→"}
+              </button>
+            </div>
           </div>
         </div>
       )}
