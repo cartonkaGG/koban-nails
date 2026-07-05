@@ -2,68 +2,100 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CabinetShell } from "@/components/cabinet/cabinet-shell";
-import { getProfile } from "@/lib/auth";
-import { getUserEnrollments } from "@/lib/data";
-import { formatDate, formatPrice } from "@/lib/types";
+import { getProfile, isSupabaseConfigured } from "@/lib/auth";
+import { getLessonsForCourse, getUserEnrollments } from "@/lib/data";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+async function getCourseProgress(userId: string, lessonIds: string[]) {
+  if (lessonIds.length === 0) return 0;
+  if (!isSupabaseConfigured()) return 20;
+
+  const supabase = await createClient();
+  const { count } = await supabase
+    .from("lesson_progress")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("completed", true)
+    .in("lesson_id", lessonIds);
+
+  return Math.round(((count ?? 0) / lessonIds.length) * 100);
+}
 
 export default async function CabinetPage() {
   const profile = await getProfile();
   if (!profile) redirect("/?auth=login&next=/cabinet");
 
   const enrollments = await getUserEnrollments(profile.id);
+  const activeEnrollments = enrollments.filter(
+    (item) => item.status === "active" && item.course?.format === "online",
+  );
+
+  const cards = await Promise.all(
+    activeEnrollments.map(async (enrollment) => {
+      const course = enrollment.course!;
+      const lessons = await getLessonsForCourse(course.id);
+      const progress = await getCourseProgress(
+        profile.id,
+        lessons.map((lesson) => lesson.id),
+      );
+      return { enrollment, course, lessons, progress };
+    }),
+  );
 
   return (
     <CabinetShell profile={profile}>
-      <div className="mb-8">
-        <p className="eyebrow">навчання</p>
-        <h2 className="font-[family-name:var(--font-playfair)] text-3xl">Мої курси</h2>
-        <p className="mt-2 text-sm text-cream-body">
-          Тут з&apos;являються програми після покупки. Онлайн-курси можна проходити одразу.
+      <div className="cabinet-intro">
+        <h1 className="cabinet-title">Мої курси</h1>
+        <p className="cabinet-subtitle">
+          {cards.length > 0
+            ? "Оберіть курс, щоб переглянути уроки."
+            : "Після покупки курс з&apos;явиться тут."}
         </p>
       </div>
 
-      {enrollments.length === 0 ? (
-        <div className="card text-center">
-          <p className="text-cream-body">У вас ще немає активних курсів.</p>
-          <Link href="/#courses" className="btn btn-primary mt-4 inline-flex">Обрати курс</Link>
+      {cards.length === 0 ? (
+        <div className="cabinet-empty">
+          <p>У вас ще немає курсів.</p>
+          <Link href="/#courses" className="btn btn-primary mt-5 inline-flex">
+            Обрати курс
+          </Link>
         </div>
       ) : (
-        <div className="grid gap-5 md:grid-cols-2">
-          {enrollments.map((enrollment) => {
-            const course = enrollment.course;
-            if (!course) return null;
-            const canLearn = enrollment.status === "active" && course.format === "online";
-            return (
-              <article key={enrollment.id} className="card overflow-hidden p-0">
-                <div className="relative aspect-[16/9]">
-                  {course.image_url && (
-                    <Image src={course.image_url} alt={course.title} fill className="object-cover" />
+        <ul className="cabinet-course-list">
+          {cards.map(({ course, lessons, progress }) => (
+            <li key={course.id}>
+              <article className="cabinet-course-card">
+                <div className="cabinet-course-thumb">
+                  {course.image_url ? (
+                    <Image src={course.image_url} alt="" fill className="object-cover" sizes="120px" />
+                  ) : (
+                    <div className="cabinet-course-thumb-fallback" />
                   )}
                 </div>
-                <div className="p-5">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="badge">{course.badge ?? course.format}</span>
-                    <span className="text-xs uppercase tracking-wide text-muted">{enrollment.status}</span>
+
+                <div className="cabinet-course-body">
+                  <div className="cabinet-course-top">
+                    <h2 className="cabinet-course-name">{course.title}</h2>
+                    <span className="cabinet-course-meta">{lessons.length} уроків</span>
                   </div>
-                  <h3 className="mt-3 font-[family-name:var(--font-playfair)] text-2xl">{course.title}</h3>
-                  <p className="mt-2 text-sm text-cream-body">{course.description}</p>
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                    <span className="text-sm text-muted">
-                      {enrollment.purchased_at ? `Куплено ${formatDate(enrollment.purchased_at)}` : "Очікує підтвердження"}
-                    </span>
-                    {canLearn ? (
-                      <Link href={`/cabinet/courses/${course.slug}`} className="btn btn-primary">
-                        Продовжити навчання
-                      </Link>
-                    ) : (
-                      <span className="text-sm text-gold">{formatPrice(course.price_uah)}</span>
-                    )}
+
+                  <div className="cabinet-progress">
+                    <div className="cabinet-progress-bar">
+                      <span style={{ width: `${progress}%` }} />
+                    </div>
+                    <span className="cabinet-progress-label">{progress}%</span>
                   </div>
+
+                  <Link href={`/cabinet/courses/${course.slug}`} className="btn btn-primary cabinet-course-cta">
+                    Переглянути курс
+                  </Link>
                 </div>
               </article>
-            );
-          })}
-        </div>
+            </li>
+          ))}
+        </ul>
       )}
     </CabinetShell>
   );

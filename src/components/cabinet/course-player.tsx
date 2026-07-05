@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Course, Lesson } from "@/lib/types";
-import { IconCheck, IconPlay } from "@/components/icons";
+import { IconCheck } from "@/components/icons";
 
 type Props = {
   course: Course;
@@ -20,7 +20,7 @@ export function CoursePlayer({
   const [completedLessonIds, setCompletedLessonIds] = useState(initialCompleted);
 
   const activeLesson = useMemo(
-    () => lessons.find((l) => l.id === activeId) ?? lessons[0],
+    () => lessons.find((lesson) => lesson.id === activeId) ?? lessons[0],
     [activeId, lessons],
   );
 
@@ -47,77 +47,56 @@ export function CoursePlayer({
 
   if (!activeLesson) {
     return (
-      <div className="card text-sm text-muted">
-        Уроки для цього курсу ще не додані. Зверніться до адміністратора.
+      <div className="cabinet-empty">
+        <p>Уроки для цього курсу ще не додані.</p>
       </div>
     );
   }
 
+  const done = completedLessonIds.includes(activeLesson.id);
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
-      <aside className="card h-fit lg:sticky lg:top-24">
-        <div className="mb-4">
-          <p className="eyebrow">{course.format === "online" ? "онлайн курс" : "програма"}</p>
-          <h2 className="font-[family-name:var(--font-playfair)] text-2xl">{course.title}</h2>
-          <div className="mt-4">
-            <div className="mb-2 flex items-center justify-between text-xs text-muted">
-              <span>Прогрес</span>
-              <span>{progress}%</span>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-black/50">
-              <div className="h-full rounded-full bg-gold transition-all duration-300" style={{ width: `${progress}%` }} />
-            </div>
+    <div className="cabinet-player">
+      <div className="cabinet-player-head">
+        <div>
+          <p className="cabinet-player-eyebrow">{course.title}</p>
+          <h1 className="cabinet-player-title">{activeLesson.title}</h1>
+        </div>
+        <div className="cabinet-player-progress">
+          <span>{progress}%</span>
+          <div className="cabinet-progress-bar">
+            <span style={{ width: `${progress}%` }} />
           </div>
         </div>
+      </div>
 
-        <ol className="space-y-2">
+      <div className="cabinet-player-layout">
+        <aside className="cabinet-lessons">
           {lessons.map((lesson, index) => {
-            const done = completedLessonIds.includes(lesson.id);
+            const lessonDone = completedLessonIds.includes(lesson.id);
             const active = lesson.id === activeLesson.id;
             return (
-              <li key={lesson.id}>
-                <button
-                  type="button"
-                  onClick={() => setActiveId(lesson.id)}
-                  className={`flex w-full items-start gap-3 rounded-lg border px-3 py-3 text-left transition-colors ${
-                    active
-                      ? "border-gold/50 bg-gold/10"
-                      : "border-transparent hover:border-line hover:bg-white/5"
-                  }`}
-                >
-                  <span className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                    done ? "bg-gold text-black" : "bg-black/50 text-muted"
-                  }`}>
-                    {done ? <IconCheck className="h-3.5 w-3.5" /> : index + 1}
-                  </span>
-                  <span>
-                    <span className="block text-sm font-medium text-cream">{lesson.title}</span>
-                    <span className="mt-0.5 block text-xs text-muted">{lesson.duration_min} хв</span>
-                  </span>
-                </button>
-              </li>
+              <button
+                key={lesson.id}
+                type="button"
+                onClick={() => setActiveId(lesson.id)}
+                className={`cabinet-lesson-btn${active ? " active" : ""}${lessonDone ? " done" : ""}`}
+              >
+                <span className="cabinet-lesson-index">
+                  {lessonDone ? <IconCheck className="h-3.5 w-3.5" /> : index + 1}
+                </span>
+                <span className="cabinet-lesson-text">
+                  <span>{lesson.title}</span>
+                  <span>{lesson.duration_min} хв</span>
+                </span>
+              </button>
             );
           })}
-        </ol>
-      </aside>
+        </aside>
 
-      <section className="card">
-        <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="eyebrow">урок</p>
-            <h3 className="font-[family-name:var(--font-playfair)] text-3xl">{activeLesson.title}</h3>
-            <p className="mt-2 text-sm text-cream-body">{activeLesson.summary}</p>
-          </div>
-          {!completedLessonIds.includes(activeLesson.id) && (
-            <button type="button" className="btn btn-primary" onClick={markComplete} disabled={saving}>
-              {saving ? "Зберігаємо..." : "Позначити пройденим"}
-            </button>
-          )}
-        </div>
-
-        <div className="mb-6 overflow-hidden rounded-xl border border-line bg-black/40">
-          {activeLesson.video_url ? (
-            <div className="aspect-video">
+        <section className="cabinet-lesson-view">
+          <div className="cabinet-lesson-media">
+            {activeLesson.video_url ? (
               <iframe
                 src={activeLesson.video_url}
                 title={activeLesson.title}
@@ -125,23 +104,30 @@ export function CoursePlayer({
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
-            </div>
-          ) : (
-            <div className="flex aspect-video flex-col items-center justify-center gap-3 text-center text-muted">
-              <span className="flex h-14 w-14 items-center justify-center rounded-full border border-line bg-panel">
-                <IconPlay />
-              </span>
-              <p className="text-sm">Відео буде додано адміністратором</p>
-            </div>
-          )}
-        </div>
-
-        <article className="prose prose-invert max-w-none">
-          <div className="whitespace-pre-wrap text-sm leading-7 text-cream-body">
-            {activeLesson.content}
+            ) : (
+              <div className="cabinet-lesson-media-empty">
+                <p>Відео буде додано незабаром</p>
+              </div>
+            )}
           </div>
-        </article>
-      </section>
+
+          <div className="cabinet-lesson-content">
+            <p className="cabinet-lesson-summary">{activeLesson.summary}</p>
+            <div className="cabinet-lesson-body">{activeLesson.content}</div>
+          </div>
+
+          {!done && (
+            <button
+              type="button"
+              className="btn btn-primary w-full sm:w-auto"
+              onClick={markComplete}
+              disabled={saving}
+            >
+              {saving ? "Зберігаємо..." : "Позначити пройденим"}
+            </button>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { FooterAuthLink } from "@/components/auth/site-auth-button";
 import { getProfile } from "@/lib/auth";
 import { DEMO_COURSES } from "@/lib/demo-data";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const profile = await getProfile();
 
@@ -14,7 +16,7 @@ export default async function HomePage() {
       <LandingTopbar profile={profile} />
       <main id="top">
         <LandingHero />
-        <CourseGrid courses={DEMO_COURSES} isLoggedIn={Boolean(profile)} />
+        <CourseGrid courses={DEMO_COURSES} />
 
         <section id="format" className="border-y border-line/60 py-16">
           <div className="shell grid gap-8 lg:grid-cols-2">

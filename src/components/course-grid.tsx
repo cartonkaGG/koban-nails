@@ -8,10 +8,9 @@ import { CourseBuyButton } from "@/components/course-buy-button";
 
 type Props = {
   courses: Course[];
-  isLoggedIn?: boolean;
 };
 
-export function CourseGrid({ courses, isLoggedIn = false }: Props) {
+export function CourseGrid({ courses }: Props) {
   const visible = courses.filter((course) => course.format === "online");
 
   return (
@@ -65,7 +64,7 @@ export function CourseGrid({ courses, isLoggedIn = false }: Props) {
               </ul>
               <div className="mt-5 flex items-center justify-between gap-3">
                 <span className="text-xl font-bold text-gold">{formatPrice(course.price_uah)}</span>
-                <CourseBuyButton slug={course.slug} isLoggedIn={isLoggedIn} />
+                <CourseBuyButton slug={course.slug} />
               </div>
             </article>
           ))}

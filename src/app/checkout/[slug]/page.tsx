@@ -5,6 +5,8 @@ import { SiteHeader } from "@/components/site-header";
 import { getProfile } from "@/lib/auth";
 import { getCourseBySlug } from "@/lib/data";
 
+export const dynamic = "force-dynamic";
+
 export default async function CheckoutPage({
   params,
 }: {

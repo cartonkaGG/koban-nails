@@ -3,12 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Profile } from "@/lib/types";
-import { IconBook, IconUser } from "@/components/icons";
-
-const links = [
-  { href: "/cabinet", label: "Мої курси", icon: IconBook },
-  { href: "/cabinet/profile", label: "Профіль", icon: IconUser },
-];
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 export function CabinetShell({
   profile,
@@ -18,45 +13,54 @@ export function CabinetShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const onCoursePage = pathname.startsWith("/cabinet/courses/");
+
+  async function logout() {
+    if (isSupabaseConfigured()) {
+      const { createClient } = await import("@/lib/supabase/client");
+      await createClient().auth.signOut();
+    } else {
+      await fetch("/api/demo-login", { method: "DELETE" });
+    }
+    window.location.href = "/";
+  }
 
   return (
-    <div className="min-h-dvh">
-      <header className="border-b border-line/60 bg-black/70 backdrop-blur-xl">
-        <div className="shell flex h-[68px] items-center justify-between gap-4">
-          <div>
-            <p className="eyebrow">Особистий кабінет</p>
-            <h1 className="font-[family-name:var(--font-playfair)] text-xl">
-              Вітаємо, {profile.full_name?.split(" ")[0] ?? "учениця"}
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            {profile.role === "admin" && (
-              <Link href="/admin" className="btn btn-ghost hidden sm:inline-flex">Адмін</Link>
+    <div className="cabinet-layout min-h-dvh">
+      <header className="cabinet-header">
+        <div className="shell cabinet-header-inner">
+          <div className="flex min-w-0 items-center gap-4">
+            {onCoursePage ? (
+              <Link href="/cabinet" className="cabinet-back-link">
+                ← Курси
+              </Link>
+            ) : (
+              <Link href="/" className="cabinet-brand">
+                Koban <span>nails</span>
+              </Link>
             )}
-            <Link href="/" className="btn btn-ghost">На сайт</Link>
           </div>
-        </div>
-        <div className="shell pb-4">
-          <nav className="flex gap-2 overflow-x-auto">
-            {links.map(({ href, label, icon: Icon }) => {
-              const active = pathname === href || pathname.startsWith(`${href}/`);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors ${
-                    active ? "bg-gold/10 text-gold" : "text-cream-body hover:bg-white/5 hover:text-cream"
-                  }`}
-                >
-                  <Icon />
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
+
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <span className="hidden max-w-[140px] truncate text-sm text-cream-body sm:block">
+              {profile.full_name?.split(" ")[0] ?? profile.email}
+            </span>
+            {profile.role === "admin" && (
+              <Link href="/admin" className="cabinet-header-btn hidden sm:inline-flex">
+                Адмін
+              </Link>
+            )}
+            <Link href="/cabinet/profile" className="cabinet-header-btn">
+              Профіль
+            </Link>
+            <button type="button" className="cabinet-header-btn" onClick={logout}>
+              Вийти
+            </button>
+          </div>
         </div>
       </header>
-      <main className="shell py-6 sm:py-8">{children}</main>
+
+      <main className="shell cabinet-main">{children}</main>
     </div>
   );
 }
