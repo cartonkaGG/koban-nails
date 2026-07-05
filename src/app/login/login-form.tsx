@@ -37,11 +37,16 @@ export default function LoginForm() {
   }
 
   async function createConfirmedAccount(repairUnconfirmedOnly = false) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
+
     const registerResponse = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, repairUnconfirmedOnly }),
+      signal: controller.signal,
     });
+    window.clearTimeout(timeout);
 
     const result = (await registerResponse.json().catch(() => null)) as
       | { error?: string }
@@ -76,6 +81,22 @@ export default function LoginForm() {
         const registerResult = await createConfirmedAccount();
 
         if (!registerResult.ok) {
+          if (registerResult.status === 409) {
+            const { error: existingSignInError } = await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
+
+            if (!existingSignInError) {
+              window.location.assign(next);
+              return;
+            }
+
+            setStatus("error");
+            setError("Акаунт уже існує, але пароль не підходить. Видаліть старий акаунт у Supabase або змініть пароль.");
+            return;
+          }
+
           setStatus("error");
           setError(registerResult.error ?? "Не вдалося створити акаунт.");
           return;
@@ -87,7 +108,7 @@ export default function LoginForm() {
         });
 
         if (!signInError) {
-          window.location.href = next;
+          window.location.assign(next);
           return;
         }
 
@@ -111,7 +132,7 @@ export default function LoginForm() {
           });
 
           if (!repairedSignInError) {
-            window.location.href = next;
+            window.location.assign(next);
             return;
           }
         }
@@ -121,10 +142,14 @@ export default function LoginForm() {
         return;
       }
 
-      window.location.href = next;
-    } catch {
+      window.location.assign(next);
+    } catch (err) {
       setStatus("error");
-      setError("Не вдалося увійти. Перевірте Supabase або спробуйте ще раз.");
+      setError(
+        err instanceof DOMException && err.name === "AbortError"
+          ? "Supabase довго не відповідає. Спробуйте ще раз."
+          : "Не вдалося увійти. Перевірте Supabase або спробуйте ще раз.",
+      );
     }
   }
 
