@@ -1,12 +1,12 @@
 export function getResendApiKey() {
-  return process.env.RESEND_API_KEY?.trim() ?? "";
+  return process.env.RESEND_API_KEY?.trim().replace(/^["']|["']$/g, "") ?? "";
 }
 
 export function getResendFromEmail() {
-  return (
-    process.env.RESEND_FROM_EMAIL?.trim() ??
-    "Koban nails <onboarding@resend.dev>"
-  );
+  const raw =
+    process.env.RESEND_FROM_EMAIL?.trim().replace(/^["']|["']$/g, "") ??
+    "Koban nails <hello@koban-nails.beauty>";
+  return raw;
 }
 
 export function isResendConfigured() {

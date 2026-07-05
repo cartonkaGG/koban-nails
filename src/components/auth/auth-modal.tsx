@@ -22,6 +22,8 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [successMessage, setSuccessMessage] = useState("");
+  const [pendingConfirmation, setPendingConfirmation] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState("");
   const supabaseReady = isSupabaseConfigured();
   const isCheckoutFlow = redirectTo.includes("/checkout/");
@@ -38,6 +40,8 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
     setLastName("");
     setStatus("idle");
     setSuccessMessage("");
+    setPendingConfirmation(false);
+    setIsBusy(false);
     setError("");
     setShowPassword(false);
   }, [open]);
@@ -141,6 +145,43 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
     }
   }
 
+  async function resendConfirmation() {
+    setIsBusy(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/auth/resend-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          redirectTo,
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as
+        | { error?: string; message?: string }
+        | null;
+
+      if (!response.ok) {
+        setStatus("error");
+        setError(result?.error ?? "Не вдалося надіслати лист повторно.");
+        setIsBusy(false);
+        return;
+      }
+
+      setStatus("success");
+      setSuccessMessage(result?.message ?? `Лист повторно надіслано на ${email}.`);
+      setIsBusy(false);
+    } catch {
+      setStatus("error");
+      setError("Не вдалося надіслати лист повторно.");
+      setIsBusy(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatus("loading");
@@ -180,6 +221,7 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
         }
 
         if (registerResult.needsEmailConfirmation) {
+          setPendingConfirmation(true);
           setStatus("success");
           setSuccessMessage(
             registerResult.message ??
@@ -402,9 +444,24 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
         )}
 
         {status === "success" && successMessage && (
-          <p className="mt-4 rounded-lg border border-gold/30 bg-gold/10 p-3 text-sm text-cream">
-            {successMessage}
-          </p>
+          <div className="mt-4 space-y-3 rounded-lg border border-gold/30 bg-gold/10 p-4 text-sm text-cream">
+            <p>{successMessage}</p>
+            {pendingConfirmation && (
+              <>
+                <p className="text-cream-body">
+                  Після підтвердження email увійдіть з тим самим паролем — відкриється кабінет.
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-ghost w-full"
+                  disabled={isBusy}
+                  onClick={resendConfirmation}
+                >
+                  {isBusy ? "Надсилаємо..." : "Надіслати лист ще раз"}
+                </button>
+              </>
+            )}
+          </div>
         )}
         {error && <p className="mt-4 text-sm text-red-300">{error}</p>}
       </div>
