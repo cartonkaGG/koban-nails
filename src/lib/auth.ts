@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { isAdminEmail, isSupabaseConfigured } from "@/lib/supabase/config";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { isAdminEmail, isSupabaseAdminConfigured, isSupabaseConfigured } from "@/lib/supabase/config";
 import { DEMO_ADMIN, DEMO_PROFILE } from "@/lib/demo-data";
 import type { Profile } from "@/lib/types";
 
@@ -39,7 +40,26 @@ export async function getProfile(): Promise<Profile | null> {
     .eq("id", user.id)
     .single();
 
-  if (!data) return null;
+  if (!data) {
+    if (!isSupabaseAdminConfigured() || !user.email) return null;
+
+    const adminSupabase = await createAdminClient();
+    const role = isAdminEmail(user.email) ? "admin" : "student";
+    const { data: createdProfile } = await adminSupabase
+      .from("profiles")
+      .upsert({
+        id: user.id,
+        email: user.email,
+        full_name: user.user_metadata?.full_name ?? user.email.split("@")[0],
+        role,
+      })
+      .select("*")
+      .single();
+
+    if (!createdProfile) return null;
+
+    return createdProfile as Profile;
+  }
 
   const profile = data as Profile;
   return isAdminEmail(profile.email) ? { ...profile, role: "admin" } : profile;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
+import { isAdminEmail, isSupabaseAdminConfigured } from "@/lib/supabase/config";
 
 export async function POST(request: Request) {
   if (!isSupabaseAdminConfigured()) {
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const { error } = await supabase.auth.admin.createUser({
+  const { data: createdUser, error } = await supabase.auth.admin.createUser({
     email: normalizedEmail,
     password: normalizedPassword,
     email_confirm: true,
@@ -54,6 +54,19 @@ export async function POST(request: Request) {
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  if (createdUser.user) {
+    const { error: profileError } = await supabase.from("profiles").upsert({
+      id: createdUser.user.id,
+      email: normalizedEmail,
+      full_name: normalizedEmail.split("@")[0],
+      role: isAdminEmail(normalizedEmail) ? "admin" : "student",
+    });
+
+    if (profileError) {
+      return NextResponse.json({ error: profileError.message }, { status: 400 });
+    }
   }
 
   return NextResponse.json({ ok: true });
