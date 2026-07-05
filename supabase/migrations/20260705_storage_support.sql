@@ -13,7 +13,8 @@ on conflict (id) do update set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
-create policy if not exists "course_videos_admin_all"
+drop policy if exists "course_videos_admin_all" on storage.objects;
+create policy "course_videos_admin_all"
 on storage.objects for all
 using (bucket_id = 'course-videos' and public.is_admin())
 with check (bucket_id = 'course-videos' and public.is_admin());
@@ -32,15 +33,19 @@ create index if not exists support_messages_user_idx
 
 alter table public.support_messages enable row level security;
 
+drop policy if exists "support_select_own_or_admin" on public.support_messages;
 create policy "support_select_own_or_admin" on public.support_messages
   for select using (auth.uid() = user_id or public.is_admin());
 
+drop policy if exists "support_insert_own" on public.support_messages;
 create policy "support_insert_own" on public.support_messages
   for insert with check (auth.uid() = user_id and direction = 'user');
 
+drop policy if exists "support_admin_insert" on public.support_messages;
 create policy "support_admin_insert" on public.support_messages
   for insert with check (public.is_admin());
 
 drop policy if exists "enrollments_admin_update" on public.enrollments;
+drop policy if exists "enrollments_admin_all" on public.enrollments;
 create policy "enrollments_admin_all" on public.enrollments
   for all using (public.is_admin()) with check (public.is_admin());
