@@ -52,9 +52,13 @@ export function CheckoutForm({ course }: { course: Course }) {
         Після оплати курс відкриється у вашому кабінеті з уроками та прогресом.
       </p>
       <p className="text-xs leading-relaxed text-muted">
-        Натискаючи «Підтвердити покупку», ви автоматично погоджуєтесь з{" "}
+        Натискаючи «Підтвердити покупку», ви погоджуєтесь з{" "}
         <Link href="/terms" className="text-gold hover:underline">
           умовами використання
+        </Link>{" "}
+        та{" "}
+        <Link href="/privacy" className="text-gold hover:underline">
+          політикою конфіденційності
         </Link>
         . Цифрові продукти (онлайн-курси) поверненню не підлягають.
       </p>

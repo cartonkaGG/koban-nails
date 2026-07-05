@@ -31,7 +31,9 @@ export default async function CheckoutPage({
             <CheckoutForm course={course} />
           </div>
           <p className="mt-6 text-center text-xs text-muted">
-            <Link href="/terms" className="hover:text-gold">Умови використання</Link>
+            <Link href="/terms" className="hover:text-gold">Умови</Link>
+            {" · "}
+            <Link href="/privacy" className="hover:text-gold">Конфіденційність</Link>
           </p>
         </div>
       </main>

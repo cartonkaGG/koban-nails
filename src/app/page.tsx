@@ -109,7 +109,8 @@ export default async function HomePage() {
           <div className="flex flex-wrap gap-4">
             <FooterAuthLink />
             <Link href="/cabinet" className="hover:text-gold">Кабінет</Link>
-            <Link href="/terms" className="hover:text-gold">Умови використання</Link>
+            <Link href="/terms" className="hover:text-gold">Умови</Link>
+            <Link href="/privacy" className="hover:text-gold">Конфіденційність</Link>
           </div>
         </div>
       </footer>
