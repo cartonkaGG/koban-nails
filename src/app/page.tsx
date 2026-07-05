@@ -4,10 +4,16 @@ import { LandingTopbar } from "@/components/landing/topbar";
 import { CourseGrid } from "@/components/course-grid";
 import { FooterAuthLink } from "@/components/auth/site-auth-button";
 import { getProfile } from "@/lib/auth";
-import { getCachedPublishedCourses } from "@/lib/courses-cache";
+import { getPublishedCourses } from "@/lib/data";
+import { DEMO_COURSES } from "@/lib/demo-data";
+
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [profile, courses] = await Promise.all([getProfile(), getCachedPublishedCourses()]);
+  const [profile, courses] = await Promise.all([
+    getProfile(),
+    getPublishedCourses().catch(() => DEMO_COURSES),
+  ]);
 
   return (
     <>

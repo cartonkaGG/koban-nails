@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createPublicClient } from "@/lib/supabase/public";
 import { isSupabaseConfigured } from "@/lib/auth";
 import { getDemoEnrollmentsForUser } from "@/lib/demo-enrollments";
 import {
@@ -21,14 +22,25 @@ function mapCourse(row: Record<string, unknown>): Course {
 export async function getPublishedCourses(): Promise<Course[]> {
   if (!isSupabaseConfigured()) return DEMO_COURSES;
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("courses")
-    .select("*")
-    .eq("published", true)
-    .order("sort_order");
+  try {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .eq("published", true)
+      .order("sort_order");
 
-  return (data ?? []).map(mapCourse);
+    if (error) {
+      console.error("getPublishedCourses:", error.message);
+      return DEMO_COURSES;
+    }
+
+    const courses = (data ?? []).map(mapCourse);
+    return courses.length > 0 ? courses : DEMO_COURSES;
+  } catch (error) {
+    console.error("getPublishedCourses:", error);
+    return DEMO_COURSES;
+  }
 }
 
 export async function getAllCourses(): Promise<Course[]> {

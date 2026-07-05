@@ -54,45 +54,50 @@ export async function getProfile(): Promise<Profile | null> {
     return null;
   }
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
 
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (error?.message.includes("public.profiles")) {
-    return makeProfileFromUser(user);
-  }
-
-  if (!data) {
-    const fallbackProfile = makeProfileFromUser(user);
-    if (!isSupabaseAdminConfigured() || !user.email) return fallbackProfile;
-
-    const adminSupabase = await createAdminClient();
-    const role = isAdminEmail(user.email) ? "admin" : "student";
-    const { data: createdProfile, error: createProfileError } = await adminSupabase
+    const { data, error } = await supabase
       .from("profiles")
-      .upsert({
-        id: user.id,
-        email: user.email,
-        full_name: user.user_metadata?.full_name ?? user.email.split("@")[0],
-        role,
-      })
       .select("*")
+      .eq("id", user.id)
       .single();
 
-    if (createProfileError?.message.includes("public.profiles")) return fallbackProfile;
-    if (!createdProfile) return null;
+    if (error?.message.includes("public.profiles")) {
+      return makeProfileFromUser(user);
+    }
 
-    return createdProfile as Profile;
+    if (!data) {
+      const fallbackProfile = makeProfileFromUser(user);
+      if (!isSupabaseAdminConfigured() || !user.email) return fallbackProfile;
+
+      const adminSupabase = await createAdminClient();
+      const role = isAdminEmail(user.email) ? "admin" : "student";
+      const { data: createdProfile, error: createProfileError } = await adminSupabase
+        .from("profiles")
+        .upsert({
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name ?? user.email.split("@")[0],
+          role,
+        })
+        .select("*")
+        .single();
+
+      if (createProfileError?.message.includes("public.profiles")) return fallbackProfile;
+      if (!createdProfile) return null;
+
+      return createdProfile as Profile;
+    }
+
+    const profile = data as Profile;
+    return isAdminEmail(profile.email) ? { ...profile, role: "admin" } : profile;
+  } catch (error) {
+    console.error("getProfile:", error);
+    return null;
   }
-
-  const profile = data as Profile;
-  return isAdminEmail(profile.email) ? { ...profile, role: "admin" } : profile;
 }
 
 export async function requireProfile() {
