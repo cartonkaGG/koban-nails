@@ -5,15 +5,18 @@ import { useEffect, useState } from "react";
 import type { Profile } from "@/lib/types";
 
 type Props = {
-  profile: Profile | null;
+  profile?: Profile | null;
 };
 
-export function LandingTopbar({ profile }: Props) {
+export function LandingTopbar({ profile = null }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40);
+    const onScroll = () => {
+      const nextScrolled = window.scrollY > 40;
+      setScrolled((current) => (current === nextScrolled ? current : nextScrolled));
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);

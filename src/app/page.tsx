@@ -2,21 +2,15 @@ import Link from "next/link";
 import { LandingHero } from "@/components/landing/hero";
 import { LandingTopbar } from "@/components/landing/topbar";
 import { CourseGrid } from "@/components/course-grid";
-import { getProfile } from "@/lib/auth";
-import { getPublishedCourses } from "@/lib/data";
+import { DEMO_COURSES } from "@/lib/demo-data";
 
 export default async function HomePage() {
-  const [courses, profile] = await Promise.all([
-    getPublishedCourses(),
-    getProfile(),
-  ]);
-
   return (
     <>
-      <LandingTopbar profile={profile} />
+      <LandingTopbar />
       <main id="top">
         <LandingHero />
-        <CourseGrid courses={courses} />
+        <CourseGrid courses={DEMO_COURSES} />
 
         <section id="format" className="border-y border-line/60 py-16">
           <div className="shell grid gap-8 lg:grid-cols-2">
