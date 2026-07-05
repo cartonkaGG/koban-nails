@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Course, Lesson } from "@/lib/types";
 import { CourseCoverUpload } from "@/components/admin/course-cover-upload";
@@ -24,10 +25,12 @@ const TABS: { id: Tab; label: string; onlineOnly?: boolean }[] = [
 ];
 
 export function CourseEditor({ course, lessons: initialLessons }: Props) {
+  const router = useRouter();
   const [courseState, setCourseState] = useState(course);
   const [lessons, setLessons] = useState(initialLessons);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
   const [expandedLesson, setExpandedLesson] = useState<string | null>(
     initialLessons[0]?.id ?? null,
@@ -50,6 +53,28 @@ export function CourseEditor({ course, lessons: initialLessons }: Props) {
     });
     setSaving(false);
     setMessage(res.ok ? "✓ Збережено" : "Помилка збереження");
+  }
+
+  async function deleteCourse() {
+    const confirmed = window.confirm(
+      `Видалити курс «${courseState.title}»?\n\nУсі уроки, записи про покупки та завантажені файли також буде видалено. Цю дію не можна скасувати.`,
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    setMessage("");
+    try {
+      const res = await fetch(`/api/admin/courses/${course.id}`, { method: "DELETE" });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setMessage(data.error ?? "Помилка видалення");
+        return;
+      }
+      router.push("/admin/courses");
+      router.refresh();
+    } finally {
+      setDeleting(false);
+    }
   }
 
   async function saveLesson(lesson: Lesson) {
@@ -419,6 +444,21 @@ export function CourseEditor({ course, lessons: initialLessons }: Props) {
               }
             />
           </label>
+
+          <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-4">
+            <p className="text-sm font-medium text-red-200">Небезпечна зона</p>
+            <p className="mt-1 text-xs text-muted">
+              Видалення курсу безповоротно прибере уроки, записи учнів і файли зі сховища.
+            </p>
+            <button
+              type="button"
+              className="btn btn-danger mt-4 min-h-9 px-4 text-xs"
+              onClick={deleteCourse}
+              disabled={deleting || saving}
+            >
+              {deleting ? "Видалення..." : "Видалити курс"}
+            </button>
+          </div>
         </section>
       )}
 

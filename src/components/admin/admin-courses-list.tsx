@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { Course } from "@/lib/types";
 import { formatPrice, getEffectiveCoursePrice, isCourseOnSale } from "@/lib/types";
@@ -13,11 +14,40 @@ type Props = {
 };
 
 export function AdminCoursesList({ courses }: Props) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "published" | "draft">("all");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
+
+  const visibleCourses = useMemo(
+    () => courses.filter((course) => !removedIds.includes(course.id)),
+    [courses, removedIds],
+  );
+
+  async function deleteCourse(course: Course) {
+    const confirmed = window.confirm(
+      `Видалити курс «${course.title}»?\n\nУсі уроки, записи про покупки та завантажені файли також буде видалено. Цю дію не можна скасувати.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingId(course.id);
+    try {
+      const res = await fetch(`/api/admin/courses/${course.id}`, { method: "DELETE" });
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        window.alert(data.error ?? "Не вдалося видалити курс");
+        return;
+      }
+      setRemovedIds((prev) => [...prev, course.id]);
+      router.refresh();
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const filtered = useMemo(() => {
-    return courses.filter((course) => {
+    return visibleCourses.filter((course) => {
       if (filter === "published" && !course.published) return false;
       if (filter === "draft" && course.published) return false;
       if (!query.trim()) return true;
@@ -27,7 +57,7 @@ export function AdminCoursesList({ courses }: Props) {
         course.slug.toLowerCase().includes(q)
       );
     });
-  }, [courses, query, filter]);
+  }, [visibleCourses, query, filter]);
 
   return (
     <MotionPage>
@@ -35,7 +65,7 @@ export function AdminCoursesList({ courses }: Props) {
         <div>
           <p className="eyebrow">контент</p>
           <h2 className="font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl">Курси</h2>
-          <p className="mt-1 text-sm text-muted">{courses.length} програм · керуйте контентом і обкладинками</p>
+          <p className="mt-1 text-sm text-muted">{visibleCourses.length} програм · керуйте контентом і обкладинками</p>
         </div>
         <Link href="/admin/courses/new" className="btn btn-primary shrink-0">
           + Новий курс
@@ -72,7 +102,7 @@ export function AdminCoursesList({ courses }: Props) {
       {filtered.length === 0 ? (
         <div className="card py-12 text-center">
           <p className="text-muted">Курсів не знайдено</p>
-          {courses.length === 0 && (
+          {visibleCourses.length === 0 && (
             <Link href="/admin/courses/new" className="btn btn-primary mt-4">
               Створити перший курс
             </Link>
@@ -82,7 +112,11 @@ export function AdminCoursesList({ courses }: Props) {
         <MotionStagger className="admin-courses-grid">
           {filtered.map((course) => (
             <MotionItem key={course.id}>
-              <AdminCourseCard course={course} />
+              <AdminCourseCard
+                course={course}
+                deleting={deletingId === course.id}
+                onDelete={() => deleteCourse(course)}
+              />
             </MotionItem>
           ))}
         </MotionStagger>
@@ -91,7 +125,15 @@ export function AdminCoursesList({ courses }: Props) {
   );
 }
 
-function AdminCourseCard({ course }: { course: Course }) {
+function AdminCourseCard({
+  course,
+  deleting,
+  onDelete,
+}: {
+  course: Course;
+  deleting?: boolean;
+  onDelete: () => void;
+}) {
   const image = resolveCourseImageUrl(course.image_url);
 
   return (
@@ -142,6 +184,14 @@ function AdminCourseCard({ course }: { course: Course }) {
             На сайті
           </Link>
         )}
+        <button
+          type="button"
+          className="btn btn-danger min-h-9 px-3 text-xs"
+          onClick={onDelete}
+          disabled={deleting}
+        >
+          {deleting ? "..." : "Видалити"}
+        </button>
       </div>
     </article>
   );

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, isSupabaseConfigured } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { removeCourseStorage } from "@/lib/course-storage";
 
 export async function PUT(
   request: Request,
@@ -41,4 +42,43 @@ export async function PUT(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const { id } = await params;
+
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({ ok: true, demo: true });
+  }
+
+  const supabase = await createAdminClient();
+  const { data: course, error: fetchError } = await supabase
+    .from("courses")
+    .select("id, title")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    return NextResponse.json({ error: fetchError.message }, { status: 400 });
+  }
+
+  if (!course) {
+    return NextResponse.json({ error: "Course not found" }, { status: 404 });
+  }
+
+  await removeCourseStorage(supabase, id);
+
+  const { error } = await supabase.from("courses").delete().eq("id", id);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  return NextResponse.json({ ok: true, title: course.title });
 }
