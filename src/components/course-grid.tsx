@@ -3,7 +3,7 @@
 import Image from "next/image";
 import type { Course } from "@/lib/types";
 import { formatPrice } from "@/lib/types";
-import { IconCheck } from "@/components/icons";
+import { IconCheck, IconArrowRight } from "@/components/icons";
 import { CourseBuyButton } from "@/components/course-buy-button";
 import { resolveCourseImageUrl } from "@/lib/images";
 import { MotionFadeUp, MotionStagger, MotionItem, MotionCard } from "@/components/motion";
@@ -16,7 +16,7 @@ export function CourseGrid({ courses }: Props) {
   const visible = courses.filter((course) => course.format === "online");
 
   return (
-    <section id="courses" className="py-16 sm:py-20">
+    <section id="courses" className="course-section py-16 sm:py-20">
       <div className="shell">
         <MotionFadeUp className="mb-10 max-w-3xl">
           <div className="eyebrow">програми</div>
@@ -26,52 +26,72 @@ export function CourseGrid({ courses }: Props) {
           </p>
         </MotionFadeUp>
 
-        <MotionStagger className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {visible.map((course) => {
-            const imageUrl = resolveCourseImageUrl(course.image_url);
-            return (
+        <MotionStagger className="course-grid">
+          {visible.map((course) => (
             <MotionItem key={course.id}>
-            <MotionCard
-              className={`card relative overflow-hidden ${course.featured ? "border-gold/40 ring-1 ring-gold/20" : ""}`}
-            >
-              {course.featured && (
-                <span className="absolute left-5 top-5 z-10 inline-flex w-fit rounded-full bg-gold px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-black shadow-lg shadow-black/30">
-                  Популярний
-                </span>
-              )}
-              {imageUrl && (
-                <div className="-mx-5 -mt-5 mb-4 overflow-hidden rounded-t-xl border-b border-line bg-black/30">
-                  <Image
-                    src={imageUrl}
-                    alt={course.title}
-                    width={720}
-                    height={450}
-                    className="block h-auto w-full"
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                  />
-                </div>
-              )}
-              {course.badge && <span className="badge">{course.badge}</span>}
-              <h3 className="mt-3 font-[family-name:var(--font-playfair)] text-2xl">{course.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-cream-body">{course.description}</p>
-              <ul className="mt-4 space-y-2">
-                {course.features.map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-cream-body">
-                    <IconCheck className="mt-0.5 shrink-0 text-gold" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-5 flex items-center justify-between gap-3">
-                <span className="text-xl font-bold text-gold">{formatPrice(course.price_uah)}</span>
-                <CourseBuyButton slug={course.slug} />
-              </div>
-            </MotionCard>
+              <CourseCard course={course} />
             </MotionItem>
-          );
-          })}
+          ))}
         </MotionStagger>
       </div>
     </section>
+  );
+}
+
+function CourseCard({ course }: { course: Course }) {
+  const imageUrl = resolveCourseImageUrl(course.image_url);
+
+  return (
+    <MotionCard className={`course-card ${course.featured ? "course-card-featured" : ""}`}>
+      <div className="course-card-media">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={course.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        ) : (
+          <div className="course-card-media-fallback" aria-hidden="true" />
+        )}
+        <div className="course-card-media-overlay" aria-hidden="true" />
+
+        <div className="course-card-media-badges">
+          {course.featured && (
+            <span className="course-card-badge course-card-badge-featured">Популярний</span>
+          )}
+          {course.badge && (
+            <span className="course-card-badge">{course.badge}</span>
+          )}
+        </div>
+
+        <div className="course-card-price-tag">
+          <span className="course-card-price">{formatPrice(course.price_uah)}</span>
+        </div>
+      </div>
+
+      <div className="course-card-body">
+        <h3 className="course-card-title">{course.title}</h3>
+        <p className="course-card-desc">{course.description}</p>
+
+        <ul className="course-card-features">
+          {course.features.map((item) => (
+            <li key={item} className="course-card-feature">
+              <IconCheck className="course-card-feature-icon" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="course-card-footer">
+        <CourseBuyButton slug={course.slug} />
+        <span className="course-card-footer-hint">
+          Доступ одразу після оплати
+          <IconArrowRight className="inline-block h-3.5 w-3.5 opacity-60" />
+        </span>
+      </div>
+    </MotionCard>
   );
 }
