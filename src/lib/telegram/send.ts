@@ -77,6 +77,33 @@ export async function notifySupportMessage(params: {
   return sendTelegramMessage(text);
 }
 
+export async function notifySupportChatClosed(params: {
+  userId: string;
+  userName: string;
+  email: string;
+  closedBy: "user" | "admin";
+  replyToMessageId?: number | null;
+}) {
+  const who =
+    params.closedBy === "user"
+      ? "Користувач завершив цей чат."
+      : "Чат завершено підтримкою.";
+
+  const text = [
+    "🔴 <b>Чат завершено</b>",
+    "",
+    `👤 ${escapeHtml(params.userName)}`,
+    `📧 ${escapeHtml(params.email)}`,
+    `#user:${params.userId}`,
+    "",
+    who,
+  ].join("\n");
+
+  return sendTelegramMessage(text, {
+    replyToMessageId: params.replyToMessageId ?? undefined,
+  });
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")

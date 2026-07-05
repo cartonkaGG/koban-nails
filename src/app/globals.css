@@ -892,6 +892,14 @@ body.auth-modal-open {
   text-align: center;
 }
 
+.support-chat-closed-state {
+  margin: auto 0;
+  padding: 24px 16px;
+  color: var(--color-muted);
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
 @media (max-width: 640px) {
   .support-chat-panel {
     right: 0;

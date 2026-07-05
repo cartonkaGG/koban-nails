@@ -119,10 +119,13 @@ export function SupportChat() {
   async function closeChat() {
     if (closing || loggedIn === false) return;
     setClosing(true);
-    await fetch("/api/support/close", { method: "POST" });
+    const res = await fetch("/api/support/close", { method: "POST" });
     setClosing(false);
-    setThreadStatus("closed");
-    await loadMessages();
+    if (res.ok) {
+      setMessages([]);
+      setUnreadCount(0);
+      setThreadStatus("closed");
+    }
   }
 
   function toggleOpen() {
@@ -181,6 +184,9 @@ export function SupportChat() {
               <p className="support-chat-hint">
                 Увійдіть, щоб написати в підтримку. Відповідь прийде сюди.
               </p>
+            )}
+            {isClosed && loggedIn !== false && (
+              <p className="support-chat-closed-state">Чат завершено</p>
             )}
             {messages.length === 0 && loggedIn !== false && !isClosed && (
               <p className="support-chat-hint">Напишіть питання — відповімо якнайшвидше.</p>

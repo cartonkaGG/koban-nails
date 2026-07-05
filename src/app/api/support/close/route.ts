@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { closeThread, getThreadStatus } from "@/lib/support/threads";
+import { closeThread, getLastTelegramMessageId, getThreadStatus } from "@/lib/support/threads";
+import { notifySupportChatClosed } from "@/lib/telegram/send";
 
 export async function POST() {
   const profile = await getProfile();
@@ -10,20 +10,21 @@ export async function POST() {
   }
 
   if (!isSupabaseConfigured()) {
-    return NextResponse.json({ ok: true, demo: true });
+    return NextResponse.json({ ok: true, demo: true, status: "closed" });
   }
 
   await closeThread(profile.id, "user");
 
-  const supabase = await createAdminClient();
-  await supabase.from("support_messages").insert({
-    user_id: profile.id,
-    body: "— Чат завершено учнем —",
-    direction: "admin",
-    read_at: new Date().toISOString(),
+  const replyToMessageId = await getLastTelegramMessageId(profile.id);
+  await notifySupportChatClosed({
+    userId: profile.id,
+    userName: profile.full_name ?? profile.email,
+    email: profile.email,
+    closedBy: "user",
+    replyToMessageId,
   });
 
-  return NextResponse.json({ ok: true, status: "closed" });
+  return NextResponse.json({ ok: true, status: "closed", messages: [] });
 }
 
 export async function GET() {
