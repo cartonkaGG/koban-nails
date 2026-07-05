@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { EnrollmentActions } from "@/components/admin/enrollment-actions";
+import { UsersAdmin } from "@/components/admin/users-admin";
 import { requireAdmin } from "@/lib/auth";
-import { getAllEnrollmentsAdmin, getAllProfiles } from "@/lib/data";
+import { getAllCourses, getAllEnrollmentsAdmin, getAllProfiles } from "@/lib/data";
 
 export default async function AdminUsersPage() {
   let profile;
@@ -12,9 +12,10 @@ export default async function AdminUsersPage() {
     redirect("/?auth=login&next=/admin/users");
   }
 
-  const [profiles, enrollments] = await Promise.all([
+  const [profiles, enrollments, courses] = await Promise.all([
     getAllProfiles(),
     getAllEnrollmentsAdmin(),
+    getAllCourses(),
   ]);
 
   return (
@@ -23,7 +24,7 @@ export default async function AdminUsersPage() {
         <p className="eyebrow">аудиторія</p>
         <h2 className="font-[family-name:var(--font-playfair)] text-3xl">Учні та доступи</h2>
         <p className="mt-2 text-sm text-cream-body">
-          Керуйте статусом оплати: після підтвердження онлайн-курс відкривається в кабінеті.
+          Редагуйте імена, видавайте курси та керуйте доступами.
         </p>
       </div>
 
@@ -42,7 +43,11 @@ export default async function AdminUsersPage() {
         </div>
       </div>
 
-      <EnrollmentActions rows={enrollments as never[]} />
+      <UsersAdmin
+        profiles={profiles as never[]}
+        enrollments={enrollments as never[]}
+        courses={courses}
+      />
     </AdminShell>
   );
 }

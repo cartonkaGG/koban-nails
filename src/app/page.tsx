@@ -4,19 +4,17 @@ import { LandingTopbar } from "@/components/landing/topbar";
 import { CourseGrid } from "@/components/course-grid";
 import { FooterAuthLink } from "@/components/auth/site-auth-button";
 import { getProfile } from "@/lib/auth";
-import { DEMO_COURSES } from "@/lib/demo-data";
-
-export const dynamic = "force-dynamic";
+import { getCachedPublishedCourses } from "@/lib/courses-cache";
 
 export default async function HomePage() {
-  const profile = await getProfile();
+  const [profile, courses] = await Promise.all([getProfile(), getCachedPublishedCourses()]);
 
   return (
     <>
       <LandingTopbar profile={profile} />
       <main id="top">
         <LandingHero />
-        <CourseGrid courses={DEMO_COURSES} />
+        <CourseGrid courses={courses} />
 
         <section id="format" className="border-y border-line/60 py-16">
           <div className="shell grid gap-8 lg:grid-cols-2">

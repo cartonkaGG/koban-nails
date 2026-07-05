@@ -1,6 +1,6 @@
+import dynamic from "next/dynamic";
 import { notFound, redirect } from "next/navigation";
 import { CabinetShell } from "@/components/cabinet/cabinet-shell";
-import { CoursePlayer } from "@/components/cabinet/course-player";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
 import {
   getCourseBySlug,
@@ -8,6 +8,11 @@ import {
   getLessonsForCourse,
 } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
+
+const CoursePlayer = dynamic(
+  () => import("@/components/cabinet/course-player").then((m) => m.CoursePlayer),
+  { loading: () => <div className="cabinet-empty"><p>Завантаження курсу...</p></div> },
+);
 
 export default async function CourseLearnPage({
   params,
@@ -17,15 +22,18 @@ export default async function CourseLearnPage({
   const { slug } = await params;
   const profile = await getProfile();
   if (!profile) redirect(`/?auth=login&next=/cabinet/courses/${slug}`);
+
   const course = await getCourseBySlug(slug);
   if (!course) notFound();
 
-  const enrollment = await getEnrollment(profile.id, course.id);
+  const [enrollment, lessons] = await Promise.all([
+    getEnrollment(profile.id, course.id),
+    getLessonsForCourse(course.id),
+  ]);
+
   if (!enrollment || enrollment.status !== "active") {
     redirect("/cabinet");
   }
-
-  const lessons = await getLessonsForCourse(course.id);
 
   let completedLessonIds: string[] = [];
   if (isSupabaseConfigured()) {

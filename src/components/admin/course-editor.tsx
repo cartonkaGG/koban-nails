@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Course, Lesson } from "@/lib/types";
+import { VideoUploadField } from "@/components/admin/video-upload";
 
 type Props = {
   course: Course;
@@ -133,7 +134,15 @@ export function CourseEditor({ course, lessons: initialLessons }: Props) {
                 <input className="field" value={lesson.title} onChange={(e) => setLessons((prev) => prev.map((l) => l.id === lesson.id ? { ...l, title: e.target.value } : l))} />
                 <input className="field" placeholder="Тривалість (хв)" type="number" value={lesson.duration_min} onChange={(e) => setLessons((prev) => prev.map((l) => l.id === lesson.id ? { ...l, duration_min: Number(e.target.value) } : l))} />
                 <input className="field md:col-span-2" placeholder="Короткий опис" value={lesson.summary} onChange={(e) => setLessons((prev) => prev.map((l) => l.id === lesson.id ? { ...l, summary: e.target.value } : l))} />
-                <input className="field md:col-span-2" placeholder="URL відео (YouTube embed)" value={lesson.video_url ?? ""} onChange={(e) => setLessons((prev) => prev.map((l) => l.id === lesson.id ? { ...l, video_url: e.target.value } : l))} />
+                <VideoUploadField
+                  lessonId={lesson.id}
+                  value={lesson.video_url ?? ""}
+                  onUploaded={(videoUrl) =>
+                    setLessons((prev) =>
+                      prev.map((l) => (l.id === lesson.id ? { ...l, video_url: videoUrl } : l)),
+                    )
+                  }
+                />
                 <textarea className="field min-h-28 md:col-span-2" placeholder="Текст уроку" value={lesson.content} onChange={(e) => setLessons((prev) => prev.map((l) => l.id === lesson.id ? { ...l, content: e.target.value } : l))} />
               </div>
               <button type="button" className="btn btn-ghost" onClick={() => saveLesson(lessons.find((l) => l.id === lesson.id)!)}>

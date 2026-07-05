@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Course, Lesson } from "@/lib/types";
 import { IconCheck } from "@/components/icons";
+import { LessonVideo } from "@/components/cabinet/lesson-video";
 
 type Props = {
   course: Course;
@@ -96,19 +97,11 @@ export function CoursePlayer({
 
         <section className="cabinet-lesson-view">
           <div className="cabinet-lesson-media">
-            {activeLesson.video_url ? (
-              <iframe
-                src={activeLesson.video_url}
-                title={activeLesson.title}
-                className="h-full w-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            ) : (
-              <div className="cabinet-lesson-media-empty">
-                <p>Відео буде додано незабаром</p>
-              </div>
-            )}
+            <LessonVideo
+              lessonId={activeLesson.id}
+              videoUrl={activeLesson.video_url}
+              title={activeLesson.title}
+            />
           </div>
 
           <div className="cabinet-lesson-content">

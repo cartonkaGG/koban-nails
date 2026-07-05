@@ -579,4 +579,127 @@ body.auth-modal-open {
     width: 100%;
     justify-content: center;
   }
+
+  .cabinet-lesson-media {
+    aspect-ratio: 9 / 16;
+    max-height: 70vh;
+  }
+
+  .cabinet-player-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cabinet-lessons {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cabinet-lesson-btn {
+    min-width: 220px;
+    flex-shrink: 0;
+  }
+}
+
+.lesson-video-native {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.support-chat-fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 45;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid rgba(215, 180, 106, 0.45);
+  border-radius: 999px;
+  color: #070806;
+  background: var(--color-gold);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.support-chat-panel {
+  position: fixed;
+  right: 16px;
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  z-index: 46;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  width: min(360px, calc(100vw - 32px));
+  height: min(480px, calc(100dvh - 120px));
+  border: 1px solid rgba(215, 180, 106, 0.24);
+  border-radius: 16px;
+  background: rgba(13, 16, 13, 0.98);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.support-chat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(215, 180, 106, 0.16);
+}
+
+.support-chat-close {
+  border: none;
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.support-chat-messages {
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.support-chat-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-muted);
+  text-align: center;
+}
+
+.support-chat-bubble {
+  max-width: 85%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.support-chat-bubble.mine {
+  align-self: flex-end;
+  background: rgba(215, 180, 106, 0.18);
+  color: var(--color-cream);
+}
+
+.support-chat-bubble.theirs {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-cream-body);
+}
+
+.support-chat-input {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid rgba(215, 180, 106, 0.16);
 }

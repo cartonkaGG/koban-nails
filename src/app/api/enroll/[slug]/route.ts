@@ -6,6 +6,7 @@ import { renderPurchaseThankYouEmail } from "@/lib/emails/templates";
 import { activateEnrollment } from "@/lib/enrollments";
 import { getCourseBySlug, getEnrollment } from "@/lib/data";
 import { getSiteOrigin } from "@/lib/site-url";
+import { notifyPurchase } from "@/lib/telegram/send";
 
 export async function POST(
   request: Request,
@@ -28,6 +29,12 @@ export async function POST(
 
   if (!isSupabaseConfigured()) {
     await addDemoEnrollment(slug);
+    await notifyPurchase({
+      userName: profile.full_name ?? profile.email,
+      email: profile.email,
+      courseTitle: course.title,
+      priceUah: course.price_uah,
+    });
     return NextResponse.json({
       ok: true,
       demo: true,
@@ -56,6 +63,13 @@ export async function POST(
       to: profile.email,
       subject: template.subject,
       html: template.html,
+    });
+
+    await notifyPurchase({
+      userName: profile.full_name ?? profile.email,
+      email: profile.email,
+      courseTitle: course.title,
+      priceUah: course.price_uah,
     });
   }
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { AuthModalProvider } from "@/components/auth/auth-modal-context";
+import { SupportChatLazy } from "@/components/support/support-chat-lazy";
 import "./globals.css";
 
 const inter = Inter({
@@ -27,7 +28,10 @@ export default function RootLayout({
   return (
     <html lang="uk" className={`${inter.variable} ${playfair.variable}`}>
       <body>
-        <AuthModalProvider>{children}</AuthModalProvider>
+        <AuthModalProvider>
+          {children}
+          <SupportChatLazy />
+        </AuthModalProvider>
       </body>
     </html>
   );
