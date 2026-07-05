@@ -166,6 +166,8 @@ export async function GET() {
     webhook,
     hint:
       webhook?.lastErrorMessage ??
-      (webhook?.url ? null : "Webhook URL not set — register with setWebhook"),
+      (webhook?.url
+        ? null
+        : "Webhook URL is empty — run setWebhook (see .env.example step 3)"),
   });
 }
