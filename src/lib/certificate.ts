@@ -138,7 +138,12 @@ function loadBodyFontBytes(): FontFamilyBundle {
   const root = process.cwd();
   bodyFontBytes = {
     cyrillic: readFontFile([
+      path.join(root, "src/assets/fonts/noto-serif-cyrillic-ext-400-normal.woff2"),
       path.join(root, "src/assets/fonts/noto-serif-cyrillic-400-normal.woff2"),
+      path.join(
+        root,
+        "node_modules/@fontsource/noto-serif/files/noto-serif-cyrillic-ext-400-normal.woff2",
+      ),
       path.join(
         root,
         "node_modules/@fontsource/noto-serif/files/noto-serif-cyrillic-400-normal.woff2",
@@ -247,31 +252,85 @@ function getDateSegments(value: string): TextSegment[] | null {
   ];
 }
 
-function measureSegments(segments: TextSegment[], fonts: CertificateFonts, size: number) {
-  return segments.reduce((sum, segment) => {
-    const font = segment.kind === "latin" ? fonts.latin : fonts.cyrillic;
-    return sum + font.widthOfTextAtSize(segment.text, size);
-  }, 0);
+function fontCanEncode(font: PDFFont, text: string) {
+  try {
+    font.encodeText(text);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-function fitMixedSize(
+function resolveSegment(
+  segment: TextSegment,
+  primary: CertificateFonts,
+  fallback: CertificateFonts,
+): ResolvedSegment[] {
+  const primaryFont = segment.kind === "latin" ? primary.latin : primary.cyrillic;
+  const fallbackFont = segment.kind === "latin" ? fallback.latin : fallback.cyrillic;
+
+  if (fontCanEncode(primaryFont, segment.text)) {
+    return [{ text: segment.text, font: primaryFont }];
+  }
+
+  if (fontCanEncode(fallbackFont, segment.text)) {
+    return [{ text: segment.text, font: fallbackFont }];
+  }
+
+  const runs: ResolvedSegment[] = [];
+  let buffer = "";
+  let currentFont: PDFFont | null = null;
+
+  for (const char of segment.text) {
+    const font = fontCanEncode(primaryFont, char) ? primaryFont : fallbackFont;
+    if (currentFont === null || font === currentFont) {
+      currentFont = font;
+      buffer += char;
+      continue;
+    }
+
+    runs.push({ text: buffer, font: currentFont });
+    buffer = char;
+    currentFont = font;
+  }
+
+  if (buffer && currentFont) runs.push({ text: buffer, font: currentFont });
+  return runs;
+}
+
+function resolveSegments(
   segments: TextSegment[],
-  fonts: CertificateFonts,
+  primary: CertificateFonts,
+  fallback: CertificateFonts,
+) {
+  return segments.flatMap((segment) => resolveSegment(segment, primary, fallback));
+}
+
+type ResolvedSegment = {
+  text: string;
+  font: PDFFont;
+};
+
+function measureResolvedSegments(segments: ResolvedSegment[], size: number) {
+  return segments.reduce((sum, segment) => sum + segment.font.widthOfTextAtSize(segment.text, size), 0);
+}
+
+function fitResolvedSize(
+  segments: ResolvedSegment[],
   maxWidth: number,
   preferred: number,
   min: number,
 ) {
   let size = preferred;
-  while (size > min && measureSegments(segments, fonts, size) > maxWidth) {
+  while (size > min && measureResolvedSegments(segments, size) > maxWidth) {
     size -= 0.5;
   }
   return size;
 }
 
-function drawSegments(
+function drawResolvedSegments(
   page: ReturnType<PDFDocument["addPage"]>,
-  segments: TextSegment[],
-  fonts: CertificateFonts,
+  segments: ResolvedSegment[],
   startX: number,
   y: number,
   size: number,
@@ -280,38 +339,44 @@ function drawSegments(
   let x = startX;
 
   for (const segment of segments) {
-    const font = segment.kind === "latin" ? fonts.latin : fonts.cyrillic;
-    page.drawText(segment.text, { x, y, size, font, color });
-    x += font.widthOfTextAtSize(segment.text, size);
+    page.drawText(segment.text, { x, y, size, font: segment.font, color });
+    x += segment.font.widthOfTextAtSize(segment.text, size);
   }
 }
 
-function drawSegmentsCentered(
+function drawResolvedCentered(
   page: ReturnType<PDFDocument["addPage"]>,
-  segments: TextSegment[],
-  fonts: CertificateFonts,
+  segments: ResolvedSegment[],
   boxX: number,
   boxWidth: number,
   y: number,
   size: number,
   color: ReturnType<typeof rgb>,
 ) {
-  const totalWidth = measureSegments(segments, fonts, size);
-  drawSegments(page, segments, fonts, boxX + Math.max(0, (boxWidth - totalWidth) / 2), y, size, color);
+  const totalWidth = measureResolvedSegments(segments, size);
+  drawResolvedSegments(page, segments, boxX + Math.max(0, (boxWidth - totalWidth) / 2), y, size, color);
 }
 
-function drawSegmentsRightAligned(
+function drawResolvedRightAligned(
   page: ReturnType<PDFDocument["addPage"]>,
-  segments: TextSegment[],
-  fonts: CertificateFonts,
+  segments: ResolvedSegment[],
   boxX: number,
   boxWidth: number,
   y: number,
   size: number,
   color: ReturnType<typeof rgb>,
 ) {
-  const totalWidth = measureSegments(segments, fonts, size);
-  drawSegments(page, segments, fonts, boxX + Math.max(0, boxWidth - totalWidth), y, size, color);
+  const totalWidth = measureResolvedSegments(segments, size);
+  drawResolvedSegments(page, segments, boxX + Math.max(0, boxWidth - totalWidth), y, size, color);
+}
+
+function formatCertificateName(fullName: string) {
+  const trimmed = fullName.trim();
+  try {
+    return trimmed.toLocaleUpperCase("uk-UA");
+  } catch {
+    return trimmed.toUpperCase();
+  }
 }
 
 export async function generateCourseCertificatePdf(input: {
@@ -332,23 +397,21 @@ export async function generateCourseCertificatePdf(input: {
 
   page.drawImage(image, { x: 0, y: 0, width, height });
 
-  const name = input.fullName.trim().toLocaleUpperCase("uk-UA");
-  const nameSegments = splitTextByFont(name);
+  const name = formatCertificateName(input.fullName);
+  const nameSegments = resolveSegments(splitTextByFont(name), fonts.name, fonts.body);
   const nameBoxX = width * LAYOUT.nameX;
   const nameBoxWidth = width * LAYOUT.nameWidth;
-  const nameSize = fitMixedSize(
+  const nameSize = fitResolvedSize(
     nameSegments,
-    fonts.name,
     nameBoxWidth,
     height * LAYOUT.nameSizeRatio,
     height * LAYOUT.nameSizeMinRatio,
   );
   const nameY = height * (1 - LAYOUT.nameY);
 
-  drawSegmentsCentered(
+  drawResolvedCentered(
     page,
     nameSegments,
-    fonts.name,
     nameBoxX,
     nameBoxWidth,
     nameY,
@@ -356,23 +419,21 @@ export async function generateCourseCertificatePdf(input: {
     LAYOUT.nameColor,
   );
 
-  const dateSegments = getDateSegments(input.completedAt);
+  const dateSegments = resolveSegments(getDateSegments(input.completedAt) ?? [], fonts.body, fonts.body);
   const dateBoxX = width * LAYOUT.dateBoxX;
   const dateBoxWidth = width * LAYOUT.dateBoxWidth;
   const dateY = height * (1 - LAYOUT.dateY);
 
-  if (dateSegments) {
-    const dateSize = fitMixedSize(
+  if (dateSegments.length > 0) {
+    const dateSize = fitResolvedSize(
       dateSegments,
-      fonts.body,
       dateBoxWidth,
       height * LAYOUT.dateSizeRatio,
       height * LAYOUT.dateSizeMinRatio,
     );
-    drawSegmentsRightAligned(
+    drawResolvedRightAligned(
       page,
       dateSegments,
-      fonts.body,
       dateBoxX,
       dateBoxWidth,
       dateY,
@@ -417,6 +478,10 @@ export function humanizeCertificateError(error: unknown) {
 
   if (lower.includes("certificate template") || lower.includes("download")) {
     return "Не вдалося завантажити шаблон сертифіката. Перезавантажте його в адмінці.";
+  }
+
+  if (lower.includes("encode") || lower.includes("glyph") || lower.includes("character")) {
+    return "У імені є символ, який не підтримується сертифікатом. Спробуйте латиницю або скорочене ім'я.";
   }
 
   if (lower.includes("font") || lower.includes("woff")) {
