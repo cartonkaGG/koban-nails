@@ -18,7 +18,6 @@ const ease = [0.22, 1, 0.36, 1] as const;
 
 export function CourseGrid({ courses }: Props) {
   const visible = courses.filter((course) => course.format === "online");
-  const isSingle = visible.length === 1;
 
   return (
     <section id="courses" className="course-section py-16 sm:py-20">
@@ -32,7 +31,7 @@ export function CourseGrid({ courses }: Props) {
           </p>
         </MotionFadeUp>
 
-        <MotionStagger className={`course-grid ${isSingle ? "course-grid-single" : ""}`}>
+        <MotionStagger className="course-grid">
           {visible.length === 0 ? (
             <div className="course-grid-empty card py-12 text-center">
               <p className="text-cream-body">Наразі немає опублікованих онлайн-курсів.</p>
@@ -43,11 +42,7 @@ export function CourseGrid({ courses }: Props) {
           ) : (
             visible.map((course) => (
               <MotionItem key={course.id}>
-                <CourseCard
-                  course={course}
-                  featured={isSingle || course.featured}
-                  horizontal={isSingle}
-                />
+                <CourseCard course={course} featured={course.featured} />
               </MotionItem>
             ))
           )}
@@ -57,15 +52,7 @@ export function CourseGrid({ courses }: Props) {
   );
 }
 
-function CourseCard({
-  course,
-  featured,
-  horizontal = false,
-}: {
-  course: Course;
-  featured?: boolean;
-  horizontal?: boolean;
-}) {
+function CourseCard({ course, featured }: { course: Course; featured?: boolean }) {
   const imageUrl = resolveCourseImageUrl(course.image_url);
   const onSale = isCourseOnSale(course);
 
@@ -75,7 +62,7 @@ function CourseCard({
       whileHover={{ y: -2 }}
       transition={{ duration: 0.25, ease }}
     >
-      <article className={`course-showcase ${horizontal ? "course-showcase-horizontal" : ""}`}>
+      <article className="course-showcase">
         <div className="course-showcase-pattern" aria-hidden="true" />
 
         <div className="course-showcase-media">
@@ -84,8 +71,8 @@ function CourseCard({
               src={imageUrl}
               alt={course.title}
               fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 420px"
+              className="course-showcase-media-img"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               priority={featured}
             />
           ) : (
