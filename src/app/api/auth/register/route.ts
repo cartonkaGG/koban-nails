@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       role: isAdminEmail(normalizedEmail) ? "admin" : "student",
     });
 
-    if (profileError) {
+    if (profileError && !profileError.message.includes("public.profiles")) {
       return NextResponse.json({ error: profileError.message }, { status: 400 });
     }
   }

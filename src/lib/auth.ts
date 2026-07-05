@@ -7,6 +7,30 @@ import type { Profile } from "@/lib/types";
 
 export { isSupabaseConfigured };
 
+type AuthUser = {
+  id: string;
+  email?: string | null;
+  created_at?: string;
+  user_metadata?: {
+    full_name?: string;
+  };
+};
+
+function makeProfileFromUser(user: AuthUser): Profile | null {
+  if (!user.email) return null;
+
+  const email = user.email.toLowerCase();
+  return {
+    id: user.id,
+    email,
+    full_name: user.user_metadata?.full_name ?? email.split("@")[0],
+    phone: null,
+    role: isAdminEmail(email) ? "admin" : "student",
+    avatar_url: null,
+    created_at: user.created_at ?? new Date().toISOString(),
+  };
+}
+
 export async function getSessionUser() {
   if (!isSupabaseConfigured()) {
     const store = await cookies();
@@ -34,18 +58,23 @@ export async function getProfile(): Promise<Profile | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .select("*")
     .eq("id", user.id)
     .single();
 
+  if (error?.message.includes("public.profiles")) {
+    return makeProfileFromUser(user);
+  }
+
   if (!data) {
-    if (!isSupabaseAdminConfigured() || !user.email) return null;
+    const fallbackProfile = makeProfileFromUser(user);
+    if (!isSupabaseAdminConfigured() || !user.email) return fallbackProfile;
 
     const adminSupabase = await createAdminClient();
     const role = isAdminEmail(user.email) ? "admin" : "student";
-    const { data: createdProfile } = await adminSupabase
+    const { data: createdProfile, error: createProfileError } = await adminSupabase
       .from("profiles")
       .upsert({
         id: user.id,
@@ -56,6 +85,7 @@ export async function getProfile(): Promise<Profile | null> {
       .select("*")
       .single();
 
+    if (createProfileError?.message.includes("public.profiles")) return fallbackProfile;
     if (!createdProfile) return null;
 
     return createdProfile as Profile;

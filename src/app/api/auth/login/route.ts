@@ -54,12 +54,16 @@ export async function POST(request: NextRequest) {
 
   if (isSupabaseAdminConfigured()) {
     const adminSupabase = await createAdminClient();
-    await adminSupabase.from("profiles").upsert({
+    const { error: profileError } = await adminSupabase.from("profiles").upsert({
       id: data.user.id,
       email: normalizedEmail,
       full_name: data.user.user_metadata?.full_name ?? normalizedEmail.split("@")[0],
       role: isAdminEmail(normalizedEmail) ? "admin" : "student",
     });
+
+    if (profileError && !profileError.message.includes("public.profiles")) {
+      return NextResponse.json({ error: profileError.message }, { status: 400 });
+    }
   }
 
   response.cookies.delete("koban_demo_user");
