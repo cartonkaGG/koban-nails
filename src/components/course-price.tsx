@@ -18,7 +18,6 @@ export function CoursePrice({ course, size = "sm", className = "" }: Props) {
           <>
             <span className="course-price-old">{formatPrice(course.price_uah)}</span>
             <span className="course-price-amount course-price-amount-sale">{formatPrice(effective)}</span>
-            <span className="course-price-sale-badge">Акція</span>
           </>
         ) : (
           <span className="course-price-amount">{formatPrice(effective)}</span>

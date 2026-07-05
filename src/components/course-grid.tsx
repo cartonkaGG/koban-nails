@@ -58,66 +58,62 @@ function CourseCard({ course, featured }: { course: Course; featured?: boolean }
 
   return (
     <motion.div
-      className={featured ? "course-showcase-wrap course-showcase-wrap-featured" : "course-showcase-wrap"}
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.25, ease }}
+      className={featured ? "course-card-wrap course-card-wrap-featured" : "course-card-wrap"}
+      whileHover={{ y: -3 }}
+      transition={{ duration: 0.22, ease }}
     >
-      <article className="course-showcase">
-        <div className="course-showcase-pattern" aria-hidden="true" />
-
-        <div className="course-showcase-media">
+      <article className="course-card">
+        <div className="course-card-media">
           {imageUrl ? (
             <Image
               src={imageUrl}
               alt={course.title}
               fill
-              className="course-showcase-media-img"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="course-card-media-img"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
               priority={featured}
             />
           ) : (
-            <div className="course-showcase-media-fallback" aria-hidden="true" />
+            <div className="course-card-media-fallback" aria-hidden="true" />
           )}
-          <div className="course-showcase-media-shade" aria-hidden="true" />
+          <div className="course-card-media-fade" aria-hidden="true" />
+
+          <div className="course-card-badges">
+            {featured && (
+              <span className="course-card-badge course-card-badge-gold">Популярний</span>
+            )}
+            {course.badge && <span className="course-card-badge">{course.badge}</span>}
+            {onSale && <span className="course-card-badge course-card-badge-sale">Акція</span>}
+          </div>
         </div>
 
-        <div className="course-showcase-body">
-          <div className="course-showcase-head">
-            <div className="course-showcase-badges">
-              {featured && (
-                <span className="course-showcase-badge course-showcase-badge-popular">Популярний</span>
-              )}
-              {course.badge && <span className="course-showcase-badge">{course.badge}</span>}
-              {onSale && (
-                <span className="course-showcase-badge course-showcase-badge-sale">Акція</span>
-              )}
-            </div>
-
-            <h3 className="course-showcase-title">{course.title}</h3>
-            <p className="course-showcase-desc">{course.description}</p>
+        <div className="course-card-body">
+          <div className="course-card-top">
+            <h3 className="course-card-title">{course.title}</h3>
+            <p className="course-card-desc">{course.description}</p>
           </div>
 
-          <div className="course-showcase-price">
+          <div className="course-card-price-row">
             <CoursePrice course={course} size="lg" />
           </div>
 
-          <ul className="course-showcase-features">
-            {course.features.map((item) => (
-              <li key={item} className="course-showcase-feature">
-                <span className="course-showcase-feature-icon" aria-hidden="true">
-                  <IconCheck />
-                </span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+          {course.features.length > 0 && (
+            <ul className="course-card-features">
+              {course.features.map((item) => (
+                <li key={item} className="course-card-feature">
+                  <IconCheck className="course-card-feature-icon" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          )}
 
-          <div className="course-showcase-footer">
+          <div className="course-card-footer">
             <CourseBuyButton slug={course.slug} />
-            <p className="course-showcase-hint">
+            <span className="course-card-hint">
               Доступ одразу після оплати
-              <IconArrowRight className="h-3.5 w-3.5 opacity-50" />
-            </p>
+              <IconArrowRight className="h-3 w-3 opacity-50" />
+            </span>
           </div>
         </div>
       </article>
