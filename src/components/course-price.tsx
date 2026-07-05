@@ -17,11 +17,11 @@ export function CoursePrice({ course, size = "sm", className = "" }: Props) {
         {onSale ? (
           <>
             <span className="course-price-old">{formatPrice(course.price_uah)}</span>
-            <span className="course-price-sale">{formatPrice(effective)}</span>
+            <span className="course-price-amount course-price-amount-sale">{formatPrice(effective)}</span>
             <span className="course-price-sale-badge">Акція</span>
           </>
         ) : (
-          <span className="course-price-regular">{formatPrice(effective)}</span>
+          <span className="course-price-amount">{formatPrice(effective)}</span>
         )}
       </div>
     );
@@ -32,10 +32,10 @@ export function CoursePrice({ course, size = "sm", className = "" }: Props) {
       {onSale ? (
         <>
           <span className="course-price-old">{formatPrice(course.price_uah)}</span>
-          <span className="course-card-price course-card-price-sale">{formatPrice(effective)}</span>
+          <span className="course-price-amount course-price-amount-sale">{formatPrice(effective)}</span>
         </>
       ) : (
-        <span className="course-card-price">{formatPrice(effective)}</span>
+        <span className="course-price-amount">{formatPrice(effective)}</span>
       )}
     </div>
   );
