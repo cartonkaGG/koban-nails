@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { CabinetShell } from "@/components/cabinet/cabinet-shell";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
 import { getLessonsForCourse, getUserEnrollments } from "@/lib/data";
+import { resolveCourseImageUrl } from "@/lib/images";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -68,8 +69,8 @@ export default async function CabinetPage() {
             <li key={course.id}>
               <article className="cabinet-course-card">
                 <div className="cabinet-course-thumb">
-                  {course.image_url ? (
-                    <Image src={course.image_url} alt="" fill className="object-cover" sizes="120px" />
+                  {resolveCourseImageUrl(course.image_url) ? (
+                    <Image src={resolveCourseImageUrl(course.image_url)!} alt="" fill className="object-cover" sizes="120px" />
                   ) : (
                     <div className="cabinet-course-thumb-fallback" />
                   )}

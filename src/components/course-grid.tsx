@@ -5,6 +5,8 @@ import type { Course } from "@/lib/types";
 import { formatPrice } from "@/lib/types";
 import { IconCheck } from "@/components/icons";
 import { CourseBuyButton } from "@/components/course-buy-button";
+import { resolveCourseImageUrl } from "@/lib/images";
+import { MotionFadeUp, MotionStagger, MotionItem, MotionCard } from "@/components/motion";
 
 type Props = {
   courses: Course[];
@@ -16,18 +18,20 @@ export function CourseGrid({ courses }: Props) {
   return (
     <section id="courses" className="py-16 sm:py-20">
       <div className="shell">
-        <div className="mb-10 max-w-3xl">
+        <MotionFadeUp className="mb-10 max-w-3xl">
           <div className="eyebrow">програми</div>
           <h2 className="mt-2 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl">Курси</h2>
           <p className="mt-3 text-left text-sm leading-relaxed text-cream-body">
             Навчайтесь у власному темпі. Після оплати курс відкривається у вашому кабінеті.
           </p>
-        </div>
+        </MotionFadeUp>
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {visible.map((course) => (
-            <article
-              key={course.id}
+        <MotionStagger className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {visible.map((course) => {
+            const imageUrl = resolveCourseImageUrl(course.image_url);
+            return (
+            <MotionItem key={course.id}>
+            <MotionCard
               className={`card relative overflow-hidden ${course.featured ? "border-gold/40 ring-1 ring-gold/20" : ""}`}
             >
               {course.featured && (
@@ -35,10 +39,10 @@ export function CourseGrid({ courses }: Props) {
                   Популярний
                 </span>
               )}
-              {course.image_url && (
+              {imageUrl && (
                 <div className="-mx-5 -mt-5 mb-4 overflow-hidden rounded-t-xl border-b border-line bg-black/30">
                   <Image
-                    src={course.image_url}
+                    src={imageUrl}
                     alt={course.title}
                     width={720}
                     height={450}
@@ -62,9 +66,11 @@ export function CourseGrid({ courses }: Props) {
                 <span className="text-xl font-bold text-gold">{formatPrice(course.price_uah)}</span>
                 <CourseBuyButton slug={course.slug} />
               </div>
-            </article>
-          ))}
-        </div>
+            </MotionCard>
+            </MotionItem>
+          );
+          })}
+        </MotionStagger>
       </div>
     </section>
   );

@@ -34,6 +34,7 @@ export async function PUT(
       features: body.features,
       payment_url: body.payment_url,
       sort_order: body.sort_order,
+      image_url: body.image_url ?? null,
     })
     .eq("id", id);
 

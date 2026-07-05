@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import type { Profile } from "@/lib/types";
 import {
   IconBook,
@@ -70,14 +71,20 @@ export function AdminShell({
         </div>
       </aside>
 
-      {open && (
-        <button
-          type="button"
-          className="fixed inset-0 z-40 bg-black/60 lg:hidden"
-          aria-label="Закрити меню"
-          onClick={() => setOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {open && (
+          <motion.button
+            type="button"
+            className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+            aria-label="Закрити меню"
+            onClick={() => setOpen(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          />
+        )}
+      </AnimatePresence>
 
       <div className="min-w-0">
         <div className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line/60 bg-panel px-4 lg:hidden">
