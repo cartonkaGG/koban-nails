@@ -66,12 +66,11 @@ export async function notifySupportMessage(params: {
     "💬 <b>Підтримка</b>",
     `👤 ${escapeHtml(params.userName)}`,
     `📧 ${escapeHtml(params.email)}`,
-    `🆔 <code>${params.userId}</code>`,
     `#user:${params.userId}`,
     "",
     escapeHtml(params.body),
     "",
-    "↩️ Відповідайте reply на це повідомлення",
+    "↩️ Reply на це повідомлення — можна відповідати кілька разів",
   ].join("\n");
 
   return sendTelegramMessage(text);

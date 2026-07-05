@@ -10,6 +10,20 @@ type Message = {
   created_at: string;
 };
 
+const POLL_OPEN_MS = 3000;
+const POLL_CLOSED_MS = 10000;
+
+function formatTime(iso: string) {
+  try {
+    return new Intl.DateTimeFormat("uk-UA", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(iso));
+  } catch {
+    return "";
+  }
+}
+
 export function SupportChat() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -57,7 +71,7 @@ export function SupportChat() {
   useEffect(() => {
     checkUnread();
     if (loggedIn === false) return;
-    const timer = setInterval(checkUnread, open ? 5000 : 20000);
+    const timer = setInterval(checkUnread, open ? POLL_OPEN_MS : POLL_CLOSED_MS);
     return () => clearInterval(timer);
   }, [open, checkUnread, loggedIn]);
 
@@ -65,7 +79,7 @@ export function SupportChat() {
     if (!open) return;
     loadMessages();
     markRead();
-    const timer = setInterval(loadMessages, 5000);
+    const timer = setInterval(loadMessages, POLL_OPEN_MS);
     return () => clearInterval(timer);
   }, [open, loadMessages, markRead]);
 
@@ -135,7 +149,7 @@ export function SupportChat() {
       {open && (
         <div className="support-chat-panel" role="dialog" aria-label="Чат підтримки">
           <div className="support-chat-head">
-            <strong>Підтримка</strong>
+            <strong>Підтримка Koban nails</strong>
             <button type="button" className="support-chat-close" onClick={() => setOpen(false)} aria-label="Закрити">
               ×
             </button>
@@ -150,14 +164,23 @@ export function SupportChat() {
             {messages.length === 0 && loggedIn !== false && (
               <p className="support-chat-hint">Напишіть питання — відповімо якнайшвидше.</p>
             )}
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`support-chat-bubble ${msg.direction === "user" ? "mine" : "theirs"}`}
-              >
-                {msg.body}
-              </div>
-            ))}
+            {messages.map((msg) => {
+              const isUser = msg.direction === "user";
+              return (
+                <div
+                  key={msg.id}
+                  className={`support-chat-row ${isUser ? "support-chat-row-user" : "support-chat-row-admin"}`}
+                >
+                  <div className="support-chat-meta">
+                    <span className="support-chat-sender">{isUser ? "Ви" : "Підтримка"}</span>
+                    <span className="support-chat-time">{formatTime(msg.created_at)}</span>
+                  </div>
+                  <div className={`support-chat-bubble ${isUser ? "mine" : "theirs"}`}>
+                    {msg.body}
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <div className="support-chat-input">
