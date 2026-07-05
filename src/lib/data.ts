@@ -16,6 +16,7 @@ function mapCourse(row: Record<string, unknown>): Course {
   return {
     ...row,
     sale_price_uah: (row.sale_price_uah as number | null | undefined) ?? null,
+    archived_at: (row.archived_at as string | null | undefined) ?? null,
     features: Array.isArray(row.features) ? (row.features as string[]) : [],
   } as Course;
 }
@@ -29,6 +30,7 @@ export async function getPublishedCourses(): Promise<Course[]> {
       .from("courses")
       .select("*")
       .eq("published", true)
+      .is("archived_at", null)
       .order("sort_order");
 
     if (error) {
@@ -69,6 +71,19 @@ export async function getCourseBySlug(slug: string): Promise<Course | null> {
     .maybeSingle();
 
   return data ? mapCourse(data) : null;
+}
+
+export async function getCourseEnrollmentCount(courseId: string): Promise<number> {
+  if (!isSupabaseConfigured()) return 0;
+
+  const supabase = await createAdminClient();
+  const { count, error } = await supabase
+    .from("enrollments")
+    .select("id", { count: "exact", head: true })
+    .eq("course_id", courseId);
+
+  if (error) return 0;
+  return count ?? 0;
 }
 
 export async function getCourseById(id: string): Promise<Course | null> {

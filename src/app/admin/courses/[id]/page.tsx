@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CourseEditor } from "@/components/admin/course-editor";
 import { requireAdmin } from "@/lib/auth";
-import { getCourseById, getLessonsForCourse } from "@/lib/data";
+import { getCourseById, getCourseEnrollmentCount, getLessonsForCourse } from "@/lib/data";
 
 export default async function EditCoursePage({
   params,
@@ -21,10 +21,11 @@ export default async function EditCoursePage({
   if (!course) notFound();
 
   const lessons = await getLessonsForCourse(course.id, true);
+  const enrollmentCount = await getCourseEnrollmentCount(course.id);
 
   return (
     <AdminShell profile={profile}>
-      <CourseEditor course={course} lessons={lessons} />
+      <CourseEditor course={course} lessons={lessons} enrollmentCount={enrollmentCount} />
     </AdminShell>
   );
 }

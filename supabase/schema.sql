@@ -32,6 +32,7 @@ create table if not exists public.courses (
   features jsonb not null default '[]'::jsonb,
   payment_url text,
   sort_order integer not null default 0,
+  archived_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -168,7 +169,15 @@ create policy "profiles_update_own_or_admin" on public.profiles
 
 -- Courses: public read published, admin full
 create policy "courses_select_published" on public.courses
-  for select using (published = true or public.is_admin());
+  for select using (
+    public.is_admin()
+    or (published = true and archived_at is null)
+    or exists (
+      select 1 from public.enrollments e
+      where e.course_id = courses.id
+        and e.user_id = auth.uid()
+    )
+  );
 create policy "courses_admin_insert" on public.courses
   for insert with check (public.is_admin());
 create policy "courses_admin_update" on public.courses

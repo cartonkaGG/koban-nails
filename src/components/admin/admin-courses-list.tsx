@@ -7,47 +7,65 @@ import { useMemo, useState } from "react";
 import type { Course } from "@/lib/types";
 import { formatPrice, getEffectiveCoursePrice, isCourseOnSale } from "@/lib/types";
 import { resolveCourseImageUrl } from "@/lib/images";
+import { CourseArchiveDialog } from "@/components/admin/course-archive-dialog";
 import { MotionPage, MotionStagger, MotionItem } from "@/components/motion";
 
 type Props = {
   courses: Course[];
 };
 
+type Filter = "all" | "published" | "draft" | "archived";
+
 export function AdminCoursesList({ courses }: Props) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<"all" | "published" | "draft">("all");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [removedIds, setRemovedIds] = useState<string[]>([]);
+  const [filter, setFilter] = useState<Filter>("all");
+  const [dialogCourse, setDialogCourse] = useState<Course | null>(null);
+  const [enrollmentCount, setEnrollmentCount] = useState(0);
+  const [loadingMeta, setLoadingMeta] = useState(false);
+  const [restoringId, setRestoringId] = useState<string | null>(null);
 
-  const visibleCourses = useMemo(
-    () => courses.filter((course) => !removedIds.includes(course.id)),
-    [courses, removedIds],
-  );
-
-  async function deleteCourse(course: Course) {
-    const confirmed = window.confirm(
-      `Видалити курс «${course.title}»?\n\nУсі уроки, записи про покупки та завантажені файли також буде видалено. Цю дію не можна скасувати.`,
-    );
-    if (!confirmed) return;
-
-    setDeletingId(course.id);
+  async function openArchiveDialog(course: Course) {
+    setDialogCourse(course);
+    setLoadingMeta(true);
     try {
-      const res = await fetch(`/api/admin/courses/${course.id}`, { method: "DELETE" });
-      const data = (await res.json()) as { error?: string };
-      if (!res.ok) {
-        window.alert(data.error ?? "Не вдалося видалити курс");
-        return;
-      }
-      setRemovedIds((prev) => [...prev, course.id]);
-      router.refresh();
+      const res = await fetch(`/api/admin/courses/${course.id}`);
+      const data = (await res.json()) as { enrollmentCount?: number };
+      setEnrollmentCount(data.enrollmentCount ?? 0);
     } finally {
-      setDeletingId(null);
+      setLoadingMeta(false);
     }
   }
 
+  async function restoreCourse(course: Course) {
+    setRestoringId(course.id);
+    try {
+      const res = await fetch(`/api/admin/courses/${course.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "restore" }),
+      });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        window.alert(data.error ?? "Не вдалося відновити курс");
+        return;
+      }
+      router.refresh();
+    } finally {
+      setRestoringId(null);
+    }
+  }
+
+  const activeCount = useMemo(
+    () => courses.filter((course) => !course.archived_at).length,
+    [courses],
+  );
+
   const filtered = useMemo(() => {
-    return visibleCourses.filter((course) => {
+    return courses.filter((course) => {
+      const archived = Boolean(course.archived_at);
+      if (filter === "archived") return archived;
+      if (archived) return false;
       if (filter === "published" && !course.published) return false;
       if (filter === "draft" && course.published) return false;
       if (!query.trim()) return true;
@@ -57,7 +75,7 @@ export function AdminCoursesList({ courses }: Props) {
         course.slug.toLowerCase().includes(q)
       );
     });
-  }, [visibleCourses, query, filter]);
+  }, [courses, query, filter]);
 
   return (
     <MotionPage>
@@ -65,7 +83,9 @@ export function AdminCoursesList({ courses }: Props) {
         <div>
           <p className="eyebrow">контент</p>
           <h2 className="font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl">Курси</h2>
-          <p className="mt-1 text-sm text-muted">{visibleCourses.length} програм · керуйте контентом і обкладинками</p>
+          <p className="mt-1 text-sm text-muted">
+            {activeCount} активних · архів зберігає записи про покупки
+          </p>
         </div>
         <Link href="/admin/courses/new" className="btn btn-primary shrink-0">
           + Новий курс
@@ -85,6 +105,7 @@ export function AdminCoursesList({ courses }: Props) {
               ["all", "Усі"],
               ["published", "Опубліковані"],
               ["draft", "Чернетки"],
+              ["archived", "Архів"],
             ] as const
           ).map(([key, label]) => (
             <button
@@ -102,7 +123,7 @@ export function AdminCoursesList({ courses }: Props) {
       {filtered.length === 0 ? (
         <div className="card py-12 text-center">
           <p className="text-muted">Курсів не знайдено</p>
-          {visibleCourses.length === 0 && (
+          {activeCount === 0 && filter !== "archived" && (
             <Link href="/admin/courses/new" className="btn btn-primary mt-4">
               Створити перший курс
             </Link>
@@ -114,12 +135,23 @@ export function AdminCoursesList({ courses }: Props) {
             <MotionItem key={course.id}>
               <AdminCourseCard
                 course={course}
-                deleting={deletingId === course.id}
-                onDelete={() => deleteCourse(course)}
+                restoring={restoringId === course.id}
+                onArchive={() => openArchiveDialog(course)}
+                onRestore={() => restoreCourse(course)}
               />
             </MotionItem>
           ))}
         </MotionStagger>
+      )}
+
+      {dialogCourse && (
+        <CourseArchiveDialog
+          course={dialogCourse}
+          open={Boolean(dialogCourse)}
+          enrollmentCount={loadingMeta ? 0 : enrollmentCount}
+          onClose={() => setDialogCourse(null)}
+          onSuccess={() => router.refresh()}
+        />
       )}
     </MotionPage>
   );
@@ -127,17 +159,20 @@ export function AdminCoursesList({ courses }: Props) {
 
 function AdminCourseCard({
   course,
-  deleting,
-  onDelete,
+  restoring,
+  onArchive,
+  onRestore,
 }: {
   course: Course;
-  deleting?: boolean;
-  onDelete: () => void;
+  restoring?: boolean;
+  onArchive: () => void;
+  onRestore: () => void;
 }) {
   const image = resolveCourseImageUrl(course.image_url);
+  const archived = Boolean(course.archived_at);
 
   return (
-    <article className="admin-course-card">
+    <article className={`admin-course-card ${archived ? "admin-course-card-archived" : ""}`}>
       <Link href={`/admin/courses/${course.id}`} className="admin-course-card-link">
         <div className="admin-course-card-media">
           {image ? (
@@ -148,10 +183,16 @@ function AdminCourseCard({
             </div>
           )}
           <div className="admin-course-card-badges">
-            <span className={`admin-status-badge ${course.published ? "admin-status-published" : "admin-status-draft"}`}>
-              {course.published ? "Опубліковано" : "Чернетка"}
-            </span>
-            {course.featured && <span className="admin-status-badge admin-status-featured">★ Популярний</span>}
+            {archived ? (
+              <span className="admin-status-badge admin-status-archived">Архів</span>
+            ) : (
+              <span className={`admin-status-badge ${course.published ? "admin-status-published" : "admin-status-draft"}`}>
+                {course.published ? "Опубліковано" : "Чернетка"}
+              </span>
+            )}
+            {course.featured && !archived && (
+              <span className="admin-status-badge admin-status-featured">★ Популярний</span>
+            )}
           </div>
         </div>
 
@@ -179,19 +220,31 @@ function AdminCourseCard({
         <Link href={`/admin/courses/${course.id}`} className="btn btn-primary min-h-9 flex-1 px-3 text-xs">
           Редагувати
         </Link>
-        {course.published && (
-          <Link href="/#courses" className="btn btn-ghost min-h-9 px-3 text-xs" target="_blank">
-            На сайті
-          </Link>
+        {archived ? (
+          <button
+            type="button"
+            className="btn btn-ghost min-h-9 px-3 text-xs"
+            onClick={onRestore}
+            disabled={restoring}
+          >
+            {restoring ? "..." : "Відновити"}
+          </button>
+        ) : (
+          <>
+            {course.published && (
+              <Link href="/#courses" className="btn btn-ghost min-h-9 px-3 text-xs" target="_blank">
+                На сайті
+              </Link>
+            )}
+            <button
+              type="button"
+              className="btn btn-danger min-h-9 px-3 text-xs"
+              onClick={onArchive}
+            >
+              Архівувати
+            </button>
+          </>
         )}
-        <button
-          type="button"
-          className="btn btn-danger min-h-9 px-3 text-xs"
-          onClick={onDelete}
-          disabled={deleting}
-        >
-          {deleting ? "..." : "Видалити"}
-        </button>
       </div>
     </article>
   );

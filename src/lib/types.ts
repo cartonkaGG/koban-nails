@@ -27,6 +27,7 @@ export type Course = {
   features: string[];
   payment_url: string | null;
   sort_order: number;
+  archived_at: string | null;
 };
 
 export type Lesson = {

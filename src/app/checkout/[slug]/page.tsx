@@ -14,7 +14,7 @@ export default async function CheckoutPage({
 }) {
   const { slug } = await params;
   const course = await getCourseBySlug(slug);
-  if (!course) notFound();
+  if (!course || course.archived_at) notFound();
 
   const profile = await getProfile();
   if (!profile) {

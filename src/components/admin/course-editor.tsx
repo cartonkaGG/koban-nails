@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Course, Lesson } from "@/lib/types";
+import { CourseArchiveDialog } from "@/components/admin/course-archive-dialog";
 import { CourseCoverUpload } from "@/components/admin/course-cover-upload";
 import { VideoUploadField } from "@/components/admin/video-upload";
 import { MotionPage } from "@/components/motion";
@@ -15,6 +16,7 @@ type Tab = "overview" | "cover" | "lessons" | "publish";
 type Props = {
   course: Course;
   lessons: Lesson[];
+  enrollmentCount?: number;
 };
 
 const TABS: { id: Tab; label: string; onlineOnly?: boolean }[] = [
@@ -24,13 +26,15 @@ const TABS: { id: Tab; label: string; onlineOnly?: boolean }[] = [
   { id: "publish", label: "Публікація" },
 ];
 
-export function CourseEditor({ course, lessons: initialLessons }: Props) {
+export function CourseEditor({ course, lessons: initialLessons, enrollmentCount = 0 }: Props) {
   const router = useRouter();
   const [courseState, setCourseState] = useState(course);
   const [lessons, setLessons] = useState(initialLessons);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [purgeOpen, setPurgeOpen] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
   const [expandedLesson, setExpandedLesson] = useState<string | null>(
     initialLessons[0]?.id ?? null,
@@ -55,27 +59,29 @@ export function CourseEditor({ course, lessons: initialLessons }: Props) {
     setMessage(res.ok ? "✓ Збережено" : "Помилка збереження");
   }
 
-  async function deleteCourse() {
-    const confirmed = window.confirm(
-      `Видалити курс «${courseState.title}»?\n\nУсі уроки, записи про покупки та завантажені файли також буде видалено. Цю дію не можна скасувати.`,
-    );
-    if (!confirmed) return;
-
-    setDeleting(true);
+  async function restoreCourse() {
+    setRestoring(true);
     setMessage("");
     try {
-      const res = await fetch(`/api/admin/courses/${course.id}`, { method: "DELETE" });
-      const data = (await res.json()) as { error?: string };
+      const res = await fetch(`/api/admin/courses/${course.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "restore" }),
+      });
       if (!res.ok) {
-        setMessage(data.error ?? "Помилка видалення");
+        const data = (await res.json()) as { error?: string };
+        setMessage(data.error ?? "Помилка відновлення");
         return;
       }
-      router.push("/admin/courses");
+      setCourseState((prev) => ({ ...prev, archived_at: null }));
+      setMessage("✓ Курс відновлено з архіву");
       router.refresh();
     } finally {
-      setDeleting(false);
+      setRestoring(false);
     }
   }
+
+  const isArchived = Boolean(courseState.archived_at);
 
   async function saveLesson(lesson: Lesson) {
     const res = await fetch(`/api/admin/lessons/${lesson.id}`, {
@@ -127,6 +133,22 @@ export function CourseEditor({ course, lessons: initialLessons }: Props) {
           </div>
         )}
       </div>
+
+      {isArchived && (
+        <div className="mb-4 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-cream-body">
+          Курс у <strong className="text-cream">архіві</strong> — не показується на сайті. Учні з
+          активною покупкою зберігають доступ. Записів про покупку:{" "}
+          <strong className="text-gold">{enrollmentCount}</strong>.
+          <button
+            type="button"
+            className="btn btn-ghost ml-3 min-h-8 px-3 text-xs"
+            onClick={restoreCourse}
+            disabled={restoring}
+          >
+            {restoring ? "..." : "Відновити з архіву"}
+          </button>
+        </div>
+      )}
 
       <nav className="admin-editor-tabs" aria-label="Розділи редагування">
         {visibleTabs.map((t) => (
@@ -448,19 +470,58 @@ export function CourseEditor({ course, lessons: initialLessons }: Props) {
           <div className="rounded-xl border border-red-500/25 bg-red-500/5 p-4">
             <p className="text-sm font-medium text-red-200">Небезпечна зона</p>
             <p className="mt-1 text-xs text-muted">
-              Видалення курсу безповоротно прибере уроки, записи учнів і файли зі сховища.
+              Архівація приховує курс з сайту, але зберігає записи про покупку ({enrollmentCount}) і
+              доступ учнів. Для підтвердження потрібно ввести slug курсу.
             </p>
-            <button
-              type="button"
-              className="btn btn-danger mt-4 min-h-9 px-4 text-xs"
-              onClick={deleteCourse}
-              disabled={deleting || saving}
-            >
-              {deleting ? "Видалення..." : "Видалити курс"}
-            </button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {!isArchived && (
+                <button
+                  type="button"
+                  className="btn btn-danger min-h-9 px-4 text-xs"
+                  onClick={() => setArchiveOpen(true)}
+                  disabled={saving}
+                >
+                  Архівувати курс
+                </button>
+              )}
+              {enrollmentCount === 0 && (
+                <button
+                  type="button"
+                  className="btn btn-ghost min-h-9 border-red-500/30 px-4 text-xs text-red-200"
+                  onClick={() => setPurgeOpen(true)}
+                  disabled={saving}
+                >
+                  Видалити назавжди
+                </button>
+              )}
+            </div>
           </div>
         </section>
       )}
+
+      <CourseArchiveDialog
+        course={courseState}
+        open={archiveOpen}
+        mode="archive"
+        enrollmentCount={enrollmentCount}
+        onClose={() => setArchiveOpen(false)}
+        onSuccess={() => {
+          router.push("/admin/courses?filter=archived");
+          router.refresh();
+        }}
+      />
+
+      <CourseArchiveDialog
+        course={courseState}
+        open={purgeOpen}
+        mode="purge"
+        enrollmentCount={enrollmentCount}
+        onClose={() => setPurgeOpen(false)}
+        onSuccess={() => {
+          router.push("/admin/courses");
+          router.refresh();
+        }}
+      />
 
       <div className="admin-editor-savebar">
         <div className="admin-editor-savebar-inner">

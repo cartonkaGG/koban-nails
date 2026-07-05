@@ -1153,6 +1153,41 @@ body.support-chat-open {
   color: #000;
 }
 
+.admin-status-archived {
+  background: rgb(148 163 184 / 0.2);
+  color: #cbd5e1;
+}
+
+.admin-course-card-archived {
+  opacity: 0.82;
+}
+
+.admin-course-card-archived .admin-course-card-media {
+  filter: grayscale(0.35);
+}
+
+.admin-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.admin-dialog {
+  width: 100%;
+  max-width: 28rem;
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background: rgb(13 16 13 / 0.98);
+  padding: 1.5rem;
+  box-shadow: 0 24px 64px rgb(0 0 0 / 0.55);
+}
+
 .admin-course-card-body {
   padding: 0.875rem 1rem 0.75rem;
 }

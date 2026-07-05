@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
 import { addDemoEnrollment } from "@/lib/demo-enrollments";
-import { sendEmail } from "@/lib/emails/send";
-import { renderPurchaseThankYouEmail } from "@/lib/emails/templates";
-import { activateEnrollment } from "@/lib/enrollments";
+import { requestPendingEnrollment } from "@/lib/enrollments";
 import { getCourseBySlug, getEnrollment } from "@/lib/data";
 import { getEffectiveCoursePrice } from "@/lib/types";
-import { getSiteOrigin } from "@/lib/site-url";
-import { notifyPurchase } from "@/lib/telegram/send";
+import { notifyPurchaseRequest } from "@/lib/telegram/send";
 
 export async function POST(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const profile = await getProfile();
@@ -24,6 +21,10 @@ export async function POST(
     return NextResponse.json({ error: "Course not found" }, { status: 404 });
   }
 
+  if (course.archived_at) {
+    return NextResponse.json({ error: "Курс більше не доступний для покупки" }, { status: 410 });
+  }
+
   if (course.payment_url) {
     return NextResponse.json({ ok: true, redirect: course.payment_url });
   }
@@ -32,12 +33,6 @@ export async function POST(
 
   if (!isSupabaseConfigured()) {
     await addDemoEnrollment(slug);
-    await notifyPurchase({
-      userName: profile.full_name ?? profile.email,
-      email: profile.email,
-      courseTitle: course.title,
-      priceUah: payPrice,
-    });
     return NextResponse.json({
       ok: true,
       demo: true,
@@ -46,38 +41,37 @@ export async function POST(
   }
 
   const existing = await getEnrollment(profile.id, course.id);
-  const isNewPurchase = !existing || existing.status !== "active";
 
-  const { error } = await activateEnrollment(profile.id, course.id);
+  if (existing?.status === "active" || existing?.status === "completed") {
+    return NextResponse.json({ ok: true, redirect: "/cabinet" });
+  }
+
+  if (existing?.status === "pending") {
+    return NextResponse.json({
+      ok: true,
+      pending: true,
+      message: "Заявка вже надіслана. Очікуйте підтвердження оплати.",
+      redirect: "/cabinet",
+    });
+  }
+
+  const { error } = await requestPendingEnrollment(profile.id, course.id);
   if (error) {
-    return NextResponse.json({ error: "Не вдалося активувати курс" }, { status: 500 });
+    return NextResponse.json({ error: "Не вдалося створити заявку" }, { status: 500 });
   }
 
-  if (isNewPurchase) {
-    const origin = getSiteOrigin(request);
-    const firstName = profile.full_name?.split(" ")[0] ?? "Друже";
-    const template = renderPurchaseThankYouEmail({
-      firstName,
-      courseTitle: course.title,
-      cabinetUrl: `${origin}/cabinet`,
-    });
-
-    await sendEmail({
-      to: profile.email,
-      subject: template.subject,
-      html: template.html,
-    });
-
-    await notifyPurchase({
-      userName: profile.full_name ?? profile.email,
-      email: profile.email,
-      courseTitle: course.title,
-      priceUah: payPrice,
-    });
-  }
+  await notifyPurchaseRequest({
+    userName: profile.full_name ?? profile.email,
+    email: profile.email,
+    courseTitle: course.title,
+    priceUah: payPrice,
+  });
 
   return NextResponse.json({
     ok: true,
+    pending: true,
+    message:
+      "Заявку надіслано. Після перевірки оплати адміністратор відкриє курс у вашому кабінеті.",
     redirect: "/cabinet",
   });
 }

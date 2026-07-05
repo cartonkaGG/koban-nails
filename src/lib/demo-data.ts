@@ -41,6 +41,7 @@ export const DEMO_COURSES: Course[] = [
     ],
     payment_url: null,
     sort_order: 1,
+    archived_at: null,
   },
   {
     id: "3",
@@ -62,6 +63,7 @@ export const DEMO_COURSES: Course[] = [
     ],
     payment_url: null,
     sort_order: 2,
+    archived_at: null,
   },
 ];
 
