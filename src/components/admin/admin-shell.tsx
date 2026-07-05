@@ -30,7 +30,11 @@ export function AdminShell({
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[260px_1fr]">
-      <aside className={`glass fixed inset-y-0 left-0 z-50 w-[260px] transform p-5 transition-transform lg:static lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-[260px] border-r border-line bg-panel p-5 transition-transform lg:static lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
         <div className="mb-8 flex items-center justify-between">
           <div>
             <p className="eyebrow">Koban nails</p>
@@ -59,12 +63,10 @@ export function AdminShell({
         </nav>
 
         <div className="mt-8 rounded-lg border border-line bg-black/30 p-3 text-xs text-muted">
-          <p className="text-cream">{profile.full_name ?? profile.email}</p>
-          <p className="mt-1">{profile.email}</p>
-          <div className="mt-3 flex gap-2">
-            <Link href="/" className="btn btn-ghost min-h-9 px-3 text-xs">Сайт</Link>
-            <Link href="/cabinet" className="btn btn-ghost min-h-9 px-3 text-xs">Кабінет</Link>
-          </div>
+          <p className="truncate text-cream">{profile.full_name ?? profile.email}</p>
+          <Link href="/" className="btn btn-ghost mt-3 min-h-9 w-full px-3 text-xs">
+            На сайт
+          </Link>
         </div>
       </aside>
 
@@ -78,7 +80,7 @@ export function AdminShell({
       )}
 
       <div className="min-w-0">
-        <div className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line/60 bg-black/70 px-4 backdrop-blur-xl lg:hidden">
+        <div className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line/60 bg-panel px-4 lg:hidden">
           <button type="button" onClick={() => setOpen(true)} aria-label="Відкрити меню">
             <IconMenu />
           </button>

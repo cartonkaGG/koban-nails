@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/auth";
+import { getDemoEnrollmentsForUser } from "@/lib/demo-enrollments";
 import {
   DEMO_COURSES,
   DEMO_ENROLLMENTS,
@@ -89,7 +90,7 @@ export async function getLessonsForCourse(courseId: string, admin = false): Prom
 
 export async function getUserEnrollments(userId: string): Promise<Enrollment[]> {
   if (!isSupabaseConfigured()) {
-    return DEMO_ENROLLMENTS.filter((e) => e.user_id === userId);
+    return getDemoEnrollmentsForUser(userId);
   }
 
   const supabase = await createClient();
@@ -107,9 +108,8 @@ export async function getUserEnrollments(userId: string): Promise<Enrollment[]> 
 
 export async function getEnrollment(userId: string, courseId: string) {
   if (!isSupabaseConfigured()) {
-    return DEMO_ENROLLMENTS.find(
-      (e) => e.user_id === userId && e.course_id === courseId,
-    ) ?? null;
+    const enrollments = await getDemoEnrollmentsForUser(userId);
+    return enrollments.find((e) => e.user_id === userId && e.course_id === courseId) ?? null;
   }
 
   const supabase = await createClient();
@@ -165,6 +165,24 @@ export async function getAllProfiles() {
     .order("created_at", { ascending: false });
 
   return (data ?? []) as import("@/lib/types").Profile[];
+}
+
+export async function getRecentEnrollmentsAdmin(limit = 6) {
+  if (!isSupabaseConfigured()) {
+    return DEMO_ENROLLMENTS.map((e) => ({
+      ...e,
+      profile: DEMO_PROFILE,
+    })).slice(0, limit);
+  }
+
+  const supabase = await createAdminClient();
+  const { data } = await supabase
+    .from("enrollments")
+    .select("*, course:courses(*), profile:profiles(*)")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  return data ?? [];
 }
 
 export async function getAllEnrollmentsAdmin() {

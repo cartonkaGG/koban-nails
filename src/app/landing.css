@@ -41,6 +41,15 @@ body.menu-open { overflow: hidden; }
 
 .mobile-only { display: none; }
 
+.landing-nav-links-desktop { display: flex; }
+
+.landing-nav-cta {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 13px;
+}
+
 .landing-topbar,
 .landing-hero {
   color: var(--color-cream);
@@ -416,35 +425,27 @@ body.menu-open .landing-menu-btn .icon-close { display: block; }
 }
 
 @media (max-width: 920px) {
-  .landing-nav-cta { display: none; }
-  .landing-menu-btn { display: grid; place-items: center; }
+  :root { --nav-h: 56px; }
 
-  .landing-nav-links {
-    position: fixed;
-    top: calc(78px + var(--safe-top));
-    left: 16px;
-    right: 16px;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 12px;
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius);
-    background: rgba(7, 8, 6, 0.97);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px);
-    transition: opacity 0.2s var(--ease), transform 0.2s var(--ease), visibility 0.2s;
+  .landing-topbar { padding: calc(8px + var(--safe-top)) 12px 0; }
+
+  .landing-topbar-inner {
+    backdrop-filter: none;
+    background: rgba(7, 8, 6, 0.98);
   }
 
-  .landing-nav-links.open {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
+  .landing-nav {
+    gap: 12px;
+    padding: 0 12px;
   }
 
-  .landing-nav-links a,
-  .landing-nav-links button.landing-nav-auth-btn {
-    padding: 14px 16px;
+  .landing-nav-links-desktop { display: none; }
+
+  .landing-brand-mark-text { display: none; }
+
+  .landing-nav-cta {
+    min-height: 42px;
+    padding: 0 16px;
   }
 }
 
@@ -452,49 +453,59 @@ body.menu-open .landing-menu-btn .icon-close { display: block; }
   .landing-hero {
     min-height: auto;
     align-items: flex-end;
-    padding-top: calc(96px + var(--safe-top));
-    padding-bottom: 34px;
+    padding-top: calc(84px + var(--safe-top));
+    padding-bottom: 28px;
   }
 
   .landing-hero::before {
     background:
-      linear-gradient(180deg, rgba(7, 8, 6, 0.24) 0%, rgba(7, 8, 6, 0.42) 42%, rgba(7, 8, 6, 0.95) 82%),
+      linear-gradient(180deg, rgba(7, 8, 6, 0.3) 0%, rgba(7, 8, 6, 0.55) 38%, rgba(7, 8, 6, 0.96) 78%),
       url("/hero-koban-owner-mobile.webp") center top / cover no-repeat;
   }
 
   .landing-lead-full { display: none; }
   .landing-lead-short { display: block; }
   .mobile-only { display: block; }
-  .landing-hero-instagram { display: block; }
+  .landing-hero-instagram { display: none; }
   .landing-hero-consult { display: none; }
 
   .landing-hero-inner {
     width: 100%;
     max-width: 100%;
     margin-left: 0;
-    padding: 18px 0 0;
+    padding: 12px 0 0;
     background: transparent;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
   }
 
   .landing-h1 {
     max-width: 100%;
-    font-size: clamp(44px, 14vw, 58px);
-    line-height: 0.95;
+    margin-bottom: 14px;
+    font-size: clamp(38px, 12vw, 52px);
+    line-height: 0.98;
   }
 
   .landing-lead {
     max-width: 100%;
-    font-size: 15px;
-    line-height: 1.55;
+    margin-bottom: 18px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .landing-hero-meta {
+    margin-top: 0;
+    font-size: 11px;
   }
 
   .landing-hero-actions {
     flex-direction: column;
-    margin-top: 22px;
+    gap: 10px;
+    margin-top: 18px;
   }
 
   .landing-hero-actions .landing-btn {
     width: 100%;
+    min-height: 46px;
   }
 }
 

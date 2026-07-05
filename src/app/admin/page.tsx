@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { requireAdmin } from "@/lib/auth";
-import { getAdminStats, getAllEnrollmentsAdmin } from "@/lib/data";
+import { getAdminStats, getRecentEnrollmentsAdmin } from "@/lib/data";
 import { formatPrice } from "@/lib/types";
 
 export default async function AdminDashboardPage() {
@@ -15,7 +15,7 @@ export default async function AdminDashboardPage() {
 
   const [stats, enrollments] = await Promise.all([
     getAdminStats(),
-    getAllEnrollmentsAdmin(),
+    getRecentEnrollmentsAdmin(6),
   ]);
 
   return (

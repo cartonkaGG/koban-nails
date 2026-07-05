@@ -50,9 +50,6 @@ export function CabinetShell({
                 Адмін
               </Link>
             )}
-            <Link href="/cabinet/profile" className="cabinet-header-btn">
-              Профіль
-            </Link>
             <button type="button" className="cabinet-header-btn" onClick={logout}>
               Вийти
             </button>

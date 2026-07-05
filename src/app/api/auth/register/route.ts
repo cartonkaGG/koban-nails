@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendSignupConfirmationEmail, getSignupOrigin } from "@/lib/auth/signup-email";
+import { applyAuthCookieDefaults } from "@/lib/supabase/cookies";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { isResendConfigured } from "@/lib/resend/config";
 
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
       },
       setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
+          response.cookies.set(name, value, applyAuthCookieDefaults(options));
         });
       },
     },

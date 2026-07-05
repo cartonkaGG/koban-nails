@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { applyAuthCookieDefaults } from "@/lib/supabase/cookies";
 import {
   getSupabaseEnv,
   isAdminEmail,
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
       },
       setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, options);
+          response.cookies.set(name, value, applyAuthCookieDefaults(options));
         });
       },
     },

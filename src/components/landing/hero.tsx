@@ -1,15 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
 import { IconArrowRight } from "@/components/icons";
 
 export function LandingHero() {
-  useEffect(() => {
-    const el = document.getElementById("heroInner");
-    el?.classList.add("hero-loaded");
-  }, []);
-
   return (
     <section className="landing-hero">
       <div className="shell">
@@ -37,9 +31,6 @@ export function LandingHero() {
               Питання перед купівлею
             </Link>
           </div>
-          <p className="hero-line landing-hero-instagram">
-            <Link href="/#courses">Дивіться програми та ціни нижче</Link>
-          </p>
           <div className="hero-line landing-hero-proof" aria-label="Переваги та довіра">
             <div className="landing-hero-proof-item">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">

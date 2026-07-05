@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
   const supabase = await createAdminClient();
   const origin = getSiteOrigin(request);
-  const callbackUrl = `${origin}/auth/callback?next=${encodeURIComponent("/cabinet/profile")}`;
+  const callbackUrl = `${origin}/auth/callback?next=${encodeURIComponent("/cabinet")}`;
 
   const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
     type: "recovery",
