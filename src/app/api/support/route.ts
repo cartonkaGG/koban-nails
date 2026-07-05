@@ -6,6 +6,7 @@ import {
   getThreadInfo,
   linkTelegramMessage,
   openThread,
+  shouldFilterBySession,
 } from "@/lib/support/threads";
 
 export async function GET() {
@@ -36,13 +37,16 @@ export async function GET() {
     .order("created_at", { ascending: true })
     .limit(100);
 
-  if (thread.available && thread.sessionStartedAt) {
+  const filterSession = thread.available && shouldFilterBySession(thread.sessionStartedAt);
+
+  if (filterSession && thread.sessionStartedAt) {
     query = query.gte("created_at", thread.sessionStartedAt);
   }
 
-  const since = thread.available && thread.sessionStartedAt
-    ? thread.sessionStartedAt
-    : "1970-01-01T00:00:00.000Z";
+  const since =
+    filterSession && thread.sessionStartedAt
+      ? thread.sessionStartedAt
+      : "1970-01-01T00:00:00.000Z";
 
   const [{ data, error }, { count: unreadCount }] = await Promise.all([
     query,

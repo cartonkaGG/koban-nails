@@ -4,17 +4,20 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   closeThread,
   getThreadInfo,
+  insertAdminSupportMessage,
   linkTelegramMessage,
   openThread,
   resolveUserFromTelegramReply,
 } from "@/lib/support/threads";
 import { isTelegramConfigured } from "@/lib/telegram/config";
 import { notifySupportChatClosed } from "@/lib/telegram/send";
+import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 
 type TelegramUpdate = {
   message?: {
     text?: string;
     message_id?: number;
+    chat?: { id?: number };
     reply_to_message?: {
       text?: string;
       message_id?: number;
@@ -27,30 +30,51 @@ export async function POST(request: Request) {
   if (secret) {
     const header = request.headers.get("x-telegram-bot-api-secret-token");
     if (header !== secret) {
+      console.error("telegram webhook: forbidden (secret mismatch)");
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }
 
   if (!isTelegramConfigured()) {
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, skipped: "telegram_not_configured" });
   }
 
-  const update = (await request.json()) as TelegramUpdate;
+  if (!isSupabaseConfigured()) {
+    return NextResponse.json({ ok: true, skipped: "supabase_not_configured" });
+  }
+
+  if (!isSupabaseAdminConfigured()) {
+    console.error("telegram webhook: SUPABASE_SERVICE_ROLE_KEY is missing on server");
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 503 });
+  }
+
+  let update: TelegramUpdate;
+  try {
+    update = (await request.json()) as TelegramUpdate;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
   const replyText = update.message?.text?.trim();
   const replyTo = update.message?.reply_to_message;
   const messageId = update.message?.message_id;
 
   if (!replyText || !messageId) {
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, skipped: "not_a_text_message" });
   }
 
-  if (!isSupabaseConfigured()) {
-    return NextResponse.json({ ok: true });
-  }
+  const userId = await resolveUserFromTelegramReply(
+    replyTo?.message_id,
+    replyTo?.text,
+    replyText,
+  );
 
-  const userId = await resolveUserFromTelegramReply(replyTo?.message_id, replyTo?.text);
   if (!userId) {
-    return NextResponse.json({ ok: true });
+    console.error("telegram webhook: could not resolve user", {
+      replyToMessageId: replyTo?.message_id,
+      hasReplyText: Boolean(replyTo?.text),
+    });
+    return NextResponse.json({ ok: true, skipped: "user_not_resolved" });
   }
 
   const normalized = replyText.toLowerCase();
@@ -65,7 +89,7 @@ export async function POST(request: Request) {
       .eq("id", userId)
       .maybeSingle();
 
-    await notifySupportChatClosed({
+    const closed = await notifySupportChatClosed({
       userId,
       userName: profile?.full_name ?? profile?.email ?? "Користувач",
       email: profile?.email ?? "",
@@ -73,11 +97,15 @@ export async function POST(request: Request) {
       replyToMessageId: replyTo?.message_id,
     });
 
-    return NextResponse.json({ ok: true });
+    if (closed.messageId) {
+      await linkTelegramMessage(closed.messageId, userId);
+    }
+
+    return NextResponse.json({ ok: true, closed: true });
   }
 
   if (replyText.startsWith("/")) {
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, skipped: "command_ignored" });
   }
 
   const thread = await getThreadInfo(userId);
@@ -85,21 +113,26 @@ export async function POST(request: Request) {
     await openThread(userId);
   }
 
-  const supabase = await createAdminClient();
-  const { error } = await supabase.from("support_messages").insert({
-    user_id: userId,
+  const inserted = await insertAdminSupportMessage({
+    userId,
     body: replyText,
-    direction: "admin",
-    telegram_message_id: messageId,
-    read_at: null,
+    telegramMessageId: messageId,
   });
 
-  if (error) {
-    console.error("telegram webhook insert:", error.message);
-    return NextResponse.json({ ok: true });
+  if (!inserted.ok) {
+    console.error("telegram webhook insert:", inserted.error);
+    return NextResponse.json({ error: inserted.error }, { status: 500 });
   }
 
   await linkTelegramMessage(messageId, userId);
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, saved: true, userId });
+}
+
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    telegram: isTelegramConfigured(),
+    supabaseAdmin: isSupabaseAdminConfigured(),
+  });
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getThreadInfo } from "@/lib/support/threads";
+import { getThreadInfo, shouldFilterBySession } from "@/lib/support/threads";
 
 export async function GET() {
   const profile = await getProfile();
@@ -26,7 +26,7 @@ export async function GET() {
     .eq("direction", "admin")
     .is("read_at", null);
 
-  if (thread.available && thread.sessionStartedAt) {
+  if (thread.available && shouldFilterBySession(thread.sessionStartedAt) && thread.sessionStartedAt) {
     query = query.gte("created_at", thread.sessionStartedAt);
   }
 

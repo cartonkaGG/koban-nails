@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 
 export type SupportThreadStatus = "open" | "closed";
 
@@ -8,11 +9,18 @@ export type SupportThreadInfo = {
   available: boolean;
 };
 
+const SESSION_EPOCH = "1970-01-01T00:00:00.000Z";
+
 const DEFAULT_THREAD: SupportThreadInfo = {
   status: "open",
   sessionStartedAt: null,
   available: false,
 };
+
+export function shouldFilterBySession(sessionStartedAt: string | null) {
+  if (!sessionStartedAt) return false;
+  return new Date(sessionStartedAt).getTime() > new Date(SESSION_EPOCH).getTime() + 86_400_000;
+}
 
 export async function getThreadInfo(userId: string): Promise<SupportThreadInfo> {
   const supabase = await createAdminClient();
@@ -60,7 +68,7 @@ export async function openThread(userId: string) {
     await supabase.from("support_threads").insert({
       user_id: userId,
       status: "open",
-      session_started_at: now,
+      session_started_at: SESSION_EPOCH,
       updated_at: now,
     });
     return;
@@ -82,17 +90,13 @@ export async function openThread(userId: string) {
 
 export async function closeThread(userId: string, closedBy: "user" | "admin") {
   const supabase = await createAdminClient();
-  const { error } = await supabase.from("support_threads").upsert({
+  await supabase.from("support_threads").upsert({
     user_id: userId,
     status: "closed",
     closed_at: new Date().toISOString(),
     closed_by: closedBy,
     updated_at: new Date().toISOString(),
   });
-
-  if (error) {
-    /* table may not exist yet */
-  }
 }
 
 export async function linkTelegramMessage(telegramMessageId: number, userId: string) {
@@ -130,11 +134,22 @@ export async function getLastTelegramMessageId(userId: string): Promise<number |
   return msg?.telegram_message_id ?? null;
 }
 
-export async function resolveUserFromTelegramReply(replyToMessageId?: number, replyText?: string) {
-  if (replyText) {
-    const tagged = replyText.match(/#user:([0-9a-f-]{36})/i);
-    if (tagged?.[1]) return tagged[1];
-  }
+export function extractUserIdFromText(text?: string | null) {
+  if (!text) return null;
+  const tagged = text.match(/#user:([0-9a-f-]{36})/i);
+  return tagged?.[1] ?? null;
+}
+
+export async function resolveUserFromTelegramReply(
+  replyToMessageId?: number,
+  replyText?: string,
+  messageText?: string,
+) {
+  const fromMessage = extractUserIdFromText(messageText);
+  if (fromMessage) return fromMessage;
+
+  const fromReply = extractUserIdFromText(replyText);
+  if (fromReply) return fromReply;
 
   if (!replyToMessageId) return null;
 
@@ -157,4 +172,29 @@ export async function resolveUserFromTelegramReply(replyToMessageId?: number, re
   if (msg?.user_id) return msg.user_id;
 
   return null;
+}
+
+export async function insertAdminSupportMessage(params: {
+  userId: string;
+  body: string;
+  telegramMessageId: number;
+}) {
+  if (!isSupabaseAdminConfigured()) {
+    return { ok: false as const, error: "service_role_missing" };
+  }
+
+  const supabase = await createAdminClient();
+  const { error } = await supabase.from("support_messages").insert({
+    user_id: params.userId,
+    body: params.body,
+    direction: "admin",
+    telegram_message_id: params.telegramMessageId,
+    read_at: null,
+  });
+
+  if (error) {
+    return { ok: false as const, error: error.message };
+  }
+
+  return { ok: true as const };
 }
