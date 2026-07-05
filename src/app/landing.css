@@ -39,6 +39,14 @@
 
 body.menu-open { overflow: hidden; }
 
+#courses,
+#format,
+#reviews,
+#faq,
+#top {
+  scroll-margin-top: calc(var(--nav-h) + 24px + var(--safe-top));
+}
+
 .mobile-only { display: none; }
 
 .landing-nav-links-desktop { display: flex; }
@@ -426,6 +434,14 @@ body.menu-open .landing-menu-btn .icon-close { display: block; }
 
 @media (max-width: 920px) {
   :root { --nav-h: 56px; }
+
+  #courses,
+  #format,
+  #reviews,
+  #faq,
+  #top {
+    scroll-margin-top: calc(var(--nav-h) + 20px + var(--safe-top));
+  }
 
   .landing-topbar { padding: calc(8px + var(--safe-top)) 12px 0; }
 

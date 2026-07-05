@@ -3,21 +3,17 @@ import { LandingHero } from "@/components/landing/hero";
 import { LandingTopbar } from "@/components/landing/topbar";
 import { CourseGrid } from "@/components/course-grid";
 import { FooterAuthLink } from "@/components/auth/site-auth-button";
-import { getProfile } from "@/lib/auth";
 import { getPublishedCourses } from "@/lib/data";
 import { DEMO_COURSES } from "@/lib/demo-data";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 export default async function HomePage() {
-  const [profile, courses] = await Promise.all([
-    getProfile(),
-    getPublishedCourses().catch(() => DEMO_COURSES),
-  ]);
+  const courses = await getPublishedCourses().catch(() => DEMO_COURSES);
 
   return (
     <>
-      <LandingTopbar profile={profile} />
+      <LandingTopbar />
       <main id="top">
         <LandingHero />
         <CourseGrid courses={courses} />

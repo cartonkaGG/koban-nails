@@ -16,16 +16,12 @@ export function CourseGrid({ courses }: Props) {
   return (
     <section id="courses" className="py-16 sm:py-20">
       <div className="shell">
-        <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="eyebrow">програми</div>
-            <h2 className="mt-2 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl">Курси</h2>
-          </div>
-          <div className="max-w-xl">
-            <p className="text-sm leading-relaxed text-cream-body">
-              Навчайтесь у власному темпі. Після оплати курс відкривається у вашому кабінеті.
-            </p>
-          </div>
+        <div className="mb-10 max-w-3xl">
+          <div className="eyebrow">програми</div>
+          <h2 className="mt-2 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl">Курси</h2>
+          <p className="mt-3 text-left text-sm leading-relaxed text-cream-body">
+            Навчайтесь у власному темпі. Після оплати курс відкривається у вашому кабінеті.
+          </p>
         </div>
 
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">

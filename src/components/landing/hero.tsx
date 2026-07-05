@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { IconArrowRight } from "@/components/icons";
+import { SmoothAnchor } from "@/components/landing/smooth-anchor";
 
 export function LandingHero() {
   return (
@@ -23,13 +24,13 @@ export function LandingHero() {
             <span>Онлайн</span> · <span>Сертифікат</span> · <span>Підтримка</span>
           </p>
           <div className="hero-line landing-hero-actions">
-            <Link className="landing-btn landing-btn-sell" href="/#courses">
+            <SmoothAnchor id="courses" className="landing-btn landing-btn-sell">
               Обрати курс
               <IconArrowRight />
-            </Link>
-            <Link className="landing-btn landing-btn-ghost landing-hero-consult" href="/#faq">
+            </SmoothAnchor>
+            <SmoothAnchor id="faq" className="landing-btn landing-btn-ghost landing-hero-consult">
               Питання перед купівлею
-            </Link>
+            </SmoothAnchor>
           </div>
           <div className="hero-line landing-hero-proof" aria-label="Переваги та довіра">
             <div className="landing-hero-proof-item">
