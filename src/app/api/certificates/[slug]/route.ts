@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
-import { certificateFileName, generateCourseCertificatePdf } from "@/lib/certificate";
+import { certificateFileName, generateCourseCertificatePdf, humanizeCertificateError } from "@/lib/certificate";
 import { getCourseBySlug, getEnrollment, getLessonsForCourse } from "@/lib/data";
 import {
   getCompletedLessonIds,
@@ -85,6 +85,6 @@ export async function GET(
     });
   } catch (error) {
     console.error("certificate generate:", error);
-    return NextResponse.json({ error: "Не вдалося згенерувати сертифікат" }, { status: 500 });
+    return NextResponse.json({ error: humanizeCertificateError(error) }, { status: 500 });
   }
 }

@@ -2,8 +2,14 @@ import fs from "node:fs";
 import path from "node:path";
 import { PDFDocument, rgb } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
-import { resolveCourseImageUrl } from "@/lib/images";
+import sharp from "sharp";
+import { getStorageImagePath, isStorageImage, resolveCourseImageUrl } from "@/lib/images";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate } from "@/lib/types";
+
+const IMAGE_BUCKET = "course-images";
+const FONT_CDN_URL =
+  "https://cdn.jsdelivr.net/npm/@fontsource/noto-serif@5.2.9/files/noto-serif-cyrillic-400-normal.woff2";
 
 /** Text placement tuned for Koban Nails landscape certificate templates. */
 const LAYOUT = {
@@ -18,8 +24,18 @@ const LAYOUT = {
 
 let fontBytesCache: Uint8Array | null = null;
 
-function loadFontBytes() {
+async function loadFontBytes() {
   if (fontBytesCache) return fontBytesCache;
+
+  try {
+    const res = await fetch(FONT_CDN_URL);
+    if (res.ok) {
+      fontBytesCache = new Uint8Array(await res.arrayBuffer());
+      return fontBytesCache;
+    }
+  } catch {
+    // Fall back to bundled font for local dev.
+  }
 
   const fontPath = path.join(
     process.cwd(),
@@ -30,6 +46,30 @@ function loadFontBytes() {
 }
 
 async function fetchTemplateBytes(templateUrl: string) {
+  if (isStorageImage(templateUrl)) {
+    const storagePath = getStorageImagePath(templateUrl);
+
+    try {
+      const supabase = await createAdminClient();
+      const { data, error } = await supabase.storage.from(IMAGE_BUCKET).download(storagePath);
+      if (!error && data) {
+        return new Uint8Array(await data.arrayBuffer());
+      }
+    } catch {
+      // Fall through to public URL fetch.
+    }
+
+    const resolved = resolveCourseImageUrl(templateUrl);
+    if (resolved) {
+      const res = await fetch(resolved);
+      if (res.ok) {
+        return new Uint8Array(await res.arrayBuffer());
+      }
+    }
+
+    throw new Error("Failed to download certificate template from storage");
+  }
+
   const resolved = resolveCourseImageUrl(templateUrl);
   if (!resolved) {
     throw new Error("Certificate template URL is invalid");
@@ -37,10 +77,18 @@ async function fetchTemplateBytes(templateUrl: string) {
 
   const res = await fetch(resolved);
   if (!res.ok) {
-    throw new Error("Failed to load certificate template");
+    throw new Error(`Failed to load certificate template (${res.status})`);
   }
 
   return new Uint8Array(await res.arrayBuffer());
+}
+
+async function templateToPngBytes(templateBytes: Uint8Array) {
+  return sharp(Buffer.from(templateBytes))
+    .rotate()
+    .resize({ width: 3508, height: 2480, fit: "inside", withoutEnlargement: true })
+    .png()
+    .toBuffer();
 }
 
 function fitFontSize(
@@ -57,7 +105,13 @@ function fitFontSize(
   return size;
 }
 
-function centerTextX(text: string, font: Awaited<ReturnType<PDFDocument["embedFont"]>>, size: number, boxX: number, boxWidth: number) {
+function centerTextX(
+  text: string,
+  font: Awaited<ReturnType<PDFDocument["embedFont"]>>,
+  size: number,
+  boxX: number,
+  boxWidth: number,
+) {
   const textWidth = font.widthOfTextAtSize(text, size);
   return boxX + Math.max(0, (boxWidth - textWidth) / 2);
 }
@@ -67,20 +121,16 @@ export async function generateCourseCertificatePdf(input: {
   fullName: string;
   completedAt: string;
 }) {
-  const [templateBytes, pdfDoc] = await Promise.all([
-    fetchTemplateBytes(input.templateUrl),
-    PDFDocument.create(),
+  const templateBytes = await fetchTemplateBytes(input.templateUrl);
+  const [pngBytes, fontBytes] = await Promise.all([
+    templateToPngBytes(templateBytes),
+    loadFontBytes(),
   ]);
 
+  const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
-  const font = await pdfDoc.embedFont(loadFontBytes());
-
-  let image;
-  try {
-    image = await pdfDoc.embedPng(templateBytes);
-  } catch {
-    image = await pdfDoc.embedJpg(templateBytes);
-  }
+  const font = await pdfDoc.embedFont(fontBytes);
+  const image = await pdfDoc.embedPng(pngBytes);
 
   const width = image.width;
   const height = image.height;
@@ -123,4 +173,23 @@ export function certificateFileName(courseSlug: string, fullName: string) {
     .replace(/[^\p{L}\p{N}-]/gu, "")
     .slice(0, 40);
   return `certificate-${courseSlug}-${safeName || "student"}.pdf`;
+}
+
+export function humanizeCertificateError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+
+  if (lower.includes("certificate template") || lower.includes("download")) {
+    return "Не вдалося завантажити шаблон сертифіката. Перезавантажте його в адмінці.";
+  }
+
+  if (lower.includes("font") || lower.includes("woff")) {
+    return "Не вдалося завантажити шрифт для сертифіката. Спробуйте ще раз.";
+  }
+
+  if (lower.includes("input buffer") || lower.includes("unsupported") || lower.includes("sharp")) {
+    return "Формат шаблону не підтримується. Завантажте PNG або JPG.";
+  }
+
+  return "Не вдалося згенерувати сертифікат";
 }
