@@ -30,10 +30,10 @@ const LAYOUT = {
   nameY: 0.355,
   nameX: 0.08,
   nameWidth: 0.52,
-  /** Date sits on the right, above the QR code (see template red-line marker). */
+  /** Date on the right sleeve area — left of the QR code. */
   dateY: 0.835,
-  dateBoxX: 0.54,
-  dateBoxWidth: 0.34,
+  dateBoxX: 0.42,
+  dateBoxWidth: 0.24,
   gold: rgb(0.85, 0.7, 0.51),
   cream: rgb(0.92, 0.88, 0.82),
 };
@@ -43,17 +43,50 @@ type FontBytesBundle = {
   latin: Uint8Array;
 };
 
+type TextSegment = {
+  text: string;
+  kind: "latin" | "cyrillic";
+};
+
 type CertificateFonts = {
   cyrillic: PDFFont;
   latin: PDFFont;
 };
 
-type DateSegment = {
-  text: string;
-  kind: "latin" | "cyrillic";
-};
-
 let fontBytesBundle: FontBytesBundle | null = null;
+
+function fontKindForChar(char: string): "latin" | "cyrillic" {
+  const code = char.codePointAt(0) ?? 0;
+  if (code >= 0x0400 && code <= 0x04ff) return "cyrillic";
+  if (code >= 0x0500 && code <= 0x052f) return "cyrillic";
+  return "latin";
+}
+
+function splitTextByFont(text: string): TextSegment[] {
+  const segments: TextSegment[] = [];
+  let buffer = "";
+  let kind: "latin" | "cyrillic" | null = null;
+
+  for (const char of text) {
+    const nextKind = fontKindForChar(char);
+    if (kind === null) {
+      kind = nextKind;
+      buffer = char;
+      continue;
+    }
+
+    if (nextKind === kind) {
+      buffer += char;
+    } else {
+      segments.push({ text: buffer, kind });
+      buffer = char;
+      kind = nextKind;
+    }
+  }
+
+  if (buffer && kind) segments.push({ text: buffer, kind });
+  return segments;
+}
 
 function readFontFile(candidates: string[]) {
   for (const candidate of candidates) {
@@ -161,12 +194,8 @@ function fitFontSize(
   return size;
 }
 
-function centerTextX(text: string, font: PDFFont, size: number, boxX: number, boxWidth: number) {
-  const textWidth = font.widthOfTextAtSize(text, size);
-  return boxX + Math.max(0, (boxWidth - textWidth) / 2);
-}
 
-function getDateSegments(value: string): DateSegment[] | null {
+function getDateSegments(value: string): TextSegment[] | null {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
 
@@ -174,19 +203,20 @@ function getDateSegments(value: string): DateSegment[] | null {
     { text: `${date.getDate()} `, kind: "latin" },
     { text: MONTHS_UK[date.getMonth()], kind: "cyrillic" },
     { text: ` ${date.getFullYear()}`, kind: "latin" },
-    { text: " р.", kind: "cyrillic" },
+    { text: " р", kind: "cyrillic" },
+    { text: ".", kind: "latin" },
   ];
 }
 
-function measureSegments(segments: DateSegment[], fonts: CertificateFonts, size: number) {
+function measureSegments(segments: TextSegment[], fonts: CertificateFonts, size: number) {
   return segments.reduce((sum, segment) => {
     const font = segment.kind === "latin" ? fonts.latin : fonts.cyrillic;
     return sum + font.widthOfTextAtSize(segment.text, size);
   }, 0);
 }
 
-function fitDateSize(
-  segments: DateSegment[],
+function fitMixedSize(
+  segments: TextSegment[],
   fonts: CertificateFonts,
   maxWidth: number,
   preferred: number,
@@ -199,9 +229,27 @@ function fitDateSize(
   return size;
 }
 
-function drawSegmentsRightAligned(
+function drawSegments(
   page: ReturnType<PDFDocument["addPage"]>,
-  segments: DateSegment[],
+  segments: TextSegment[],
+  fonts: CertificateFonts,
+  startX: number,
+  y: number,
+  size: number,
+  color: ReturnType<typeof rgb>,
+) {
+  let x = startX;
+
+  for (const segment of segments) {
+    const font = segment.kind === "latin" ? fonts.latin : fonts.cyrillic;
+    page.drawText(segment.text, { x, y, size, font, color });
+    x += font.widthOfTextAtSize(segment.text, size);
+  }
+}
+
+function drawSegmentsCentered(
+  page: ReturnType<PDFDocument["addPage"]>,
+  segments: TextSegment[],
   fonts: CertificateFonts,
   boxX: number,
   boxWidth: number,
@@ -210,13 +258,21 @@ function drawSegmentsRightAligned(
   color: ReturnType<typeof rgb>,
 ) {
   const totalWidth = measureSegments(segments, fonts, size);
-  let x = boxX + Math.max(0, boxWidth - totalWidth);
+  drawSegments(page, segments, fonts, boxX + Math.max(0, (boxWidth - totalWidth) / 2), y, size, color);
+}
 
-  for (const segment of segments) {
-    const font = segment.kind === "latin" ? fonts.latin : fonts.cyrillic;
-    page.drawText(segment.text, { x, y, size, font, color });
-    x += font.widthOfTextAtSize(segment.text, size);
-  }
+function drawSegmentsRightAligned(
+  page: ReturnType<PDFDocument["addPage"]>,
+  segments: TextSegment[],
+  fonts: CertificateFonts,
+  boxX: number,
+  boxWidth: number,
+  y: number,
+  size: number,
+  color: ReturnType<typeof rgb>,
+) {
+  const totalWidth = measureSegments(segments, fonts, size);
+  drawSegments(page, segments, fonts, boxX + Math.max(0, boxWidth - totalWidth), y, size, color);
 }
 
 export async function generateCourseCertificatePdf(input: {
@@ -238,19 +294,13 @@ export async function generateCourseCertificatePdf(input: {
   page.drawImage(image, { x: 0, y: 0, width, height });
 
   const name = input.fullName.trim().toLocaleUpperCase("uk-UA");
+  const nameSegments = splitTextByFont(name);
   const nameBoxX = width * LAYOUT.nameX;
   const nameBoxWidth = width * LAYOUT.nameWidth;
-  const nameSize = fitFontSize(name, fonts.cyrillic, nameBoxWidth, height * 0.036, height * 0.02);
-  const nameX = centerTextX(name, fonts.cyrillic, nameSize, nameBoxX, nameBoxWidth);
+  const nameSize = fitMixedSize(nameSegments, fonts, nameBoxWidth, height * 0.036, height * 0.02);
   const nameY = height * (1 - LAYOUT.nameY);
 
-  page.drawText(name, {
-    x: nameX,
-    y: nameY,
-    size: nameSize,
-    font: fonts.cyrillic,
-    color: LAYOUT.gold,
-  });
+  drawSegmentsCentered(page, nameSegments, fonts, nameBoxX, nameBoxWidth, nameY, nameSize, LAYOUT.gold);
 
   const dateSegments = getDateSegments(input.completedAt);
   const dateBoxX = width * LAYOUT.dateBoxX;
@@ -258,7 +308,7 @@ export async function generateCourseCertificatePdf(input: {
   const dateY = height * (1 - LAYOUT.dateY);
 
   if (dateSegments) {
-    const dateSize = fitDateSize(dateSegments, fonts, dateBoxWidth, height * 0.02, height * 0.013);
+    const dateSize = fitMixedSize(dateSegments, fonts, dateBoxWidth, height * 0.02, height * 0.013);
     drawSegmentsRightAligned(page, dateSegments, fonts, dateBoxX, dateBoxWidth, dateY, dateSize, LAYOUT.cream);
   } else {
     const fallback = formatDate(input.completedAt);
