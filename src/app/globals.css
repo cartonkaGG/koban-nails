@@ -1410,3 +1410,64 @@ body.support-chat-open {
   padding: 2rem;
   color: var(--muted);
 }
+
+/* Student photo gallery */
+.student-gallery {
+  position: relative;
+  padding: 4rem 0 3.5rem;
+  overflow: hidden;
+}
+
+.student-gallery-grid {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  top: 6rem;
+  z-index: 0;
+  opacity: 0.14;
+  background-image:
+    linear-gradient(to right, rgb(212 175 55 / 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(212 175 55 / 0.35) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  mask-image: radial-gradient(ellipse 80% 55% at 50% 20%, #000 55%, transparent 100%);
+}
+
+.student-gallery-stage {
+  position: relative;
+  z-index: 1;
+  margin-top: 2.5rem;
+  margin-bottom: 1.5rem;
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (min-width: 768px) {
+  .student-gallery {
+    padding: 5rem 0 4rem;
+  }
+
+  .student-gallery-stage {
+    min-height: 340px;
+    margin-top: 3rem;
+  }
+}
+
+.gallery-photo-frame {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid rgb(212 175 55 / 0.35);
+  background: rgb(0 0 0 / 0.4);
+  box-shadow:
+    0 4px 24px rgb(0 0 0 / 0.45),
+    0 0 0 1px rgb(255 255 255 / 0.04) inset;
+}
+
+.gallery-photo:focus-visible .gallery-photo-frame {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
