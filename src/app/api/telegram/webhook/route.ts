@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isSupabaseConfigured } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isTelegramConfigured } from "@/lib/telegram/config";
 
@@ -14,8 +15,15 @@ type TelegramUpdate = {
 
 function extractUserId(text?: string) {
   if (!text) return null;
-  const match = text.match(/🆔\s*<code>([^<]+)<\/code>|🆔\s*([0-9a-f-]{36})/i);
-  return match?.[1] ?? match?.[2] ?? null;
+
+  const tagged = text.match(/#user:([0-9a-f-]{36})/i);
+  if (tagged?.[1]) return tagged[1];
+
+  const code = text.match(/<code>([0-9a-f-]{36})<\/code>/i);
+  if (code?.[1]) return code[1];
+
+  const uuid = text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  return uuid?.[0] ?? null;
 }
 
 export async function POST(request: Request) {
@@ -34,19 +42,32 @@ export async function POST(request: Request) {
   const update = (await request.json()) as TelegramUpdate;
   const replyText = update.message?.text?.trim();
   const replyTo = update.message?.reply_to_message?.text;
-  const userId = extractUserId(replyTo);
 
-  if (!replyText || !userId) {
+  if (!replyText || replyText.startsWith("/")) {
+    return NextResponse.json({ ok: true });
+  }
+
+  const userId = extractUserId(replyTo);
+  if (!userId) {
+    return NextResponse.json({ ok: true });
+  }
+
+  if (!isSupabaseConfigured()) {
     return NextResponse.json({ ok: true });
   }
 
   const supabase = await createAdminClient();
-  await supabase.from("support_messages").insert({
+  const { error } = await supabase.from("support_messages").insert({
     user_id: userId,
     body: replyText,
     direction: "admin",
     telegram_message_id: update.message?.message_id ?? null,
+    read_at: null,
   });
+
+  if (error) {
+    console.error("telegram webhook insert:", error.message);
+  }
 
   return NextResponse.json({ ok: true });
 }

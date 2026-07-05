@@ -17,7 +17,10 @@ export function SmoothAnchor({ id, onClick, children, ...props }: Props) {
     event.preventDefault();
 
     if (pathname === "/") {
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      const target = document.getElementById(id);
+      if (target) {
+        target.scrollIntoView({ behavior: "auto", block: "start" });
+      }
       window.history.replaceState(null, "", `#${id}`);
       return;
     }

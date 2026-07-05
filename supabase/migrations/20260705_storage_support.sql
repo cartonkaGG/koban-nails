@@ -25,6 +25,7 @@ create table if not exists public.support_messages (
   body text not null,
   direction text not null check (direction in ('user', 'admin')),
   telegram_message_id bigint,
+  read_at timestamptz,
   created_at timestamptz not null default now()
 );
 

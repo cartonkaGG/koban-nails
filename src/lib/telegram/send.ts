@@ -67,8 +67,11 @@ export async function notifySupportMessage(params: {
     `👤 ${escapeHtml(params.userName)}`,
     `📧 ${escapeHtml(params.email)}`,
     `🆔 <code>${params.userId}</code>`,
+    `#user:${params.userId}`,
     "",
     escapeHtml(params.body),
+    "",
+    "↩️ Відповідайте reply на це повідомлення",
   ].join("\n");
 
   return sendTelegramMessage(text);

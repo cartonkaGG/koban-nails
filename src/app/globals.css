@@ -628,6 +628,29 @@ body.auth-modal-open {
   cursor: pointer;
 }
 
+.support-chat-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #070806;
+  border-radius: 999px;
+  background: #e53935;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  animation: supportBadgePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes supportBadgePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
 .support-chat-panel {
   position: fixed;
   right: 16px;

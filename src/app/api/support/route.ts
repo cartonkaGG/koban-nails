@@ -14,18 +14,29 @@ export async function GET() {
   }
 
   const supabase = await createAdminClient();
-  const { data, error } = await supabase
-    .from("support_messages")
-    .select("id, body, direction, created_at")
-    .eq("user_id", profile.id)
-    .order("created_at", { ascending: true })
-    .limit(100);
+  const [{ data, error }, { count: unreadCount }] = await Promise.all([
+    supabase
+      .from("support_messages")
+      .select("id, body, direction, created_at, read_at")
+      .eq("user_id", profile.id)
+      .order("created_at", { ascending: true })
+      .limit(100),
+    supabase
+      .from("support_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", profile.id)
+      .eq("direction", "admin")
+      .is("read_at", null),
+  ]);
 
   if (error) {
-    return NextResponse.json({ messages: [] });
+    return NextResponse.json({ messages: [], unreadCount: 0 });
   }
 
-  return NextResponse.json({ messages: data ?? [] });
+  return NextResponse.json({
+    messages: data ?? [],
+    unreadCount: unreadCount ?? 0,
+  });
 }
 
 export async function POST(request: Request) {
