@@ -9,15 +9,33 @@ import { formatDate } from "@/lib/types";
 
 const IMAGE_BUCKET = "course-images";
 const FONT_CDN_URL =
-  "https://cdn.jsdelivr.net/npm/@fontsource/noto-serif@5.2.9/files/noto-serif-cyrillic-400-normal.woff2";
+  "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notoserif/NotoSerif-Regular.ttf";
+
+const MONTHS_UK = [
+  "січня",
+  "лютого",
+  "березня",
+  "квітня",
+  "травня",
+  "червня",
+  "липня",
+  "серпня",
+  "вересня",
+  "жовтня",
+  "листопада",
+  "грудня",
+];
 
 /** Text placement tuned for Koban Nails landscape certificate templates. */
 const LAYOUT = {
-  nameY: 0.405,
+  /** Fraction from top — baseline for student name (above gold underline). */
+  nameY: 0.355,
   nameX: 0.08,
   nameWidth: 0.52,
-  dateX: 0.12,
-  dateY: 0.875,
+  /** Date sits on the right, above the QR code (see template red-line marker). */
+  dateY: 0.835,
+  dateBoxX: 0.54,
+  dateBoxWidth: 0.34,
   gold: rgb(0.85, 0.7, 0.51),
   cream: rgb(0.92, 0.88, 0.82),
 };
@@ -39,7 +57,7 @@ async function loadFontBytes() {
 
   const fontPath = path.join(
     process.cwd(),
-    "node_modules/@fontsource/noto-serif/files/noto-serif-cyrillic-400-normal.woff2",
+    "node_modules/@fontsource/noto-serif/files/noto-serif-latin-400-normal.woff2",
   );
   fontBytesCache = new Uint8Array(fs.readFileSync(fontPath));
   return fontBytesCache;
@@ -116,6 +134,23 @@ function centerTextX(
   return boxX + Math.max(0, (boxWidth - textWidth) / 2);
 }
 
+function rightTextX(
+  text: string,
+  font: Awaited<ReturnType<PDFDocument["embedFont"]>>,
+  size: number,
+  boxX: number,
+  boxWidth: number,
+) {
+  const textWidth = font.widthOfTextAtSize(text, size);
+  return boxX + Math.max(0, boxWidth - textWidth);
+}
+
+function formatCertificateDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return formatDate(value);
+  return `${date.getDate()} ${MONTHS_UK[date.getMonth()]} ${date.getFullYear()} р.`;
+}
+
 export async function generateCourseCertificatePdf(input: {
   templateUrl: string;
   fullName: string;
@@ -138,11 +173,11 @@ export async function generateCourseCertificatePdf(input: {
 
   page.drawImage(image, { x: 0, y: 0, width, height });
 
-  const name = input.fullName.trim();
-  const dateLabel = formatDate(input.completedAt);
+  const name = input.fullName.trim().toLocaleUpperCase("uk-UA");
+  const dateLabel = formatCertificateDate(input.completedAt);
   const nameBoxX = width * LAYOUT.nameX;
   const nameBoxWidth = width * LAYOUT.nameWidth;
-  const nameSize = fitFontSize(name, font, nameBoxWidth, height * 0.034, height * 0.018);
+  const nameSize = fitFontSize(name, font, nameBoxWidth, height * 0.036, height * 0.02);
   const nameX = centerTextX(name, font, nameSize, nameBoxX, nameBoxWidth);
   const nameY = height * (1 - LAYOUT.nameY);
 
@@ -154,9 +189,12 @@ export async function generateCourseCertificatePdf(input: {
     color: LAYOUT.gold,
   });
 
-  const dateSize = fitFontSize(dateLabel, font, width * 0.25, height * 0.02, height * 0.012);
+  const dateBoxX = width * LAYOUT.dateBoxX;
+  const dateBoxWidth = width * LAYOUT.dateBoxWidth;
+  const dateSize = fitFontSize(dateLabel, font, dateBoxWidth, height * 0.02, height * 0.013);
+  const dateX = rightTextX(dateLabel, font, dateSize, dateBoxX, dateBoxWidth);
   page.drawText(dateLabel, {
-    x: width * LAYOUT.dateX,
+    x: dateX,
     y: height * (1 - LAYOUT.dateY),
     size: dateSize,
     font,
