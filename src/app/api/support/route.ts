@@ -1,139 +1,128 @@
 import { NextResponse } from "next/server";
-import { getProfile, isSupabaseConfigured } from "@/lib/auth";
+import { isSupabaseConfigured } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  actorTag,
+  attachGuestCookie,
+  enrichActor,
+  resolveSupportActor,
+  saveGuestName,
+} from "@/lib/support/actor";
 import { notifySupportMessage } from "@/lib/telegram/send";
 import {
   countUnreadAdminMessages,
+  fetchSupportMessages,
   forceOpenThread,
   getThreadInfo,
+  insertUserSupportMessage,
   linkTelegramMessage,
   openThread,
-  shouldFilterBySession,
 } from "@/lib/support/threads";
 
 export async function GET() {
-  const profile = await getProfile();
-  if (!profile) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  let actor = await resolveSupportActor();
+  actor = await enrichActor(actor);
 
   if (!isSupabaseConfigured()) {
-    return NextResponse.json({ messages: [], unreadCount: 0, status: "open" });
+    const response = NextResponse.json({
+      messages: [],
+      unreadCount: 0,
+      status: "open",
+      mode: actor.type,
+      displayName: actor.name,
+    });
+    if (actor.type === "guest") attachGuestCookie(response, actor.id);
+    return response;
   }
 
-  const supabase = await createAdminClient();
-  let thread = await getThreadInfo(profile.id);
+  let thread = await getThreadInfo(actor);
 
   if (thread.available && thread.status === "closed") {
-    const pending = await countUnreadAdminMessages(profile.id);
+    const pending = await countUnreadAdminMessages(actor);
     if (pending > 0) {
-      await forceOpenThread(profile.id);
-      thread = await getThreadInfo(profile.id);
+      await forceOpenThread(actor);
+      thread = await getThreadInfo(actor);
     } else {
-      return NextResponse.json({
+      const response = NextResponse.json({
         messages: [],
         unreadCount: 0,
         status: "closed",
+        mode: actor.type,
+        displayName: actor.name,
       });
+      if (actor.type === "guest") attachGuestCookie(response, actor.id);
+      return response;
     }
   }
 
-  let query = supabase
-    .from("support_messages")
-    .select("id, body, direction, created_at, read_at")
-    .eq("user_id", profile.id)
-    .order("created_at", { ascending: true })
-    .limit(100);
+  const { messages, unreadCount } = await fetchSupportMessages(actor, thread);
 
-  const filterSession = thread.available && shouldFilterBySession(thread.sessionStartedAt);
-
-  if (filterSession && thread.sessionStartedAt) {
-    query = query.gte("created_at", thread.sessionStartedAt);
-  }
-
-  const since =
-    filterSession && thread.sessionStartedAt
-      ? thread.sessionStartedAt
-      : "1970-01-01T00:00:00.000Z";
-
-  const [{ data, error }, { count: unreadCount }] = await Promise.all([
-    query,
-    supabase
-      .from("support_messages")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", profile.id)
-      .eq("direction", "admin")
-      .is("read_at", null)
-      .gte("created_at", since),
-  ]);
-
-  if (error) {
-    return NextResponse.json({ messages: [], unreadCount: 0, status: thread.status });
-  }
-
-  const messages = (data ?? []).filter((m) => !m.body.startsWith("— Чат завершено"));
-
-  return NextResponse.json({
+  const response = NextResponse.json({
     messages,
-    unreadCount: unreadCount ?? 0,
+    unreadCount,
     status: thread.status,
+    mode: actor.type,
+    displayName: actor.name,
   });
+  if (actor.type === "guest") attachGuestCookie(response, actor.id);
+  return response;
 }
 
 export async function POST(request: Request) {
-  const profile = await getProfile();
-  if (!profile) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const payload = await request.json();
+  const text = typeof payload.body === "string" ? payload.body.trim() : "";
+  const guestName = typeof payload.name === "string" ? payload.name.trim() : "";
 
-  const { body } = await request.json();
-  const text = typeof body === "string" ? body.trim() : "";
   if (text.length < 1 || text.length > 2000) {
     return NextResponse.json({ error: "Invalid message" }, { status: 400 });
   }
 
+  let actor = await resolveSupportActor();
+  if (actor.type === "guest" && guestName) {
+    await saveGuestName(actor.id, guestName);
+    actor = { ...actor, name: guestName };
+  } else {
+    actor = await enrichActor(actor);
+  }
+
   if (!isSupabaseConfigured()) {
     await notifySupportMessage({
-      userId: profile.id,
-      userName: profile.full_name ?? profile.email,
-      email: profile.email,
+      actorTag: actorTag(actor),
+      userName: actor.name,
+      email: actor.type === "user" ? actor.email : undefined,
+      isGuest: actor.type === "guest",
       body: text,
     });
-    return NextResponse.json({ ok: true, demo: true });
+    const response = NextResponse.json({ ok: true, demo: true });
+    if (actor.type === "guest") attachGuestCookie(response, actor.id);
+    return response;
   }
 
-  const thread = await getThreadInfo(profile.id);
+  const thread = await getThreadInfo(actor);
   if (thread.status === "closed") {
-    await openThread(profile.id);
+    await openThread(actor);
   }
 
-  const supabase = await createAdminClient();
-  const { data: saved, error } = await supabase
-    .from("support_messages")
-    .insert({
-      user_id: profile.id,
-      body: text,
-      direction: "user",
-    })
-    .select("id")
-    .single();
+  const { data: saved, error } = await insertUserSupportMessage(actor, text);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  await forceOpenThread(profile.id);
+  await forceOpenThread(actor);
 
   const telegram = await notifySupportMessage({
-    userId: profile.id,
-    userName: profile.full_name ?? profile.email,
-    email: profile.email,
+    actorTag: actorTag(actor),
+    userName: actor.name,
+    email: actor.type === "user" ? actor.email : undefined,
+    isGuest: actor.type === "guest",
     body: text,
   });
 
   if (telegram.messageId) {
-    await linkTelegramMessage(telegram.messageId, profile.id);
+    await linkTelegramMessage(telegram.messageId, actor);
     if (saved?.id) {
+      const supabase = await createAdminClient();
       await supabase
         .from("support_messages")
         .update({ telegram_message_id: telegram.messageId })
@@ -141,5 +130,7 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, status: "open" });
+  const response = NextResponse.json({ ok: true, status: "open", mode: actor.type });
+  if (actor.type === "guest") attachGuestCookie(response, actor.id);
+  return response;
 }

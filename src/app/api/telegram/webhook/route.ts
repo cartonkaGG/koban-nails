@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { isSupabaseConfigured } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { actorTag, enrichActor } from "@/lib/support/actor";
 import {
   closeThread,
   forceOpenThread,
   insertAdminSupportMessage,
   linkTelegramMessage,
-  resolveSupportUserFromTelegramUpdate,
+  resolveSupportActorFromTelegramUpdate,
 } from "@/lib/support/threads";
 import { getTelegramConfig, isTelegramConfigured } from "@/lib/telegram/config";
 import { notifySupportChatClosed } from "@/lib/telegram/send";
@@ -91,56 +92,70 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, skipped: "not_a_text_message" });
   }
 
-  const userId = await resolveSupportUserFromTelegramUpdate({
+  let actor = await resolveSupportActorFromTelegramUpdate({
     chatId,
     replyToMessageId: replyTo?.message_id,
     replyText: replyTo?.text,
     messageText: replyText,
   });
 
-  if (!userId) {
-    console.error("telegram webhook: user not resolved", {
+  if (!actor) {
+    console.error("telegram webhook: actor not resolved", {
       chatId,
       replyToMessageId: replyTo?.message_id,
     });
-    return NextResponse.json({ ok: true, skipped: "user_not_resolved" });
+    return NextResponse.json({ ok: true, skipped: "actor_not_resolved" });
   }
+
+  actor = await enrichActor(actor);
 
   const normalized = replyText.toLowerCase();
 
   if (normalized === "/close" || normalized === "close" || normalized === "закрити") {
-    await closeThread(userId, "admin");
+    await closeThread(actor, "admin");
 
-    const supabase = await createAdminClient();
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("id", userId)
-      .maybeSingle();
+    if (actor.type === "user") {
+      const supabase = await createAdminClient();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", actor.id)
+        .maybeSingle();
+
+      if (profile) {
+        actor = {
+          type: "user",
+          id: actor.id,
+          name: profile.full_name ?? profile.email,
+          email: profile.email,
+        };
+      }
+    }
 
     const closed = await notifySupportChatClosed({
-      userId,
-      userName: profile?.full_name ?? profile?.email ?? "Користувач",
-      email: profile?.email ?? "",
+      actorTag: actorTag(actor),
+      userName: actor.name,
+      email: actor.type === "user" ? actor.email : undefined,
+      isGuest: actor.type === "guest",
       closedBy: "admin",
       replyToMessageId: replyTo?.message_id,
     });
 
     if (closed.messageId) {
-      await linkTelegramMessage(closed.messageId, userId);
+      await linkTelegramMessage(closed.messageId, actor);
     }
 
-    return NextResponse.json({ ok: true, closed: true, userId });
+    return NextResponse.json({ ok: true, closed: true, actor: actor.type });
   }
 
   if (replyText.startsWith("/")) {
     return NextResponse.json({ ok: true, skipped: "command_ignored" });
   }
 
-  await forceOpenThread(userId);
+  await forceOpenThread(actor);
 
   const inserted = await insertAdminSupportMessage({
-    userId,
+    actor,
     body: replyText,
     telegramMessageId: messageId,
   });
@@ -150,9 +165,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: inserted.error }, { status: 500 });
   }
 
-  await linkTelegramMessage(messageId, userId);
+  await linkTelegramMessage(messageId, actor);
 
-  return NextResponse.json({ ok: true, saved: true, userId });
+  return NextResponse.json({ ok: true, saved: true, actor: actor.type });
 }
 
 export async function GET() {

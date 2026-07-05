@@ -57,30 +57,40 @@ export async function notifyPurchase(params: {
 }
 
 export async function notifySupportMessage(params: {
-  userId: string;
+  actorTag: string;
   userName: string;
-  email: string;
+  email?: string;
+  isGuest?: boolean;
   body: string;
 }) {
-  const text = [
+  const lines = [
     "💬 <b>Підтримка</b>",
     `👤 ${escapeHtml(params.userName)}`,
-    `📧 ${escapeHtml(params.email)}`,
-    `#user:${params.userId}`,
+  ];
+
+  if (params.isGuest) {
+    lines.push("🌐 Гість (без акаунту)");
+  } else if (params.email) {
+    lines.push(`📧 ${escapeHtml(params.email)}`);
+  }
+
+  lines.push(
+    params.actorTag,
     "",
     escapeHtml(params.body),
     "",
     "↩️ Reply на це повідомлення",
     "/close — завершити чат",
-  ].join("\n");
+  );
 
-  return sendTelegramMessage(text);
+  return sendTelegramMessage(lines.join("\n"));
 }
 
 export async function notifySupportChatClosed(params: {
-  userId: string;
+  actorTag: string;
   userName: string;
-  email: string;
+  email?: string;
+  isGuest?: boolean;
   closedBy: "user" | "admin";
   replyToMessageId?: number | null;
 }) {
@@ -89,17 +99,21 @@ export async function notifySupportChatClosed(params: {
       ? "Користувач завершив цей чат."
       : "Чат завершено підтримкою.";
 
-  const text = [
+  const lines = [
     "🔴 <b>Чат завершено</b>",
     "",
     `👤 ${escapeHtml(params.userName)}`,
-    `📧 ${escapeHtml(params.email)}`,
-    `#user:${params.userId}`,
-    "",
-    who,
-  ].join("\n");
+  ];
 
-  return sendTelegramMessage(text, {
+  if (params.isGuest) {
+    lines.push("🌐 Гість (без акаунту)");
+  } else if (params.email) {
+    lines.push(`📧 ${escapeHtml(params.email)}`);
+  }
+
+  lines.push(params.actorTag, "", who);
+
+  return sendTelegramMessage(lines.join("\n"), {
     replyToMessageId: params.replyToMessageId ?? undefined,
   });
 }

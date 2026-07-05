@@ -1,38 +1,49 @@
 import { NextResponse } from "next/server";
-import { getProfile, isSupabaseConfigured } from "@/lib/auth";
-import { closeThread, getLastTelegramMessageId, getThreadStatus } from "@/lib/support/threads";
+import { isSupabaseConfigured } from "@/lib/auth";
+import {
+  actorTag,
+  attachGuestCookie,
+  enrichActor,
+  resolveSupportActor,
+} from "@/lib/support/actor";
+import {
+  closeThread,
+  getLastTelegramMessageId,
+  getThreadStatus,
+} from "@/lib/support/threads";
 import { notifySupportChatClosed } from "@/lib/telegram/send";
 
 export async function POST() {
-  const profile = await getProfile();
-  if (!profile) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  let actor = await resolveSupportActor();
+  actor = await enrichActor(actor);
 
   if (!isSupabaseConfigured()) {
-    return NextResponse.json({ ok: true, demo: true, status: "closed" });
+    const response = NextResponse.json({ ok: true, demo: true, status: "closed" });
+    if (actor.type === "guest") attachGuestCookie(response, actor.id);
+    return response;
   }
 
-  await closeThread(profile.id, "user");
+  await closeThread(actor, "user");
 
-  const replyToMessageId = await getLastTelegramMessageId(profile.id);
+  const replyToMessageId = await getLastTelegramMessageId(actor);
   await notifySupportChatClosed({
-    userId: profile.id,
-    userName: profile.full_name ?? profile.email,
-    email: profile.email,
+    actorTag: actorTag(actor),
+    userName: actor.name,
+    email: actor.type === "user" ? actor.email : undefined,
+    isGuest: actor.type === "guest",
     closedBy: "user",
     replyToMessageId,
   });
 
-  return NextResponse.json({ ok: true, status: "closed", messages: [] });
+  const response = NextResponse.json({ ok: true, status: "closed", messages: [] });
+  if (actor.type === "guest") attachGuestCookie(response, actor.id);
+  return response;
 }
 
 export async function GET() {
-  const profile = await getProfile();
-  if (!profile) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const status = isSupabaseConfigured() ? await getThreadStatus(profile.id) : "open";
-  return NextResponse.json({ status });
+  const actor = await resolveSupportActor();
+  const status = isSupabaseConfigured() ? await getThreadStatus(actor) : "open";
+  const response = NextResponse.json({ status, mode: actor.type });
+  if (actor.type === "guest") attachGuestCookie(response, actor.id);
+  return response;
 }

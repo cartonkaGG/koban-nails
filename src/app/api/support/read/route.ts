@@ -1,24 +1,20 @@
 import { NextResponse } from "next/server";
-import { getProfile, isSupabaseConfigured } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseConfigured } from "@/lib/auth";
+import { attachGuestCookie, resolveSupportActor } from "@/lib/support/actor";
+import { markSupportMessagesRead } from "@/lib/support/threads";
 
 export async function POST() {
-  const profile = await getProfile();
-  if (!profile) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const actor = await resolveSupportActor();
 
   if (!isSupabaseConfigured()) {
-    return NextResponse.json({ ok: true });
+    const response = NextResponse.json({ ok: true });
+    if (actor.type === "guest") attachGuestCookie(response, actor.id);
+    return response;
   }
 
-  const supabase = await createAdminClient();
-  await supabase
-    .from("support_messages")
-    .update({ read_at: new Date().toISOString() })
-    .eq("user_id", profile.id)
-    .eq("direction", "admin")
-    .is("read_at", null);
+  await markSupportMessagesRead(actor);
 
-  return NextResponse.json({ ok: true });
+  const response = NextResponse.json({ ok: true });
+  if (actor.type === "guest") attachGuestCookie(response, actor.id);
+  return response;
 }

@@ -1,29 +1,42 @@
 import { NextResponse } from "next/server";
-import { getProfile, isSupabaseConfigured } from "@/lib/auth";
+import { isSupabaseConfigured } from "@/lib/auth";
+import {
+  attachGuestCookie,
+  enrichActor,
+  resolveSupportActor,
+} from "@/lib/support/actor";
+import {
+  countUnreadAdminMessages,
+  getThreadInfo,
+  shouldFilterBySession,
+} from "@/lib/support/threads";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { countUnreadAdminMessages, getThreadInfo, shouldFilterBySession } from "@/lib/support/threads";
 
 export async function GET() {
-  const profile = await getProfile();
-  if (!profile) {
-    return NextResponse.json({ loggedIn: false, unreadCount: 0 });
-  }
+  let actor = await resolveSupportActor();
 
   if (!isSupabaseConfigured()) {
-    return NextResponse.json({ loggedIn: true, unreadCount: 0 });
+    const response = NextResponse.json({ unreadCount: 0, mode: actor.type });
+    if (actor.type === "guest") attachGuestCookie(response, actor.id);
+    return response;
   }
 
-  const thread = await getThreadInfo(profile.id);
+  const thread = await getThreadInfo(actor);
+
   if (thread.available && thread.status === "closed") {
-    const pending = await countUnreadAdminMessages(profile.id);
-    return NextResponse.json({ loggedIn: true, unreadCount: pending });
+    const pending = await countUnreadAdminMessages(actor);
+    const response = NextResponse.json({ unreadCount: pending, mode: actor.type });
+    if (actor.type === "guest") attachGuestCookie(response, actor.id);
+    return response;
   }
 
   const supabase = await createAdminClient();
+  const idCol = actor.type === "user" ? "user_id" : "guest_id";
+
   let query = supabase
     .from("support_messages")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", profile.id)
+    .eq(idCol, actor.id)
     .eq("direction", "admin")
     .is("read_at", null);
 
@@ -33,12 +46,10 @@ export async function GET() {
 
   const { count, error } = await query;
 
-  if (error) {
-    return NextResponse.json({ loggedIn: true, unreadCount: 0 });
-  }
-
-  return NextResponse.json({
-    loggedIn: true,
-    unreadCount: count ?? 0,
+  const response = NextResponse.json({
+    unreadCount: error ? 0 : (count ?? 0),
+    mode: actor.type,
   });
+  if (actor.type === "guest") attachGuestCookie(response, actor.id);
+  return response;
 }

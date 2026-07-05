@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useAuthModal } from "@/components/auth/auth-modal-context";
 
 type Message = {
   id: string;
@@ -11,7 +10,8 @@ type Message = {
 };
 
 const POLL_OPEN_MS = 3000;
-const POLL_CLOSED_MS = 15000;
+const POLL_CLOSED_MS = 12000;
+const GUEST_NAME_KEY = "support_guest_name";
 
 function formatTime(iso: string) {
   try {
@@ -28,25 +28,35 @@ export function SupportChat() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
+  const [guestName, setGuestName] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [mode, setMode] = useState<"user" | "guest">("guest");
   const [sending, setSending] = useState(false);
   const [closing, setClosing] = useState(false);
-  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+  const [ready, setReady] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [threadStatus, setThreadStatus] = useState<"open" | "closed">("open");
   const listRef = useRef<HTMLDivElement>(null);
-  const { openAuth } = useAuthModal();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(GUEST_NAME_KEY);
+    if (saved) setGuestName(saved);
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      document.body.classList.add("support-chat-open");
+      return () => document.body.classList.remove("support-chat-open");
+    }
+  }, [open]);
 
   const checkUnread = useCallback(async () => {
     try {
       const res = await fetch("/api/support/unread", { cache: "no-store" });
       const data = await res.json();
-      if (data.loggedIn) {
-        setLoggedIn(true);
-        setUnreadCount(data.unreadCount ?? 0);
-      } else {
-        setLoggedIn(false);
-        setUnreadCount(0);
-      }
+      setUnreadCount(data.unreadCount ?? 0);
+      if (data.mode) setMode(data.mode);
     } catch {
       /* ignore */
     }
@@ -54,16 +64,15 @@ export function SupportChat() {
 
   const loadMessages = useCallback(async () => {
     const res = await fetch("/api/support", { cache: "no-store" });
-    if (res.status === 401) {
-      setLoggedIn(false);
-      setUnreadCount(0);
-      return;
-    }
-    setLoggedIn(true);
+    if (!res.ok) return;
+
+    setReady(true);
     const data = await res.json();
     setMessages(data.messages ?? []);
     setUnreadCount(data.unreadCount ?? 0);
     setThreadStatus(data.status === "closed" ? "closed" : "open");
+    if (data.mode) setMode(data.mode);
+    if (data.displayName) setDisplayName(data.displayName);
   }, []);
 
   const markRead = useCallback(async () => {
@@ -73,10 +82,9 @@ export function SupportChat() {
 
   useEffect(() => {
     checkUnread();
-    if (loggedIn === false) return;
     const timer = setInterval(checkUnread, open ? POLL_OPEN_MS : POLL_CLOSED_MS);
     return () => clearInterval(timer);
-  }, [open, checkUnread, loggedIn]);
+  }, [open, checkUnread]);
 
   useEffect(() => {
     if (unreadCount <= 0) return;
@@ -98,32 +106,40 @@ export function SupportChat() {
     }
   }, [messages, open, threadStatus]);
 
+  useEffect(() => {
+    if (open && inputRef.current && threadStatus !== "closed") {
+      inputRef.current.focus();
+    }
+  }, [open, threadStatus]);
+
   async function send() {
     const body = text.trim();
     if (!body || sending) return;
 
-    if (loggedIn === false) {
-      openAuth({ mode: "login" });
-      return;
+    setSending(true);
+    const payload: { body: string; name?: string } = { body };
+    if (mode === "guest" && guestName.trim()) {
+      payload.name = guestName.trim();
+      localStorage.setItem(GUEST_NAME_KEY, guestName.trim());
     }
 
-    setSending(true);
     const res = await fetch("/api/support", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body }),
+      body: JSON.stringify(payload),
     });
     setSending(false);
 
     if (res.ok) {
       setText("");
       setThreadStatus("open");
+      if (payload.name) setDisplayName(payload.name);
       await loadMessages();
     }
   }
 
   async function closeChat() {
-    if (closing || loggedIn === false) return;
+    if (closing) return;
     setClosing(true);
     const res = await fetch("/api/support/close", { method: "POST" });
     setClosing(false);
@@ -146,6 +162,7 @@ export function SupportChat() {
   }
 
   const isClosed = threadStatus === "closed";
+  const showGuestNameField = mode === "guest" && !displayName;
 
   return (
     <>
@@ -171,82 +188,108 @@ export function SupportChat() {
       </button>
 
       {open && (
-        <div className="support-chat-panel" role="dialog" aria-label="Чат підтримки">
-          <div className="support-chat-head">
-            <strong>Підтримка Koban nails</strong>
-            <button type="button" className="support-chat-close" onClick={() => setOpen(false)} aria-label="Закрити">
-              ×
-            </button>
-          </div>
-
-          {isClosed && (
-            <div className="support-chat-closed-banner">
-              Чат завершено. Напишіть нове повідомлення, щоб почати знову.
-            </div>
-          )}
-
-          <div className="support-chat-messages" ref={listRef}>
-            {loggedIn === false && (
-              <p className="support-chat-hint">
-                Увійдіть, щоб написати в підтримку. Відповідь прийде сюди.
-              </p>
-            )}
-            {isClosed && loggedIn !== false && (
-              <p className="support-chat-closed-state">Чат завершено</p>
-            )}
-            {messages.length === 0 && loggedIn !== false && !isClosed && (
-              <p className="support-chat-hint">Напишіть питання — відповімо якнайшвидше.</p>
-            )}
-            {messages.map((msg) => {
-              const isUser = msg.direction === "user";
-              return (
-                <div
-                  key={msg.id}
-                  className={`support-chat-row ${isUser ? "support-chat-row-user" : "support-chat-row-admin"}`}
-                >
-                  <div className="support-chat-meta">
-                    <span className="support-chat-sender">{isUser ? "Ви" : "Підтримка"}</span>
-                    <span className="support-chat-time">{formatTime(msg.created_at)}</span>
-                  </div>
-                  <div className={`support-chat-bubble ${isUser ? "mine" : "theirs"}`}>
-                    {msg.body}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="support-chat-footer">
-            {!isClosed && loggedIn !== false && (
-              <button type="button" className="support-chat-close-thread" onClick={closeChat} disabled={closing}>
-                {closing ? "..." : "Завершити чат"}
+        <>
+          <button
+            type="button"
+            className="support-chat-backdrop"
+            aria-label="Закрити чат"
+            onClick={() => setOpen(false)}
+          />
+          <div className="support-chat-panel" role="dialog" aria-label="Чат підтримки">
+            <div className="support-chat-head">
+              <div className="support-chat-head-text">
+                <strong>Підтримка</strong>
+                <span>Koban nails · онлайн</span>
+              </div>
+              <button type="button" className="support-chat-close" onClick={() => setOpen(false)} aria-label="Закрити">
+                ×
               </button>
+            </div>
+
+            {isClosed && (
+              <div className="support-chat-closed-banner">
+                Чат завершено. Напишіть нове повідомлення, щоб почати знову.
+              </div>
             )}
-            <div className="support-chat-input">
-              <input
-                className="field"
-                placeholder={
-                  loggedIn === false
-                    ? "Спочатку увійдіть..."
-                    : isClosed
+
+            <div className="support-chat-messages" ref={listRef}>
+              {!ready && <p className="support-chat-hint">Завантаження...</p>}
+              {ready && isClosed && (
+                <p className="support-chat-closed-state">Чат завершено</p>
+              )}
+              {ready && messages.length === 0 && !isClosed && (
+                <p className="support-chat-hint">
+                  Напишіть питання — відповімо якнайшвидше. Реєстрація не потрібна.
+                </p>
+              )}
+              {messages.map((msg) => {
+                const isUser = msg.direction === "user";
+                return (
+                  <div
+                    key={msg.id}
+                    className={`support-chat-row ${isUser ? "support-chat-row-user" : "support-chat-row-admin"}`}
+                  >
+                    <div className="support-chat-meta">
+                      <span className="support-chat-sender">{isUser ? "Ви" : "Підтримка"}</span>
+                      <span className="support-chat-time">{formatTime(msg.created_at)}</span>
+                    </div>
+                    <div className={`support-chat-bubble ${isUser ? "mine" : "theirs"}`}>
+                      {msg.body}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="support-chat-footer">
+              {!isClosed && (
+                <button type="button" className="support-chat-close-thread" onClick={closeChat} disabled={closing}>
+                  {closing ? "..." : "Завершити чат"}
+                </button>
+              )}
+
+              {showGuestNameField && (
+                <input
+                  className="field support-chat-name-field"
+                  placeholder="Ваше ім'я (необов'язково)"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  maxLength={80}
+                />
+              )}
+
+              <div className="support-chat-input">
+                <textarea
+                  ref={inputRef}
+                  className="field support-chat-textarea"
+                  rows={1}
+                  placeholder={
+                    isClosed
                       ? "Нове звернення..."
-                      : "Ваше повідомлення..."
-                }
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void send();
+                      : "Повідомлення..."
                   }
-                }}
-              />
-              <button type="button" className="btn btn-primary min-h-10 px-4" onClick={send} disabled={sending}>
-                {sending ? "..." : "→"}
-              </button>
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      void send();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-primary support-chat-send-btn"
+                  onClick={send}
+                  disabled={sending}
+                  aria-label="Надіслати"
+                >
+                  {sending ? "..." : "↑"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );
