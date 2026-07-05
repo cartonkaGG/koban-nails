@@ -32,6 +32,11 @@ export function CheckoutForm({ course }: { course: Course }) {
       return;
     }
 
+    if (data.pending && data.message) {
+      window.location.href = `${data.redirect ?? "/cabinet"}?pending=1`;
+      return;
+    }
+
     window.location.href = data.redirect ?? "/cabinet";
   }
 

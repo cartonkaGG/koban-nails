@@ -24,11 +24,17 @@ async function getCourseProgress(userId: string, lessonIds: string[]) {
   return Math.round(((count ?? 0) / lessonIds.length) * 100);
 }
 
-export default async function CabinetPage() {
+export default async function CabinetPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pending?: string }>;
+}) {
   const profile = await getProfile();
   if (!profile) redirect("/?auth=login&next=/cabinet");
 
+  const { pending: pendingQuery } = await searchParams;
   const enrollments = await getUserEnrollments(profile.id);
+  const pendingEnrollments = enrollments.filter((item) => item.status === "pending");
   const activeEnrollments = enrollments.filter(
     (item) => item.status === "active" && item.course?.format === "online",
   );
@@ -55,6 +61,22 @@ export default async function CabinetPage() {
             : "Після покупки курс з&apos;явиться тут."}
         </p>
       </div>
+
+      {(pendingQuery === "1" || pendingEnrollments.length > 0) && (
+        <div className="mb-6 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-cream-body">
+          {pendingEnrollments.length > 0 ? (
+            <>
+              Очікується підтвердження оплати:{" "}
+              <strong className="text-cream">
+                {pendingEnrollments.map((e) => e.course?.title).filter(Boolean).join(", ")}
+              </strong>
+              . Курс відкриється після перевірки адміністратором.
+            </>
+          ) : (
+            <>Заявку на оплату надіслано. Курс з&apos;явиться після підтвердження.</>
+          )}
+        </div>
+      )}
 
       {cards.length === 0 ? (
         <div className="cabinet-empty">

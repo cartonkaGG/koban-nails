@@ -56,6 +56,26 @@ export async function notifyPurchase(params: {
   await sendTelegramMessage(text);
 }
 
+export async function notifyPurchaseRequest(params: {
+  userName: string;
+  email: string;
+  courseTitle: string;
+  priceUah: number;
+}) {
+  const text = [
+    "⏳ <b>Заявка на оплату курсу</b>",
+    "",
+    `👤 ${escapeHtml(params.userName)}`,
+    `📧 ${escapeHtml(params.email)}`,
+    `📚 ${escapeHtml(params.courseTitle)}`,
+    `💰 ${params.priceUah.toLocaleString("uk-UA")} ₴`,
+    "",
+    "Підтвердіть оплату в адмін-панелі → Учні.",
+  ].join("\n");
+
+  await sendTelegramMessage(text);
+}
+
 export async function notifySupportMessage(params: {
   actorTag: string;
   userName: string;
