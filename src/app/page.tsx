@@ -3,6 +3,8 @@ import { LandingHero } from "@/components/landing/hero";
 import { LandingTopbar } from "@/components/landing/topbar";
 import { CourseGrid } from "@/components/course-grid";
 import { StudentGallery } from "@/components/landing/student-gallery";
+import { LandingFormatSection } from "@/components/landing/format-section";
+import { LandingReviewsSection } from "@/components/landing/reviews-section";
 import { FooterAuthLink } from "@/components/auth/site-auth-button";
 import { getPublishedCourses } from "@/lib/data";
 import { DEMO_COURSES } from "@/lib/demo-data";
@@ -20,54 +22,8 @@ export default async function HomePage() {
         <CourseGrid courses={courses} />
         <StudentGallery />
 
-        <section id="format" className="border-y border-line/60 py-16">
-          <div className="shell grid gap-8 lg:grid-cols-2">
-            <div className="card">
-              <div className="eyebrow">навчання</div>
-              <h2 className="mt-2 font-[family-name:var(--font-playfair)] text-3xl">
-                Від першого руху до готової роботи
-              </h2>
-              <p className="mt-4 text-sm leading-relaxed text-cream-body">
-                Теорія, практика і зворотний зв&apos;язок. Онлайн-уроки доступні 24/7 у кабінеті після оплати.
-              </p>
-            </div>
-            <div className="grid gap-4">
-              {[
-                ["Теорія без зайвого", "Матеріали, інструменти, стерилізація простими словами."],
-                ["Відпрацювання техніки", "Чистий зріз, рівне покриття, безпечна робота."],
-                ["Готовність до клієнтів", "Алгоритм роботи, портфоліо і впевненість у діях."],
-              ].map(([title, text], i) => (
-                <article key={title} className="card flex gap-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-line text-sm font-bold text-gold">
-                    {i + 1}
-                  </span>
-                  <div>
-                    <h3 className="font-medium">{title}</h3>
-                    <p className="mt-1 text-sm text-cream-body">{text}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="reviews" className="py-16">
-          <div className="shell">
-            <div className="eyebrow">відгуки</div>
-            <h2 className="mt-2 font-[family-name:var(--font-playfair)] text-3xl">Після курсу</h2>
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {[
-                "Після Online я нарешті зрозуміла послідовність і перестала боятися перших клієнтів.",
-                "Онлайн-формат зручний: дивлюсь уроки ввечері, а куратор коментує мої роботи.",
-                "Pro допоміг прибрати зайві рухи — стала швидше і чистіше працювати.",
-              ].map((text) => (
-                <article key={text} className="card text-sm leading-relaxed text-cream-body">
-                  {text}
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
+        <LandingFormatSection />
+        <LandingReviewsSection />
 
         <section id="faq" className="py-16">
           <div className="shell max-w-3xl">

@@ -15,6 +15,7 @@ type Props = {
 
 export function CourseGrid({ courses }: Props) {
   const visible = courses.filter((course) => course.format === "online");
+  const isSingle = visible.length === 1;
 
   return (
     <section id="courses" className="course-section py-16 sm:py-20">
@@ -32,8 +33,8 @@ export function CourseGrid({ courses }: Props) {
           className={`course-grid ${visible.length === 1 ? "course-grid-single" : ""}`}
         >
           {visible.map((course) => (
-            <MotionItem key={course.id}>
-              <CourseCard course={course} />
+            <MotionItem key={course.id} className={isSingle ? "course-grid-item-spotlight" : undefined}>
+              <CourseCard course={course} spotlight={isSingle} />
             </MotionItem>
           ))}
         </MotionStagger>
@@ -42,11 +43,13 @@ export function CourseGrid({ courses }: Props) {
   );
 }
 
-function CourseCard({ course }: { course: Course }) {
+function CourseCard({ course, spotlight = false }: { course: Course; spotlight?: boolean }) {
   const imageUrl = resolveCourseImageUrl(course.image_url);
 
   return (
-    <MotionCard className={`course-card ${course.featured ? "course-card-featured" : ""}`}>
+    <MotionCard
+      className={`course-card ${course.featured ? "course-card-featured" : ""} ${spotlight ? "course-card-spotlight" : ""}`}
+    >
       <div className="course-card-media">
         {imageUrl ? (
           <Image
@@ -54,7 +57,7 @@ function CourseCard({ course }: { course: Course }) {
             alt={course.title}
             fill
             className="object-cover"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            sizes={spotlight ? "(max-width: 768px) 100vw, 480px" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
           />
         ) : (
           <div className="course-card-media-fallback" aria-hidden="true" />
