@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, isSupabaseConfigured } from "@/lib/auth";
 import { buildCourseUpdatePayload, humanizeAdminDbError } from "@/lib/courses-admin";
+import { revalidateCoursesCatalog } from "@/lib/revalidate-courses";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
     ...body,
     title: body.title ?? "Новий курс",
     slug: body.slug ?? `course-${Date.now()}`,
-    published: false,
+    published: body.published ?? true,
   });
 
   const { data, error } = await supabase
@@ -44,5 +45,6 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: humanizeAdminDbError(error.message) }, { status: 400 });
   }
+  revalidateCoursesCatalog();
   return NextResponse.json(data);
 }

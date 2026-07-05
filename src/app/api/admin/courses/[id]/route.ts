@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, isSupabaseConfigured } from "@/lib/auth";
 import { buildCourseUpdatePayload, humanizeAdminDbError } from "@/lib/courses-admin";
+import { revalidateCoursesCatalog } from "@/lib/revalidate-courses";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { removeCourseStorage } from "@/lib/course-storage";
@@ -71,6 +72,7 @@ export async function PUT(
   if (error) {
     return NextResponse.json({ error: humanizeAdminDbError(error.message) }, { status: 400 });
   }
+  revalidateCoursesCatalog();
   return NextResponse.json({ ok: true });
 }
 
@@ -100,6 +102,7 @@ export async function PATCH(
       .eq("id", id);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    revalidateCoursesCatalog();
     return NextResponse.json({ ok: true, restored: true });
   }
 
@@ -176,6 +179,7 @@ export async function DELETE(
     await removeCourseStorage(supabase, id);
     const { error } = await supabase.from("courses").delete().eq("id", id);
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    revalidateCoursesCatalog();
     return NextResponse.json({ ok: true, purged: true, title: course.title });
   }
 
@@ -193,5 +197,6 @@ export async function DELETE(
     .eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  revalidateCoursesCatalog();
   return NextResponse.json({ ok: true, archived: true, title: course.title });
 }

@@ -33,15 +33,24 @@ export function CourseGrid({ courses }: Props) {
         </MotionFadeUp>
 
         <MotionStagger className={`course-grid ${isSingle ? "course-grid-single" : ""}`}>
-          {visible.map((course) => (
-            <MotionItem key={course.id}>
-              <CourseCard
-                course={course}
-                featured={isSingle || course.featured}
-                horizontal={isSingle}
-              />
-            </MotionItem>
-          ))}
+          {visible.length === 0 ? (
+            <div className="course-grid-empty card py-12 text-center">
+              <p className="text-cream-body">Наразі немає опублікованих онлайн-курсів.</p>
+              <p className="mt-2 text-sm text-muted">
+                У адмінці увімкніть «Опубліковано» і формат «Онлайн» для вашого курсу.
+              </p>
+            </div>
+          ) : (
+            visible.map((course) => (
+              <MotionItem key={course.id}>
+                <CourseCard
+                  course={course}
+                  featured={isSingle || course.featured}
+                  horizontal={isSingle}
+                />
+              </MotionItem>
+            ))
+          )}
         </MotionStagger>
       </div>
     </section>

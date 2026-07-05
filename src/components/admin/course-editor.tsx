@@ -428,6 +428,11 @@ export function CourseEditor({ course, lessons: initialLessons, enrollmentCount 
       {tab === "publish" && (
         <section className="card space-y-5">
           <p className="text-sm text-muted">Налаштування видимості та оплати.</p>
+          <p className="rounded-lg border border-gold/25 bg-gold/10 px-3 py-2 text-xs text-cream-body">
+            На головній показуються лише курси з форматом <strong className="text-cream">Онлайн</strong>,{" "}
+            увімкненим «Опубліковано» і без архівації. Після збереження зміни з&apos;являться на сайті
+            протягом хвилини.
+          </p>
 
           <div className="admin-toggle-list">
             <label className="admin-toggle-row">

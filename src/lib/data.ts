@@ -35,14 +35,13 @@ export async function getPublishedCourses(): Promise<Course[]> {
 
     if (error) {
       console.error("getPublishedCourses:", error.message);
-      return DEMO_COURSES;
+      return [];
     }
 
-    const courses = (data ?? []).map(mapCourse);
-    return courses.length > 0 ? courses : DEMO_COURSES;
+    return (data ?? []).map(mapCourse);
   } catch (error) {
     console.error("getPublishedCourses:", error);
-    return DEMO_COURSES;
+    return [];
   }
 }
 

@@ -7,12 +7,11 @@ import { LandingFormatSection } from "@/components/landing/format-section";
 import { LandingReviewsSection } from "@/components/landing/reviews-section";
 import { FooterAuthLink } from "@/components/auth/site-auth-button";
 import { getPublishedCourses } from "@/lib/data";
-import { DEMO_COURSES } from "@/lib/demo-data";
 
-export const revalidate = 120;
+export const revalidate = 60;
 
 export default async function HomePage() {
-  const courses = await getPublishedCourses().catch(() => DEMO_COURSES);
+  const courses = await getPublishedCourses();
 
   return (
     <>
