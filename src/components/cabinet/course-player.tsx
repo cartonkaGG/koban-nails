@@ -4,17 +4,22 @@ import { useMemo, useState } from "react";
 import type { Course, Lesson } from "@/lib/types";
 import { IconCheck } from "@/components/icons";
 import { LessonVideo } from "@/components/cabinet/lesson-video";
+import { CertificateDownloadButton } from "@/components/cabinet/certificate-download-button";
 
 type Props = {
   course: Course;
   lessons: Lesson[];
   completedLessonIds: string[];
+  certificateAvailable?: boolean;
+  userFullName?: string | null;
 };
 
 export function CoursePlayer({
   course,
   lessons,
   completedLessonIds: initialCompleted,
+  certificateAvailable = false,
+  userFullName,
 }: Props) {
   const [activeId, setActiveId] = useState(lessons[0]?.id ?? "");
   const [saving, setSaving] = useState(false);
@@ -59,9 +64,25 @@ export function CoursePlayer({
   const done = completedLessonIds.includes(activeLesson.id);
   const hasPrev = activeIndex > 0;
   const hasNext = activeIndex < lessons.length - 1;
+  const courseComplete = progress === 100;
+  const canDownloadCertificate = courseComplete && certificateAvailable;
+  const missingName = canDownloadCertificate && !userFullName?.trim();
 
   return (
     <div className="cabinet-player">
+      {canDownloadCertificate && (
+        <div className="certificate-complete-banner">
+          <div>
+            <p className="certificate-complete-title">Курс пройдено!</p>
+            <p className="certificate-complete-text">
+              {missingName
+                ? "Вкажіть ім'я та прізвище в профілі, щоб згенерувати сертифікат."
+                : "Ваш сертифікат готовий до завантаження у форматі PDF."}
+            </p>
+          </div>
+          {!missingName && <CertificateDownloadButton courseSlug={course.slug} />}
+        </div>
+      )}
       <div className="cabinet-player-head">
         <div className="cabinet-player-head-main">
           <p className="cabinet-player-eyebrow">{course.title}</p>

@@ -28,6 +28,7 @@ export type Course = {
   payment_url: string | null;
   sort_order: number;
   archived_at: string | null;
+  certificate_template_url: string | null;
 };
 
 export type Lesson = {

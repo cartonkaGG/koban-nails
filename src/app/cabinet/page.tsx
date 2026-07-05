@@ -6,6 +6,7 @@ import { getProfile, isSupabaseConfigured } from "@/lib/auth";
 import { getLessonsForCourse, getUserEnrollments } from "@/lib/data";
 import { resolveCourseImageUrl } from "@/lib/images";
 import { createClient } from "@/lib/supabase/server";
+import { CertificateDownloadButton } from "@/components/cabinet/certificate-download-button";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,9 @@ export default async function CabinetPage({
   const enrollments = await getUserEnrollments(profile.id);
   const pendingEnrollments = enrollments.filter((item) => item.status === "pending");
   const activeEnrollments = enrollments.filter(
-    (item) => item.status === "active" && item.course?.format === "online",
+    (item) =>
+      (item.status === "active" || item.status === "completed") &&
+      item.course?.format === "online",
   );
 
   const cards = await Promise.all(
@@ -114,6 +117,10 @@ export default async function CabinetPage({
                   <Link href={`/cabinet/courses/${course.slug}`} className="btn btn-primary cabinet-course-cta">
                     Переглянути курс
                   </Link>
+
+                  {progress === 100 && course.certificate_template_url && profile.full_name?.trim() && (
+                    <CertificateDownloadButton courseSlug={course.slug} compact />
+                  )}
                 </div>
               </article>
             </li>

@@ -6,12 +6,13 @@ import { useState } from "react";
 import type { Course, Lesson } from "@/lib/types";
 import { CourseArchiveDialog } from "@/components/admin/course-archive-dialog";
 import { CourseCoverUpload } from "@/components/admin/course-cover-upload";
+import { CertificateTemplateUpload } from "@/components/admin/certificate-template-upload";
 import { VideoUploadField } from "@/components/admin/video-upload";
 import { MotionPage } from "@/components/motion";
 import { resolveCourseImageUrl } from "@/lib/images";
 import Image from "next/image";
 
-type Tab = "overview" | "cover" | "lessons" | "publish";
+type Tab = "overview" | "cover" | "lessons" | "certificate" | "publish";
 
 type Props = {
   course: Course;
@@ -23,6 +24,7 @@ const TABS: { id: Tab; label: string; onlineOnly?: boolean }[] = [
   { id: "overview", label: "Основне" },
   { id: "cover", label: "Обкладинка" },
   { id: "lessons", label: "Уроки", onlineOnly: true },
+  { id: "certificate", label: "Сертифікат", onlineOnly: true },
   { id: "publish", label: "Публікація" },
 ];
 
@@ -422,6 +424,26 @@ export function CourseEditor({ course, lessons: initialLessons, enrollmentCount 
               );
             })
           )}
+        </section>
+      )}
+
+      {tab === "certificate" && courseState.format === "online" && (
+        <section className="card space-y-4">
+          <div>
+            <h3 className="font-medium">Шаблон сертифіката</h3>
+            <p className="mt-1 text-sm text-muted">
+              Завантажте пустий сертифікат без імені та дати. Після проходження всіх уроків учень
+              зможе згенерувати PDF зі своїм ім&apos;ям та датою завершення.
+            </p>
+          </div>
+          <CertificateTemplateUpload
+            courseId={course.id}
+            value={courseState.certificate_template_url}
+            onChange={(url) =>
+              setCourseState((prev) => ({ ...prev, certificate_template_url: url }))
+            }
+            onSaved={(url) => void saveCourse({ certificate_template_url: url })}
+          />
         </section>
       )}
 

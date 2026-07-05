@@ -31,7 +31,7 @@ export default async function CourseLearnPage({
     getLessonsForCourse(course.id),
   ]);
 
-  if (!enrollment || enrollment.status !== "active") {
+  if (!enrollment || !["active", "completed"].includes(enrollment.status)) {
     redirect("/cabinet");
   }
 
@@ -54,6 +54,8 @@ export default async function CourseLearnPage({
         course={course}
         lessons={lessons}
         completedLessonIds={completedLessonIds}
+        certificateAvailable={Boolean(course.certificate_template_url)}
+        userFullName={profile.full_name}
       />
     </CabinetShell>
   );

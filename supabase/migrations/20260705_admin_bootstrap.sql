@@ -6,6 +6,9 @@ alter table public.courses
 alter table public.courses
   add column if not exists archived_at timestamptz;
 
+alter table public.courses
+  add column if not exists certificate_template_url text;
+
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values (
   'course-images',

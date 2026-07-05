@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { markEnrollmentCompletedIfReady } from "@/lib/progress";
 
 export async function POST(request: Request) {
   const profile = await getProfile();
@@ -23,5 +24,22 @@ export async function POST(request: Request) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+
+  const { data: lesson } = await supabase
+    .from("lessons")
+    .select("course_id")
+    .eq("id", lessonId)
+    .maybeSingle();
+
+  if (lesson?.course_id) {
+    const { data: courseLessons } = await supabase
+      .from("lessons")
+      .select("id")
+      .eq("course_id", lesson.course_id);
+
+    const lessonIds = (courseLessons ?? []).map((row) => row.id as string);
+    await markEnrollmentCompletedIfReady(supabase, profile.id, lesson.course_id, lessonIds);
+  }
+
   return NextResponse.json({ ok: true });
 }

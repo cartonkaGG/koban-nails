@@ -1417,6 +1417,51 @@ body.support-chat-open {
   aspect-ratio: 16 / 10;
 }
 
+.course-cert-preview {
+  aspect-ratio: 1.414 / 1;
+  background: rgb(0 0 0 / 0.35);
+}
+
+.certificate-complete-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid rgb(215 180 106 / 0.35);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgb(215 180 106 / 0.12), rgb(13 16 13 / 0.8));
+}
+
+.certificate-complete-title {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  color: var(--color-gold);
+}
+
+.certificate-complete-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-cream-body);
+}
+
+.certificate-download-btn {
+  white-space: nowrap;
+}
+
+.certificate-download-error {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: #fca5a5;
+}
+
+.certificate-download-compact {
+  margin-top: 0.5rem;
+}
+
 .course-cover-overlay {
   position: absolute;
   inset: 0;

@@ -14,6 +14,7 @@ export type CourseUpdateInput = {
   payment_url?: unknown;
   sort_order?: unknown;
   image_url?: unknown;
+  certificate_template_url?: unknown;
 };
 
 function asString(value: unknown, fallback = "") {
@@ -60,6 +61,7 @@ export function buildCourseUpdatePayload(body: CourseUpdateInput) {
     payment_url: asNullableString(body.payment_url),
     sort_order: asInt(body.sort_order, 0),
     image_url: asNullableString(body.image_url),
+    certificate_template_url: asNullableString(body.certificate_template_url),
   };
 }
 
@@ -72,6 +74,10 @@ export function humanizeAdminDbError(message: string) {
 
   if (lower.includes("archived_at")) {
     return "Колонка archived_at відсутня в базі. Запустіть міграцію supabase/migrations/20260705_course_archived.sql у Supabase SQL Editor.";
+  }
+
+  if (lower.includes("certificate_template_url")) {
+    return "Колонка certificate_template_url відсутня в базі. Запустіть міграцію supabase/migrations/20260705_course_certificate.sql у Supabase SQL Editor.";
   }
 
   if (lower.includes("bucket") && lower.includes("not found")) {
