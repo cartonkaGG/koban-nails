@@ -1,15 +1,27 @@
-import { NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isAdminEmail, isSupabaseAdminConfigured } from "@/lib/supabase/config";
+import {
+  getSupabaseEnv,
+  isAdminEmail,
+  isSupabaseAdminConfigured,
+} from "@/lib/supabase/config";
 
-export async function POST(request: Request) {
+function getRedirectPath(value: unknown) {
+  if (typeof value !== "string") return "/cabinet";
+  if (!value.startsWith("/") || value.startsWith("//")) return "/cabinet";
+  return value;
+}
+
+export async function POST(request: NextRequest) {
   if (!isSupabaseAdminConfigured()) {
     return NextResponse.json({ error: "Supabase admin key is not configured" }, { status: 400 });
   }
 
-  const { email, password, repairUnconfirmedOnly } = await request.json();
+  const { email, password, redirectTo, repairUnconfirmedOnly } = await request.json();
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
   const normalizedPassword = typeof password === "string" ? password : "";
+  const safeRedirectTo = getRedirectPath(redirectTo);
 
   if (!normalizedEmail || normalizedPassword.length < 6) {
     return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
@@ -43,6 +55,7 @@ export async function POST(request: Request) {
     }
   }
 
+  const response = NextResponse.json({ ok: true, redirectTo: safeRedirectTo });
   const { data: createdUser, error } = await supabase.auth.admin.createUser({
     email: normalizedEmail,
     password: normalizedPassword,
@@ -69,5 +82,29 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true });
+  const { url, key } = getSupabaseEnv();
+  const sessionSupabase = createServerClient(url, key, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
+      },
+      setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
+      },
+    },
+  });
+
+  const { error: signInError } = await sessionSupabase.auth.signInWithPassword({
+    email: normalizedEmail,
+    password: normalizedPassword,
+  });
+
+  if (signInError) {
+    return NextResponse.json({ error: signInError.message }, { status: 400 });
+  }
+
+  response.cookies.delete("koban_demo_user");
+  return response;
 }

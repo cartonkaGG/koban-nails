@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 type Mode = "login" | "register";
@@ -21,6 +20,33 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const supabaseReady = isSupabaseConfigured();
 
+  async function authRequest(path: "/api/auth/login" | "/api/auth/register", repairUnconfirmedOnly = false) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
+
+    try {
+      const response = await fetch(path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, redirectTo: next, repairUnconfirmedOnly }),
+        signal: controller.signal,
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | { error?: string; redirectTo?: string }
+        | null;
+
+      return {
+        ok: response.ok,
+        error: result?.error,
+        redirectTo: result?.redirectTo ?? next,
+        status: response.status,
+      };
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
+
   async function demoLogin() {
     const role = email.toLowerCase().includes("admin") ? "admin" : "student";
     const res = await fetch("/api/demo-login", {
@@ -33,30 +59,7 @@ export default function LoginForm() {
       throw new Error("Не вдалося увійти в демо-режим");
     }
 
-    window.location.href = role === "admin" ? "/admin" : next;
-  }
-
-  async function createConfirmedAccount(repairUnconfirmedOnly = false) {
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 12000);
-
-    const registerResponse = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, repairUnconfirmedOnly }),
-      signal: controller.signal,
-    });
-    window.clearTimeout(timeout);
-
-    const result = (await registerResponse.json().catch(() => null)) as
-      | { error?: string }
-      | null;
-
-    return {
-      ok: registerResponse.ok,
-      error: result?.error,
-      status: registerResponse.status,
-    };
+    window.location.assign(role === "admin" ? "/admin" : next);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -75,25 +78,20 @@ export default function LoginForm() {
     }
 
     try {
-      const supabase = createClient();
-
       if (mode === "register") {
-        const registerResult = await createConfirmedAccount();
+        const registerResult = await authRequest("/api/auth/register");
 
         if (!registerResult.ok) {
           if (registerResult.status === 409) {
-            const { error: existingSignInError } = await supabase.auth.signInWithPassword({
-              email,
-              password,
-            });
+            const loginResult = await authRequest("/api/auth/login");
 
-            if (!existingSignInError) {
-              window.location.assign(next);
+            if (loginResult.ok) {
+              window.location.assign(loginResult.redirectTo);
               return;
             }
 
             setStatus("error");
-            setError("Акаунт уже існує, але пароль не підходить. Видаліть старий акаунт у Supabase або змініть пароль.");
+            setError(loginResult.error ?? "Акаунт уже існує, але пароль не підходить.");
             return;
           }
 
@@ -102,47 +100,26 @@ export default function LoginForm() {
           return;
         }
 
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        window.location.assign(registerResult.redirectTo);
+        return;
+      }
 
-        if (!signInError) {
-          window.location.assign(next);
+      const loginResult = await authRequest("/api/auth/login");
+
+      if (!loginResult.ok) {
+        const repairResult = await authRequest("/api/auth/register", true);
+
+        if (repairResult.ok) {
+          window.location.assign(repairResult.redirectTo);
           return;
         }
 
         setStatus("error");
-        setError("Акаунт створено. Увійдіть з email і паролем.");
+        setError(loginResult.error ?? "Невірний email або пароль.");
         return;
       }
 
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (authError) {
-        const repairResult = await createConfirmedAccount(true);
-
-        if (repairResult.ok) {
-          const { error: repairedSignInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-
-          if (!repairedSignInError) {
-            window.location.assign(next);
-            return;
-          }
-        }
-
-        setStatus("error");
-        setError("Невірний email або пароль.");
-        return;
-      }
-
-      window.location.assign(next);
+      window.location.assign(loginResult.redirectTo);
     } catch (err) {
       setStatus("error");
       setError(
