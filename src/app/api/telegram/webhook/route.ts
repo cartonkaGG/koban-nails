@@ -3,11 +3,13 @@ import { isSupabaseConfigured } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   closeThread,
+  getThreadInfo,
   linkTelegramMessage,
+  openThread,
   resolveUserFromTelegramReply,
 } from "@/lib/support/threads";
 import { isTelegramConfigured } from "@/lib/telegram/config";
-import { sendTelegramMessage } from "@/lib/telegram/send";
+import { notifySupportChatClosed } from "@/lib/telegram/send";
 
 type TelegramUpdate = {
   message?: {
@@ -57,19 +59,30 @@ export async function POST(request: Request) {
     await closeThread(userId, "admin");
 
     const supabase = await createAdminClient();
-    await supabase.from("support_messages").insert({
-      user_id: userId,
-      body: "— Чат завершено підтримкою —",
-      direction: "admin",
-      read_at: null,
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", userId)
+      .maybeSingle();
+
+    await notifySupportChatClosed({
+      userId,
+      userName: profile?.full_name ?? profile?.email ?? "Користувач",
+      email: profile?.email ?? "",
+      closedBy: "admin",
+      replyToMessageId: replyTo?.message_id,
     });
 
-    await sendTelegramMessage("✅ Чат з учнем завершено.");
     return NextResponse.json({ ok: true });
   }
 
   if (replyText.startsWith("/")) {
     return NextResponse.json({ ok: true });
+  }
+
+  const thread = await getThreadInfo(userId);
+  if (thread.status === "closed") {
+    await openThread(userId);
   }
 
   const supabase = await createAdminClient();

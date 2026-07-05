@@ -3,8 +3,7 @@ import { getProfile, isSupabaseConfigured } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifySupportMessage } from "@/lib/telegram/send";
 import {
-  closeThread,
-  getThreadStatus,
+  getThreadInfo,
   linkTelegramMessage,
   openThread,
 } from "@/lib/support/threads";
@@ -20,25 +19,44 @@ export async function GET() {
   }
 
   const supabase = await createAdminClient();
-  const status = await getThreadStatus(profile.id);
+  const thread = await getThreadInfo(profile.id);
+
+  if (thread.available && thread.status === "closed") {
+    return NextResponse.json({
+      messages: [],
+      unreadCount: 0,
+      status: "closed",
+    });
+  }
+
+  let query = supabase
+    .from("support_messages")
+    .select("id, body, direction, created_at, read_at")
+    .eq("user_id", profile.id)
+    .order("created_at", { ascending: true })
+    .limit(100);
+
+  if (thread.available && thread.sessionStartedAt) {
+    query = query.gte("created_at", thread.sessionStartedAt);
+  }
+
+  const since = thread.available && thread.sessionStartedAt
+    ? thread.sessionStartedAt
+    : "1970-01-01T00:00:00.000Z";
 
   const [{ data, error }, { count: unreadCount }] = await Promise.all([
-    supabase
-      .from("support_messages")
-      .select("id, body, direction, created_at, read_at")
-      .eq("user_id", profile.id)
-      .order("created_at", { ascending: true })
-      .limit(100),
+    query,
     supabase
       .from("support_messages")
       .select("id", { count: "exact", head: true })
       .eq("user_id", profile.id)
       .eq("direction", "admin")
-      .is("read_at", null),
+      .is("read_at", null)
+      .gte("created_at", since),
   ]);
 
   if (error) {
-    return NextResponse.json({ messages: [], unreadCount: 0, status });
+    return NextResponse.json({ messages: [], unreadCount: 0, status: thread.status });
   }
 
   const messages = (data ?? []).filter((m) => !m.body.startsWith("— Чат завершено"));
@@ -46,7 +64,7 @@ export async function GET() {
   return NextResponse.json({
     messages,
     unreadCount: unreadCount ?? 0,
-    status,
+    status: thread.status,
   });
 }
 
@@ -72,8 +90,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, demo: true });
   }
 
-  const status = await getThreadStatus(profile.id);
-  if (status === "closed") {
+  const thread = await getThreadInfo(profile.id);
+  if (thread.status === "closed") {
     await openThread(profile.id);
   }
 
@@ -91,8 +109,6 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
-
-  await openThread(profile.id);
 
   const telegram = await notifySupportMessage({
     userId: profile.id,

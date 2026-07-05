@@ -1,12 +1,17 @@
--- Support threads (open/close) + Telegram message ID mapping
+-- Support chat: threads, Telegram links, session tracking
+-- Run this ONCE in Supabase SQL Editor (safe to re-run)
 
 create table if not exists public.support_threads (
   user_id uuid primary key references public.profiles(id) on delete cascade,
   status text not null default 'open' check (status in ('open', 'closed')),
+  session_started_at timestamptz not null default now(),
   closed_at timestamptz,
   closed_by text check (closed_by in ('user', 'admin')),
   updated_at timestamptz not null default now()
 );
+
+alter table public.support_threads
+  add column if not exists session_started_at timestamptz not null default now();
 
 create table if not exists public.support_tg_links (
   telegram_message_id bigint primary key,
@@ -31,3 +36,8 @@ create policy "support_threads_update_own_or_admin" on public.support_threads
 drop policy if exists "support_threads_insert_own_or_admin" on public.support_threads;
 create policy "support_threads_insert_own_or_admin" on public.support_threads
   for insert with check (auth.uid() = user_id or public.is_admin());
+
+-- Fix open threads: don't hide messages due to bad session_started_at
+update public.support_threads
+set session_started_at = '1970-01-01'::timestamptz
+where status = 'open';
