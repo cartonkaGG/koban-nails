@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/emails/send";
 import { renderResetPasswordEmail } from "@/lib/emails/templates";
-import { getSiteOrigin } from "@/lib/site-url";
+import { fixAuthActionLink, getSiteOrigin } from "@/lib/site-url";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { isResendConfigured } from "@/lib/resend/config";
 
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
 
   const template = renderResetPasswordEmail({
     firstName,
-    resetUrl: linkData.properties.action_link,
+    resetUrl: fixAuthActionLink(linkData.properties.action_link, origin),
   });
 
   await sendEmail({

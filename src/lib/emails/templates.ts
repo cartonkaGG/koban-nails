@@ -21,7 +21,7 @@ export function renderEmailLayout({
     ctaLabel && ctaUrl
       ? `
         <tr>
-          <td style="padding: 8px 0 28px;">
+          <td align="center" style="padding: 8px 32px 28px; text-align: center;">
             <a href="${ctaUrl}" style="display: inline-block; background: linear-gradient(135deg, #d7b46a 0%, #e4c780 100%); color: #070806; text-decoration: none; font-weight: 700; font-size: 15px; padding: 14px 28px; border-radius: 10px; letter-spacing: 0.02em;">
               ${ctaLabel}
             </a>

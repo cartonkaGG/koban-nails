@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/emails/send";
 import { renderConfirmEmailEmail } from "@/lib/emails/templates";
-import { getSiteOrigin } from "@/lib/site-url";
+import { fixAuthActionLink, getSiteOrigin } from "@/lib/site-url";
 
 type Params = {
   email: string;
@@ -59,10 +59,12 @@ export async function sendSignupConfirmationEmail(params: Params) {
     return { ok: false as const, error: linkError.message };
   }
 
-  const confirmUrl = linkData.properties?.action_link;
-  if (!confirmUrl) {
+  const rawConfirmUrl = linkData.properties?.action_link;
+  if (!rawConfirmUrl) {
     return { ok: false as const, error: "Не вдалося створити посилання підтвердження." };
   }
+
+  const confirmUrl = fixAuthActionLink(rawConfirmUrl, params.origin);
 
   const template = renderConfirmEmailEmail({
     firstName: params.firstName,
