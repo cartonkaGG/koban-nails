@@ -3,6 +3,8 @@ import { getProfile, isSupabaseConfigured } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notifySupportMessage } from "@/lib/telegram/send";
 import {
+  countUnreadAdminMessages,
+  forceOpenThread,
   getThreadInfo,
   linkTelegramMessage,
   openThread,
@@ -20,14 +22,20 @@ export async function GET() {
   }
 
   const supabase = await createAdminClient();
-  const thread = await getThreadInfo(profile.id);
+  let thread = await getThreadInfo(profile.id);
 
   if (thread.available && thread.status === "closed") {
-    return NextResponse.json({
-      messages: [],
-      unreadCount: 0,
-      status: "closed",
-    });
+    const pending = await countUnreadAdminMessages(profile.id);
+    if (pending > 0) {
+      await forceOpenThread(profile.id);
+      thread = await getThreadInfo(profile.id);
+    } else {
+      return NextResponse.json({
+        messages: [],
+        unreadCount: 0,
+        status: "closed",
+      });
+    }
   }
 
   let query = supabase
@@ -113,6 +121,8 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
+
+  await forceOpenThread(profile.id);
 
   const telegram = await notifySupportMessage({
     userId: profile.id,

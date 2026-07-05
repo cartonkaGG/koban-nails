@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getThreadInfo, shouldFilterBySession } from "@/lib/support/threads";
+import { countUnreadAdminMessages, getThreadInfo, shouldFilterBySession } from "@/lib/support/threads";
 
 export async function GET() {
   const profile = await getProfile();
@@ -15,7 +15,8 @@ export async function GET() {
 
   const thread = await getThreadInfo(profile.id);
   if (thread.available && thread.status === "closed") {
-    return NextResponse.json({ loggedIn: true, unreadCount: 0 });
+    const pending = await countUnreadAdminMessages(profile.id);
+    return NextResponse.json({ loggedIn: true, unreadCount: pending });
   }
 
   const supabase = await createAdminClient();

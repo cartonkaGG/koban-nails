@@ -79,6 +79,12 @@ export function SupportChat() {
   }, [open, checkUnread, loggedIn]);
 
   useEffect(() => {
+    if (unreadCount <= 0) return;
+    void loadMessages();
+    setThreadStatus("open");
+  }, [unreadCount, loadMessages]);
+
+  useEffect(() => {
     if (!open) return;
     loadMessages();
     markRead();

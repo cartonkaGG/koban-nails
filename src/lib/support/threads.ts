@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
+import { getTelegramConfig } from "@/lib/telegram/config";
 
 export type SupportThreadStatus = "open" | "closed";
 
@@ -48,6 +49,19 @@ export async function getThreadInfo(userId: string): Promise<SupportThreadInfo> 
 export async function getThreadStatus(userId: string): Promise<SupportThreadStatus> {
   const { status } = await getThreadInfo(userId);
   return status;
+}
+
+export async function forceOpenThread(userId: string) {
+  const supabase = await createAdminClient();
+  const now = new Date().toISOString();
+
+  await supabase.from("support_threads").upsert({
+    user_id: userId,
+    status: "open",
+    closed_at: null,
+    closed_by: null,
+    updated_at: now,
+  });
 }
 
 /** Start a new visible session only when reopening a closed chat. */
@@ -140,6 +154,16 @@ export function extractUserIdFromText(text?: string | null) {
   return tagged?.[1] ?? null;
 }
 
+export function isAdminTelegramChat(chatId?: number) {
+  if (chatId == null) return false;
+  try {
+    const { chatId: adminChatId } = getTelegramConfig();
+    return String(chatId) === String(adminChatId);
+  } catch {
+    return false;
+  }
+}
+
 export async function resolveUserFromTelegramReply(
   replyToMessageId?: number,
   replyText?: string,
@@ -151,14 +175,38 @@ export async function resolveUserFromTelegramReply(
   const fromReply = extractUserIdFromText(replyText);
   if (fromReply) return fromReply;
 
-  if (!replyToMessageId) return null;
+  if (replyToMessageId) {
+    const supabase = await createAdminClient();
 
+    const { data: link } = await supabase
+      .from("support_tg_links")
+      .select("user_id")
+      .eq("telegram_message_id", replyToMessageId)
+      .maybeSingle();
+
+    if (link?.user_id) return link.user_id;
+
+    const { data: msg } = await supabase
+      .from("support_messages")
+      .select("user_id")
+      .eq("telegram_message_id", replyToMessageId)
+      .maybeSingle();
+
+    if (msg?.user_id) return msg.user_id;
+  }
+
+  return null;
+}
+
+/** Last user who wrote to support — fallback when admin sends without Reply. */
+export async function resolveLatestSupportUser() {
   const supabase = await createAdminClient();
 
   const { data: link } = await supabase
     .from("support_tg_links")
     .select("user_id")
-    .eq("telegram_message_id", replyToMessageId)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (link?.user_id) return link.user_id;
@@ -166,12 +214,30 @@ export async function resolveUserFromTelegramReply(
   const { data: msg } = await supabase
     .from("support_messages")
     .select("user_id")
-    .eq("telegram_message_id", replyToMessageId)
+    .eq("direction", "user")
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
-  if (msg?.user_id) return msg.user_id;
+  return msg?.user_id ?? null;
+}
 
-  return null;
+export async function resolveSupportUserFromTelegramUpdate(params: {
+  chatId?: number;
+  replyToMessageId?: number;
+  replyText?: string;
+  messageText?: string;
+}) {
+  const fromReply = await resolveUserFromTelegramReply(
+    params.replyToMessageId,
+    params.replyText,
+    params.messageText,
+  );
+  if (fromReply) return fromReply;
+
+  if (!isAdminTelegramChat(params.chatId)) return null;
+
+  return resolveLatestSupportUser();
 }
 
 export async function insertAdminSupportMessage(params: {
@@ -197,4 +263,16 @@ export async function insertAdminSupportMessage(params: {
   }
 
   return { ok: true as const };
+}
+
+export async function countUnreadAdminMessages(userId: string) {
+  const supabase = await createAdminClient();
+  const { count } = await supabase
+    .from("support_messages")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("direction", "admin")
+    .is("read_at", null);
+
+  return count ?? 0;
 }
