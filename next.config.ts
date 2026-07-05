@@ -31,6 +31,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["sharp", "@pdf-lib/fontkit", "pdf-lib"],
+  outputFileTracingIncludes: {
+    "/api/certificates/[slug]": ["./src/assets/fonts/**/*"],
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**.supabase.co" },

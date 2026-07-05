@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { PDFDocument, rgb } from "pdf-lib";
+import { PDFDocument, rgb, type PDFFont } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import sharp from "sharp";
 import { getStorageImagePath, isStorageImage, resolveCourseImageUrl } from "@/lib/images";
@@ -8,8 +8,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDate } from "@/lib/types";
 
 const IMAGE_BUCKET = "course-images";
-const FONT_CDN_URL =
-  "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notoserif/NotoSerif-Regular.ttf";
 
 const MONTHS_UK = [
   "січня",
@@ -40,27 +38,67 @@ const LAYOUT = {
   cream: rgb(0.92, 0.88, 0.82),
 };
 
-let fontBytesCache: Uint8Array | null = null;
+type FontBytesBundle = {
+  cyrillic: Uint8Array;
+  latin: Uint8Array;
+};
 
-async function loadFontBytes() {
-  if (fontBytesCache) return fontBytesCache;
+type CertificateFonts = {
+  cyrillic: PDFFont;
+  latin: PDFFont;
+};
 
-  try {
-    const res = await fetch(FONT_CDN_URL);
-    if (res.ok) {
-      fontBytesCache = new Uint8Array(await res.arrayBuffer());
-      return fontBytesCache;
+type DateSegment = {
+  text: string;
+  kind: "latin" | "cyrillic";
+};
+
+let fontBytesBundle: FontBytesBundle | null = null;
+
+function readFontFile(candidates: string[]) {
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return new Uint8Array(fs.readFileSync(candidate));
     }
-  } catch {
-    // Fall back to bundled font for local dev.
   }
 
-  const fontPath = path.join(
-    process.cwd(),
-    "node_modules/@fontsource/noto-serif/files/noto-serif-latin-400-normal.woff2",
-  );
-  fontBytesCache = new Uint8Array(fs.readFileSync(fontPath));
-  return fontBytesCache;
+  throw new Error(`Certificate font file not found (${candidates[0]})`);
+}
+
+function loadFontBytesBundle(): FontBytesBundle {
+  if (fontBytesBundle) return fontBytesBundle;
+
+  const root = process.cwd();
+  fontBytesBundle = {
+    cyrillic: readFontFile([
+      path.join(root, "src/assets/fonts/noto-serif-cyrillic-400-normal.woff2"),
+      path.join(
+        root,
+        "node_modules/@fontsource/noto-serif/files/noto-serif-cyrillic-400-normal.woff2",
+      ),
+    ]),
+    latin: readFontFile([
+      path.join(root, "src/assets/fonts/noto-serif-latin-400-normal.woff2"),
+      path.join(
+        root,
+        "node_modules/@fontsource/noto-serif/files/noto-serif-latin-400-normal.woff2",
+      ),
+    ]),
+  };
+
+  return fontBytesBundle;
+}
+
+async function embedCertificateFonts(pdfDoc: PDFDocument): Promise<CertificateFonts> {
+  const bundle = loadFontBytesBundle();
+  pdfDoc.registerFontkit(fontkit);
+
+  const [cyrillic, latin] = await Promise.all([
+    pdfDoc.embedFont(bundle.cyrillic),
+    pdfDoc.embedFont(bundle.latin),
+  ]);
+
+  return { cyrillic, latin };
 }
 
 async function fetchTemplateBytes(templateUrl: string) {
@@ -111,7 +149,7 @@ async function templateToPngBytes(templateBytes: Uint8Array) {
 
 function fitFontSize(
   text: string,
-  font: Awaited<ReturnType<PDFDocument["embedFont"]>>,
+  font: PDFFont,
   maxWidth: number,
   preferred: number,
   min: number,
@@ -123,32 +161,62 @@ function fitFontSize(
   return size;
 }
 
-function centerTextX(
-  text: string,
-  font: Awaited<ReturnType<PDFDocument["embedFont"]>>,
-  size: number,
-  boxX: number,
-  boxWidth: number,
-) {
+function centerTextX(text: string, font: PDFFont, size: number, boxX: number, boxWidth: number) {
   const textWidth = font.widthOfTextAtSize(text, size);
   return boxX + Math.max(0, (boxWidth - textWidth) / 2);
 }
 
-function rightTextX(
-  text: string,
-  font: Awaited<ReturnType<PDFDocument["embedFont"]>>,
-  size: number,
-  boxX: number,
-  boxWidth: number,
-) {
-  const textWidth = font.widthOfTextAtSize(text, size);
-  return boxX + Math.max(0, boxWidth - textWidth);
+function getDateSegments(value: string): DateSegment[] | null {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return [
+    { text: `${date.getDate()} `, kind: "latin" },
+    { text: MONTHS_UK[date.getMonth()], kind: "cyrillic" },
+    { text: ` ${date.getFullYear()}`, kind: "latin" },
+    { text: " р.", kind: "cyrillic" },
+  ];
 }
 
-function formatCertificateDate(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return formatDate(value);
-  return `${date.getDate()} ${MONTHS_UK[date.getMonth()]} ${date.getFullYear()} р.`;
+function measureSegments(segments: DateSegment[], fonts: CertificateFonts, size: number) {
+  return segments.reduce((sum, segment) => {
+    const font = segment.kind === "latin" ? fonts.latin : fonts.cyrillic;
+    return sum + font.widthOfTextAtSize(segment.text, size);
+  }, 0);
+}
+
+function fitDateSize(
+  segments: DateSegment[],
+  fonts: CertificateFonts,
+  maxWidth: number,
+  preferred: number,
+  min: number,
+) {
+  let size = preferred;
+  while (size > min && measureSegments(segments, fonts, size) > maxWidth) {
+    size -= 0.5;
+  }
+  return size;
+}
+
+function drawSegmentsRightAligned(
+  page: ReturnType<PDFDocument["addPage"]>,
+  segments: DateSegment[],
+  fonts: CertificateFonts,
+  boxX: number,
+  boxWidth: number,
+  y: number,
+  size: number,
+  color: ReturnType<typeof rgb>,
+) {
+  const totalWidth = measureSegments(segments, fonts, size);
+  let x = boxX + Math.max(0, boxWidth - totalWidth);
+
+  for (const segment of segments) {
+    const font = segment.kind === "latin" ? fonts.latin : fonts.cyrillic;
+    page.drawText(segment.text, { x, y, size, font, color });
+    x += font.widthOfTextAtSize(segment.text, size);
+  }
 }
 
 export async function generateCourseCertificatePdf(input: {
@@ -157,14 +225,10 @@ export async function generateCourseCertificatePdf(input: {
   completedAt: string;
 }) {
   const templateBytes = await fetchTemplateBytes(input.templateUrl);
-  const [pngBytes, fontBytes] = await Promise.all([
-    templateToPngBytes(templateBytes),
-    loadFontBytes(),
-  ]);
+  const pngBytes = await templateToPngBytes(templateBytes);
 
   const pdfDoc = await PDFDocument.create();
-  pdfDoc.registerFontkit(fontkit);
-  const font = await pdfDoc.embedFont(fontBytes);
+  const fonts = await embedCertificateFonts(pdfDoc);
   const image = await pdfDoc.embedPng(pngBytes);
 
   const width = image.width;
@@ -174,32 +238,40 @@ export async function generateCourseCertificatePdf(input: {
   page.drawImage(image, { x: 0, y: 0, width, height });
 
   const name = input.fullName.trim().toLocaleUpperCase("uk-UA");
-  const dateLabel = formatCertificateDate(input.completedAt);
   const nameBoxX = width * LAYOUT.nameX;
   const nameBoxWidth = width * LAYOUT.nameWidth;
-  const nameSize = fitFontSize(name, font, nameBoxWidth, height * 0.036, height * 0.02);
-  const nameX = centerTextX(name, font, nameSize, nameBoxX, nameBoxWidth);
+  const nameSize = fitFontSize(name, fonts.cyrillic, nameBoxWidth, height * 0.036, height * 0.02);
+  const nameX = centerTextX(name, fonts.cyrillic, nameSize, nameBoxX, nameBoxWidth);
   const nameY = height * (1 - LAYOUT.nameY);
 
   page.drawText(name, {
     x: nameX,
     y: nameY,
     size: nameSize,
-    font,
+    font: fonts.cyrillic,
     color: LAYOUT.gold,
   });
 
+  const dateSegments = getDateSegments(input.completedAt);
   const dateBoxX = width * LAYOUT.dateBoxX;
   const dateBoxWidth = width * LAYOUT.dateBoxWidth;
-  const dateSize = fitFontSize(dateLabel, font, dateBoxWidth, height * 0.02, height * 0.013);
-  const dateX = rightTextX(dateLabel, font, dateSize, dateBoxX, dateBoxWidth);
-  page.drawText(dateLabel, {
-    x: dateX,
-    y: height * (1 - LAYOUT.dateY),
-    size: dateSize,
-    font,
-    color: LAYOUT.cream,
-  });
+  const dateY = height * (1 - LAYOUT.dateY);
+
+  if (dateSegments) {
+    const dateSize = fitDateSize(dateSegments, fonts, dateBoxWidth, height * 0.02, height * 0.013);
+    drawSegmentsRightAligned(page, dateSegments, fonts, dateBoxX, dateBoxWidth, dateY, dateSize, LAYOUT.cream);
+  } else {
+    const fallback = formatDate(input.completedAt);
+    const dateSize = fitFontSize(fallback, fonts.latin, dateBoxWidth, height * 0.02, height * 0.013);
+    const dateX = dateBoxX + Math.max(0, dateBoxWidth - fonts.latin.widthOfTextAtSize(fallback, dateSize));
+    page.drawText(fallback, {
+      x: dateX,
+      y: dateY,
+      size: dateSize,
+      font: fonts.latin,
+      color: LAYOUT.cream,
+    });
+  }
 
   return pdfDoc.save();
 }
