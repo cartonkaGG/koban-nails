@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "cleanup:unconfirmed-users": "node scripts/cleanup-unconfirmed-users.mjs",
     "start": "next start",
     "lint": "next lint"
   },

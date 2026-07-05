@@ -16,6 +16,7 @@ export default function LoginForm() {
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState("");
   const supabaseReady = isSupabaseConfigured();
@@ -35,12 +36,22 @@ export default function LoginForm() {
     window.location.href = role === "admin" ? "/admin" : next;
   }
 
-  async function confirmExistingAccount() {
-    await fetch("/api/auth/confirm-user", {
+  async function createConfirmedAccount(repairUnconfirmedOnly = false) {
+    const registerResponse = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, password, repairUnconfirmedOnly }),
     });
+
+    const result = (await registerResponse.json().catch(() => null)) as
+      | { error?: string }
+      | null;
+
+    return {
+      ok: registerResponse.ok,
+      error: result?.error,
+      status: registerResponse.status,
+    };
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -62,28 +73,11 @@ export default function LoginForm() {
       const supabase = createClient();
 
       if (mode === "register") {
-        const { data, error: authError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              full_name: email.split("@")[0],
-            },
-          },
-        });
+        const registerResult = await createConfirmedAccount();
 
-        if (authError) {
+        if (!registerResult.ok) {
           setStatus("error");
-          setError(
-            authError.message.toLowerCase().includes("already")
-              ? "Акаунт вже зареєстрований, увійдіть."
-              : authError.message,
-          );
-          return;
-        }
-
-        if (data.session) {
-          window.location.href = next;
+          setError(registerResult.error ?? "Не вдалося створити акаунт.");
           return;
         }
 
@@ -98,7 +92,7 @@ export default function LoginForm() {
         }
 
         setStatus("error");
-        setError("Акаунт вже зареєстрований, увійдіть.");
+        setError("Акаунт створено. Увійдіть з email і паролем.");
         return;
       }
 
@@ -108,16 +102,18 @@ export default function LoginForm() {
       });
 
       if (authError) {
-        await confirmExistingAccount();
+        const repairResult = await createConfirmedAccount(true);
 
-        const { error: retryError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        if (repairResult.ok) {
+          const { error: repairedSignInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
 
-        if (!retryError) {
-          window.location.href = next;
-          return;
+          if (!repairedSignInError) {
+            window.location.href = next;
+            return;
+          }
         }
 
         setStatus("error");
@@ -184,15 +180,60 @@ export default function LoginForm() {
           </label>
           <label className="block text-sm">
             <span className="mb-2 block text-muted">Пароль</span>
-            <input
-              type="password"
-              required
-              minLength={6}
-              className="field"
-              placeholder="Мінімум 6 символів"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <span className="relative block">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={6}
+                className="field pr-12"
+                placeholder="Мінімум 6 символів"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                className="absolute right-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-md text-muted transition hover:bg-white/5 hover:text-gold"
+                aria-label={showPassword ? "Сховати пароль" : "Показати пароль"}
+                onClick={() => setShowPassword((value) => !value)}
+              >
+                {showPassword ? (
+                  <svg
+                    aria-hidden="true"
+                    className="size-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.9 5.3A8.8 8.8 0 0112 5c5 0 8 4.5 9 7a12.8 12.8 0 01-2.2 3.3M6.5 6.5A13.5 13.5 0 003 12c1 2.5 4 7 9 7 1.6 0 3-.5 4.2-1.2"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    aria-hidden="true"
+                    className="size-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.8 12S6 5 12 5s9.2 7 9.2 7S18 19 12 19s-9.2-7-9.2-7z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 15a3 3 0 100-6 3 3 0 000 6z"
+                    />
+                  </svg>
+                )}
+              </button>
+            </span>
           </label>
           <button type="submit" className="btn btn-primary w-full" disabled={status === "loading"}>
             {status === "loading"
