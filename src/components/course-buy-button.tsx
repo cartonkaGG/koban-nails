@@ -1,19 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { CheckoutModal } from "@/components/checkout-modal";
 import { useAuthModal } from "@/components/auth/auth-modal-context";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import type { Course } from "@/lib/types";
 import { IconArrowRight } from "@/components/icons";
 
 type Props = {
-  slug: string;
+  course: Course;
 };
 
 async function isUserLoggedIn() {
   if (isSupabaseConfigured()) {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     return Boolean(user);
   }
 
@@ -23,10 +27,11 @@ async function isUserLoggedIn() {
   return Boolean(data.loggedIn);
 }
 
-export function CourseBuyButton({ slug }: Props) {
+export function CourseBuyButton({ course }: Props) {
   const { openAuth } = useAuthModal();
   const [loading, setLoading] = useState(false);
-  const checkoutPath = `/checkout/${slug}`;
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const checkoutPath = `/checkout/${course.slug}`;
 
   async function handleBuy() {
     setLoading(true);
@@ -36,16 +41,19 @@ export function CourseBuyButton({ slug }: Props) {
         openAuth({ mode: "login", next: checkoutPath });
         return;
       }
-      window.location.assign(checkoutPath);
+      setCheckoutOpen(true);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <button type="button" className="btn btn-primary" onClick={handleBuy} disabled={loading}>
-      {loading ? "Зачекайте..." : "Купити"}
-      {!loading && <IconArrowRight />}
-    </button>
+    <>
+      <button type="button" className="btn btn-primary" onClick={handleBuy} disabled={loading}>
+        {loading ? "Зачекайте..." : "Купити"}
+        {!loading && <IconArrowRight />}
+      </button>
+      <CheckoutModal course={course} open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
+    </>
   );
 }

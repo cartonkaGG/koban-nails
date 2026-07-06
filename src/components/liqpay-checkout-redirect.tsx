@@ -15,32 +15,27 @@ export function LiqPayCheckoutRedirect({ url, data, signature }: Props) {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       formRef.current?.requestSubmit();
-    }, 0);
+    }, 100);
 
-    const fallbackTimer = window.setTimeout(() => setShowFallback(true), 2500);
+    const fallbackTimer = window.setTimeout(() => setShowFallback(true), 3000);
 
     return () => {
       window.clearTimeout(timer);
       window.clearTimeout(fallbackTimer);
     };
-  }, []);
+  }, [url, data, signature]);
 
   return (
-    <div className="space-y-4">
-      <form ref={formRef} method="POST" action={url}>
+    <div className="payment-overlay-form">
+      <form ref={formRef} method="POST" action={url} target="_self">
         <input type="hidden" name="data" value={data} />
         <input type="hidden" name="signature" value={signature} />
         {showFallback && (
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary mt-4 w-full">
             Перейти до оплати LiqPay
           </button>
         )}
       </form>
-      {showFallback && (
-        <p className="text-xs text-muted">
-          Якщо перенаправлення не відбулось автоматично, натисніть кнопку вище.
-        </p>
-      )}
     </div>
   );
 }

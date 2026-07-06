@@ -93,7 +93,7 @@ export default async function CourseDetailPage({ params }: Props) {
             <div className="card space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <CoursePrice course={course} size="lg" />
-                <CourseBuyButton slug={course.slug} />
+                <CourseBuyButton course={course} />
               </div>
 
               <dl className="services-meta">

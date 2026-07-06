@@ -114,7 +114,7 @@ function CourseCard({ course, featured }: { course: Course; featured?: boolean }
               <Link href={`/courses/${course.slug}`} className="btn btn-ghost">
                 Деталі
               </Link>
-              <CourseBuyButton slug={course.slug} />
+              <CourseBuyButton course={course} />
             </div>
             <p className="course-card-hint">Доступ одразу після оплати</p>
           </div>
