@@ -24,7 +24,7 @@ const securityHeaders = [
       "frame-src 'self' https://www.youtube.com https://youtube.com https://youtu.be",
       "frame-ancestors 'none'",
       "base-uri 'self'",
-      "form-action 'self'",
+      "form-action 'self' https://www.liqpay.ua https://liqpay.ua",
     ].join("; "),
   },
 ];
