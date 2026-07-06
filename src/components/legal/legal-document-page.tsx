@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LandingTopbar } from "@/components/landing/topbar";
+import { SiteFooter } from "@/components/site-footer";
 import type { LegalSection } from "@/content/legal";
 
 type Props = {
@@ -63,19 +64,7 @@ export function LegalDocumentPage({ eyebrow, title, sections, relatedLinks = [] 
         </div>
       </main>
 
-      <footer className="border-t border-line/60 py-8">
-        <div className="shell flex flex-col gap-3 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>Koban nails © {new Date().getFullYear()}</p>
-          <div className="flex flex-wrap gap-4">
-            <Link href="/terms" className="hover:text-gold">
-              Умови використання
-            </Link>
-            <Link href="/privacy" className="hover:text-gold">
-              Політика конфіденційності
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter showAuthLink={false} />
     </>
   );
 }

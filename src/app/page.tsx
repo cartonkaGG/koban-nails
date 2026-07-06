@@ -5,7 +5,7 @@ import { CourseGrid } from "@/components/course-grid";
 import { StudentGallery } from "@/components/landing/student-gallery";
 import { LandingFormatSection } from "@/components/landing/format-section";
 import { LandingReviewsSection } from "@/components/landing/reviews-section";
-import { FooterAuthLink } from "@/components/auth/site-auth-button";
+import { SiteFooter } from "@/components/site-footer";
 import { getPublishedCourses } from "@/lib/data";
 
 export const revalidate = 60;
@@ -60,17 +60,7 @@ export default async function HomePage() {
         </section>
       </main>
 
-      <footer className="border-t border-line/60 py-8">
-        <div className="shell flex flex-col gap-3 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>Галина Кобан © {new Date().getFullYear()}</p>
-          <div className="flex flex-wrap gap-4">
-            <FooterAuthLink />
-            <Link href="/cabinet" className="hover:text-gold">Кабінет</Link>
-            <Link href="/terms" className="hover:text-gold">Умови</Link>
-            <Link href="/privacy" className="hover:text-gold">Конфіденційність</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }

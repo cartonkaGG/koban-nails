@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { SiteFooter } from "@/components/site-footer";
 import { CheckoutForm } from "@/components/checkout-form";
 import { SiteHeader } from "@/components/site-header";
 import { getProfile } from "@/lib/auth";
@@ -37,6 +38,7 @@ export default async function CheckoutPage({
           </p>
         </div>
       </main>
+      <SiteFooter showAuthLink={false} />
     </>
   );
 }
