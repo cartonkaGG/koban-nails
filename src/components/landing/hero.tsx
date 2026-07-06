@@ -9,8 +9,9 @@ export function LandingHero() {
     <section className="landing-hero">
       <div className="shell">
         <div className="landing-hero-inner" id="heroInner">
-          <MotionHeroLine className="hero-line landing-h1" delay={0}>
+          <MotionHeroLine as="h1" className="hero-line landing-h1" delay={0}>
             Галина <em>Кобан</em>
+            <span className="sr-only"> — онлайн-курси манікюру та педикюру Koban Nails</span>
           </MotionHeroLine>
           <MotionHeroLine className="hero-line landing-lead landing-lead-full" delay={0.08}>
             Галина Кобан — інструктор базових онлайн та офлайн курсів з манікюру та педикюру, та

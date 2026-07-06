@@ -5,16 +5,32 @@ import { CourseGrid } from "@/components/course-grid";
 import { StudentGallery } from "@/components/landing/student-gallery";
 import { LandingFormatSection } from "@/components/landing/format-section";
 import { LandingReviewsSection } from "@/components/landing/reviews-section";
+import { JsonLd } from "@/components/seo/json-ld";
 import { SiteFooter } from "@/components/site-footer";
+import { landingFaq } from "@/content/faq";
 import { getPublishedCourses } from "@/lib/data";
+import { resolveCourseImageUrl } from "@/lib/images";
+import { buildHomeGraph } from "@/lib/seo";
+import type { Metadata } from "next";
 
 export const revalidate = 60;
 
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/",
+  },
+};
+
 export default async function HomePage() {
   const courses = await getPublishedCourses();
+  const onlineCourses = courses.filter((course) => course.format === "online");
+  const courseImages = Object.fromEntries(
+    onlineCourses.map((course) => [course.slug, resolveCourseImageUrl(course.image_url)]),
+  );
 
   return (
     <>
+      <JsonLd data={buildHomeGraph(onlineCourses, courseImages)} />
       <LandingTopbar />
       <main id="top">
         <LandingHero />
@@ -27,16 +43,14 @@ export default async function HomePage() {
         <section id="faq" className="py-16">
           <div className="shell max-w-3xl">
             <div className="eyebrow">faq</div>
-            <h2 className="mt-2 font-[family-name:var(--font-playfair)] text-3xl">Питання перед купівлею</h2>
+            <h2 className="mt-2 font-[family-name:var(--font-playfair)] text-3xl">
+              Питання перед купівлею
+            </h2>
             <div className="mt-8 space-y-3">
-              {[
-                ["Як отримати доступ після оплати?", "Увійдіть на email після покупки. Онлайн-курс з'явиться в кабінеті після підтвердження оплати."],
-                ["Чи можна проходити уроки у своєму темпі?", "Так. Уроки відкриті 24/7, прогрес зберігається у профілі."],
-                ["Чи є підтримка під час навчання?", "Так. Куратор перевіряє домашні роботи та відповідає на питання у кабінеті."],
-              ].map(([q, a]) => (
-                <details key={q} className="card">
-                  <summary className="cursor-pointer list-none font-medium">{q}</summary>
-                  <p className="mt-3 text-sm leading-relaxed text-cream-body">{a}</p>
+              {landingFaq.map((item) => (
+                <details key={item.question} className="card">
+                  <summary className="cursor-pointer list-none font-medium">{item.question}</summary>
+                  <p className="mt-3 text-sm leading-relaxed text-cream-body">{item.answer}</p>
                 </details>
               ))}
             </div>

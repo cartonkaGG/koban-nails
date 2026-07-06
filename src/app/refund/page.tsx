@@ -10,7 +10,6 @@ export const metadata = {
 const relatedLinks = [
   { href: "/offer", label: "← Публічна оферта" },
   { href: "/privacy", label: "Політика конфіденційності" },
-  { href: "/services", label: "Опис освітніх послуг" },
 ];
 
 export default function RefundPage() {
@@ -21,7 +20,6 @@ export default function RefundPage() {
       subtitle={`Редакція від ${businessInfo.legalRevision}`}
       sections={refundSections}
       relatedLinks={relatedLinks}
-      pdfDoc="refund"
     />
   );
 }

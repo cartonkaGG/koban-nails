@@ -19,7 +19,6 @@ export const legalNavLinks = [
   { href: "/offer", label: "Оферта" },
   { href: "/privacy", label: "Конфіденційність" },
   { href: "/refund", label: "Повернення" },
-  { href: "/services", label: "Послуги" },
 ] as const;
 
 export function fopRequisitesBlocks() {

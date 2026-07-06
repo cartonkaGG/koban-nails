@@ -1825,6 +1825,18 @@ body.support-chat-open {
   padding-top: 0.25rem;
 }
 
+.course-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.course-card-actions .btn {
+  width: 100%;
+  min-height: 2.625rem;
+  justify-content: center;
+}
+
 .course-card-footer .btn {
   width: 100%;
   min-height: 2.625rem;
@@ -2247,6 +2259,40 @@ body.support-chat-open {
   .services-meta {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.course-detail-cover {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgb(215 180 106 / 0.14);
+}
+
+.course-detail-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.course-detail-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-cream-body);
+}
+
+.course-detail-feature-icon {
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--color-gold);
 }
 
 .site-footer-legal-link {

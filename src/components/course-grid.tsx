@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import type { Course } from "@/lib/types";
 import { IconCheck, IconArrowRight } from "@/components/icons";
@@ -109,7 +110,12 @@ function CourseCard({ course, featured }: { course: Course; featured?: boolean }
           )}
 
           <div className="course-card-footer">
-            <CourseBuyButton slug={course.slug} />
+            <div className="course-card-actions">
+              <Link href={`/courses/${course.slug}`} className="btn btn-ghost">
+                Деталі
+              </Link>
+              <CourseBuyButton slug={course.slug} />
+            </div>
             <span className="course-card-hint">
               Доступ одразу після оплати
               <IconArrowRight className="h-3 w-3 opacity-50" />

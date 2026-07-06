@@ -31,7 +31,7 @@ type MotionProps = {
   children: ReactNode;
   className?: string;
   delay?: number;
-  as?: "div" | "section" | "article" | "li";
+  as?: "div" | "section" | "article" | "li" | "h1" | "p";
 } & Pick<React.HTMLAttributes<HTMLElement>, "aria-label" | "aria-hidden">;
 
 function useMotionSafe() {
@@ -95,15 +95,22 @@ export function MotionItem({ children, className }: { children: ReactNode; class
   );
 }
 
-export function MotionHeroLine({ children, className, delay = 0, ...rest }: MotionProps) {
+export function MotionHeroLine({ children, className, delay = 0, as = "div", ...rest }: MotionProps) {
   const reduced = useMotionSafe();
+  const Component = as;
 
   if (reduced) {
-    return <div className={className} {...rest}>{children}</div>;
+    return (
+      <Component className={className} {...rest}>
+        {children}
+      </Component>
+    );
   }
 
+  const MotionComponent = motion[as === "h1" || as === "p" ? as : "div"] as typeof motion.div;
+
   return (
-    <motion.div
+    <MotionComponent
       className={className}
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
@@ -111,7 +118,7 @@ export function MotionHeroLine({ children, className, delay = 0, ...rest }: Moti
       {...rest}
     >
       {children}
-    </motion.div>
+    </MotionComponent>
   );
 }
 

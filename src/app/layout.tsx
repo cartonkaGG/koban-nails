@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import { AuthModalProvider } from "@/components/auth/auth-modal-context";
 import { SupportChatLazy } from "@/components/support/support-chat-lazy";
+import { rootMetadata } from "@/lib/seo";
 import "./globals.css";
 
 const inter = Inter({
@@ -14,11 +15,7 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
 });
 
-export const metadata: Metadata = {
-  title: "Галина Кобан | Курси манікюру",
-  description:
-    "Онлайн-курси манікюру від нуля до першого клієнта. Навчання, кабінет учня та підтримка наставника.",
-};
+export const metadata: Metadata = rootMetadata;
 
 export default function RootLayout({
   children,

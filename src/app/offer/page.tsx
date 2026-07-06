@@ -10,7 +10,6 @@ export const metadata = {
 const relatedLinks = [
   { href: "/privacy", label: "Політика конфіденційності" },
   { href: "/refund", label: "Політика повернення коштів" },
-  { href: "/services", label: "Опис освітніх послуг" },
 ];
 
 export default function OfferPage() {
@@ -21,7 +20,6 @@ export default function OfferPage() {
       subtitle={`про укладення договору про надання освітніх послуг · Редакція від ${businessInfo.legalRevision}`}
       sections={offerSections}
       relatedLinks={relatedLinks}
-      pdfDoc="offer"
     />
   );
 }
