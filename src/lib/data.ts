@@ -19,6 +19,7 @@ function mapCourse(row: Record<string, unknown>): Course {
     archived_at: (row.archived_at as string | null | undefined) ?? null,
     certificate_template_url:
       (row.certificate_template_url as string | null | undefined) ?? null,
+    detailed_description: (row.detailed_description as string | null | undefined) ?? null,
     features: Array.isArray(row.features) ? (row.features as string[]) : [],
   } as Course;
 }

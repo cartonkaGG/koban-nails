@@ -211,11 +211,25 @@ export function CourseEditor({ course, lessons: initialLessons, enrollmentCount 
               </select>
             </label>
             <label className="block text-sm sm:col-span-2">
-              <span className="mb-2 block text-muted">Короткий опис</span>
+              <span className="mb-2 block text-muted">Короткий опис (на картці курсу)</span>
               <textarea
-                className="field min-h-24"
+                className="field min-h-20"
                 value={courseState.description}
                 onChange={(e) => setCourseState({ ...courseState, description: e.target.value })}
+              />
+            </label>
+            <label className="block text-sm sm:col-span-2">
+              <span className="mb-2 block text-muted">Детальний опис (сторінка «Деталі»)</span>
+              <textarea
+                className="field min-h-40"
+                placeholder="Повний опис програми, для кого курс, що отримає учень. Абзаци — через порожній рядок."
+                value={courseState.detailed_description ?? ""}
+                onChange={(e) =>
+                  setCourseState({
+                    ...courseState,
+                    detailed_description: e.target.value.trim() ? e.target.value : null,
+                  })
+                }
               />
             </label>
             <label className="block text-sm">

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { Course } from "@/lib/types";
-import { IconCheck, IconArrowRight } from "@/components/icons";
+import { IconCheck } from "@/components/icons";
 import { CourseBuyButton } from "@/components/course-buy-button";
 import { CoursePrice } from "@/components/course-price";
 import { resolveCourseImageUrl } from "@/lib/images";
@@ -116,10 +116,7 @@ function CourseCard({ course, featured }: { course: Course; featured?: boolean }
               </Link>
               <CourseBuyButton slug={course.slug} />
             </div>
-            <span className="course-card-hint">
-              Доступ одразу після оплати
-              <IconArrowRight className="h-3 w-3 opacity-50" />
-            </span>
+            <p className="course-card-hint">Доступ одразу після оплати</p>
           </div>
         </div>
       </article>

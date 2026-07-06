@@ -4,6 +4,7 @@ export type CourseUpdateInput = {
   title?: unknown;
   slug?: unknown;
   description?: unknown;
+  detailed_description?: unknown;
   format?: unknown;
   price_uah?: unknown;
   sale_price_uah?: unknown;
@@ -51,6 +52,7 @@ export function buildCourseUpdatePayload(body: CourseUpdateInput) {
     title: asString(body.title, "Без назви"),
     slug: asString(body.slug, `course-${Date.now()}`),
     description: asString(body.description),
+    detailed_description: asNullableString(body.detailed_description),
     format: (body.format === "offline" ? "offline" : "online") as CourseFormat,
     price_uah: asInt(body.price_uah, 0),
     sale_price_uah: asNullableInt(body.sale_price_uah),
@@ -78,6 +80,10 @@ export function humanizeAdminDbError(message: string) {
 
   if (lower.includes("certificate_template_url")) {
     return "Колонка certificate_template_url відсутня в базі. Запустіть міграцію supabase/migrations/20260705_course_certificate.sql у Supabase SQL Editor.";
+  }
+
+  if (lower.includes("detailed_description")) {
+    return "Колонка detailed_description відсутня в базі. Запустіть міграцію supabase/migrations/20260706_course_detailed_description.sql у Supabase SQL Editor.";
   }
 
   if (lower.includes("bucket") && lower.includes("not found")) {

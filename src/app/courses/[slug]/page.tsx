@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CourseBuyButton } from "@/components/course-buy-button";
+import { CourseDetailedDescription } from "@/components/course-detailed-description";
 import { CoursePrice } from "@/components/course-price";
 import { IconCheck } from "@/components/icons";
 import { LandingTopbar } from "@/components/landing/topbar";
@@ -84,6 +85,9 @@ export default async function CourseDetailPage({ params }: Props) {
                 {course.title}
               </h1>
               <p className="text-sm leading-relaxed text-cream-body">{course.description}</p>
+              {course.detailed_description && (
+                <CourseDetailedDescription text={course.detailed_description} />
+              )}
             </div>
 
             <div className="card space-y-5">

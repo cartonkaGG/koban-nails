@@ -17,6 +17,7 @@ export type Course = {
   slug: string;
   title: string;
   description: string;
+  detailed_description: string | null;
   format: CourseFormat;
   price_uah: number;
   sale_price_uah: number | null;
