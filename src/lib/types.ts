@@ -21,6 +21,8 @@ export type Course = {
   format: CourseFormat;
   price_uah: number;
   sale_price_uah: number | null;
+  /** Admin toggle: show personal 3h offer countdown on cards and sticky CTA */
+  offer_countdown_enabled: boolean;
   image_url: string | null;
   badge: string | null;
   featured: boolean;
@@ -79,6 +81,12 @@ export function getEffectiveCoursePrice(course: Pick<Course, "price_uah" | "sale
 
 export function isCourseOnSale(course: Pick<Course, "price_uah" | "sale_price_uah">) {
   return getEffectiveCoursePrice(course) < course.price_uah;
+}
+
+export function isOfferCountdownEnabled(
+  course: Pick<Course, "offer_countdown_enabled">,
+) {
+  return course.offer_countdown_enabled === true;
 }
 
 export function formatDate(value: string) {

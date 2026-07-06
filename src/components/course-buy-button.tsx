@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { CheckoutModal } from "@/components/checkout-modal";
 import { useAuthModal } from "@/components/auth/auth-modal-context";
 import { createClient } from "@/lib/supabase/client";
@@ -10,6 +10,10 @@ import { IconArrowRight } from "@/components/icons";
 
 type Props = {
   course: Course;
+  variant?: "default" | "sell";
+  className?: string;
+  label?: string;
+  icon?: ReactNode;
 };
 
 async function isUserLoggedIn() {
@@ -27,11 +31,22 @@ async function isUserLoggedIn() {
   return Boolean(data.loggedIn);
 }
 
-export function CourseBuyButton({ course }: Props) {
+export function CourseBuyButton({
+  course,
+  variant = "default",
+  className = "",
+  label,
+  icon,
+}: Props) {
   const { openAuth } = useAuthModal();
   const [loading, setLoading] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const checkoutPath = `/checkout/${course.slug}`;
+  const buttonLabel = label ?? (variant === "sell" ? "Отримати доступ" : "Купити");
+  const btnClass =
+    variant === "sell"
+      ? `btn btn-primary course-buy-sell ${className}`.trim()
+      : `btn btn-primary ${className}`.trim();
 
   async function handleBuy() {
     setLoading(true);
@@ -49,9 +64,9 @@ export function CourseBuyButton({ course }: Props) {
 
   return (
     <>
-      <button type="button" className="btn btn-primary" onClick={handleBuy} disabled={loading}>
-        {loading ? "Зачекайте..." : "Купити"}
-        {!loading && <IconArrowRight />}
+      <button type="button" className={btnClass} onClick={handleBuy} disabled={loading}>
+        {loading ? "Зачекайте..." : buttonLabel}
+        {!loading && (icon ?? <IconArrowRight />)}
       </button>
       <CheckoutModal course={course} open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
     </>

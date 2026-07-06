@@ -19,7 +19,8 @@ export function LandingHero() {
             судді чемпіонату та багаторазова призерка чемпіонату України
           </MotionHeroLine>
           <MotionHeroLine className="hero-line landing-lead landing-lead-short" delay={0.08}>
-            Інструктор курсів з манікюру та педикюру. Топ-майстер і спікер б&apos;юті-марафонів.
+            Інструктор онлайн та офлайн курсів з манікюру та педикюру. Топ-майстер, спікер
+            б&apos;юті-марафонів і багаторазова призерка чемпіонату України.
           </MotionHeroLine>
           <MotionHeroLine className="hero-line landing-hero-meta mobile-only" delay={0.12} aria-hidden="true">
             <span>Онлайн</span> · <span>Сертифікат</span> · <span>Підтримка</span>

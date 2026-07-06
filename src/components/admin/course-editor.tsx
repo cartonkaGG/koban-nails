@@ -268,6 +268,25 @@ export function CourseEditor({
                 Менша за звичайну ціну — показується як акція на сайті та при покупці
               </span>
             </label>
+            <label className="admin-toggle-row sm:col-span-2">
+              <div>
+                <span className="font-medium">Таймер знижки</span>
+                <p className="text-xs text-muted">
+                  Показувати персональний 3-годинний відлік на картці курсу та в липкій кнопці покупки
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                className="admin-toggle-input"
+                checked={courseState.offer_countdown_enabled}
+                onChange={(e) =>
+                  setCourseState({
+                    ...courseState,
+                    offer_countdown_enabled: e.target.checked,
+                  })
+                }
+              />
+            </label>
             <label className="block text-sm">
               <span className="mb-2 block text-muted">Бейдж (опційно)</span>
               <input

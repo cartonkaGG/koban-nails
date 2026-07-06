@@ -11,6 +11,10 @@
   --color-cream-body: #ded6c7;
   --color-muted: #a9a190;
   --color-line: rgba(215, 180, 106, 0.24);
+  /* Aliases used across course & checkout styles */
+  --gold: var(--color-gold);
+  --cream: var(--color-cream);
+  --cream-body: var(--color-cream-body);
   --font-display: "Playfair Display", Georgia, serif;
   --soft-line: rgba(244, 237, 223, 0.1);
   --radius: 12px;
@@ -467,61 +471,103 @@ body.menu-open .landing-menu-btn .icon-close { display: block; }
 
 @media (max-width: 620px) {
   .landing-hero {
-    min-height: auto;
-    align-items: flex-end;
-    padding-top: calc(84px + var(--safe-top));
-    padding-bottom: 28px;
+    position: relative;
+    min-height: unset;
+    height: auto;
+    max-height: none;
+    display: block;
+    padding: calc(52px + var(--safe-top)) 0 0;
+    overflow: visible;
+    background: var(--color-black);
   }
 
   .landing-hero::before {
+    position: relative;
+    display: block;
+    inset: unset;
+    width: 100%;
+    height: clamp(240px, 54vw, 360px);
+    z-index: 0;
     background:
-      linear-gradient(180deg, rgba(7, 8, 6, 0.3) 0%, rgba(7, 8, 6, 0.55) 38%, rgba(7, 8, 6, 0.96) 78%),
-      url("/hero-koban-owner-mobile.webp") center top / cover no-repeat;
+      linear-gradient(
+        180deg,
+        rgba(7, 8, 6, 0.12) 0%,
+        rgba(7, 8, 6, 0.35) 55%,
+        rgba(7, 8, 6, 0.92) 88%,
+        var(--color-black) 100%
+      ),
+      url("/hero-koban-owner-mobile.webp") center 18% / cover no-repeat;
+    filter: saturate(0.96);
   }
 
-  .landing-lead-full { display: none; }
+  .landing-hero::after {
+    display: none;
+  }
+
+  .landing-hero .shell {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 100%;
+    margin: -18px 0 0;
+    padding: 0 16px 12px;
+  }
+
+  .landing-lead-full { display: none !important; }
   .landing-lead-short { display: block; }
-  .mobile-only { display: block; }
+  .mobile-only { display: none !important; }
+  .landing-hero-proof,
+  .landing-hero-strip { display: none !important; }
   .landing-hero-instagram { display: none; }
-  .landing-hero-consult { display: none; }
+  .landing-hero-consult { display: inline-flex; }
 
   .landing-hero-inner {
     width: 100%;
     max-width: 100%;
-    margin-left: 0;
-    padding: 12px 0 0;
-    background: transparent;
-    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.65);
+    margin: 0 auto;
+    padding: 22px 18px 20px;
+    border-radius: 20px;
+    background: rgba(7, 8, 6, 0.96);
+    text-align: center;
+    text-shadow: none;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   }
 
   .landing-h1 {
     max-width: 100%;
-    margin-bottom: 14px;
-    font-size: clamp(38px, 12vw, 52px);
-    line-height: 0.98;
+    margin: 0 auto 12px;
+    font-size: clamp(36px, 10.5vw, 46px);
+    line-height: 1.02;
+    text-align: center;
   }
 
   .landing-lead {
     max-width: 100%;
-    margin-bottom: 18px;
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  .landing-hero-meta {
-    margin-top: 0;
-    font-size: 11px;
+    margin: 0 auto 16px;
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.62;
+    letter-spacing: 0;
+    color: rgba(245, 240, 232, 0.96);
+    -webkit-font-smoothing: antialiased;
+    text-align: center;
   }
 
   .landing-hero-actions {
     flex-direction: column;
+    align-items: stretch;
     gap: 10px;
-    margin-top: 18px;
+    margin-top: 0;
+    margin-bottom: 0;
   }
 
   .landing-hero-actions .landing-btn {
     width: 100%;
-    min-height: 46px;
+    min-height: 48px;
+    font-size: 15px;
+    justify-content: center;
   }
 }
 

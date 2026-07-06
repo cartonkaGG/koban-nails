@@ -16,6 +16,7 @@ function mapCourse(row: Record<string, unknown>): Course {
   return {
     ...row,
     sale_price_uah: (row.sale_price_uah as number | null | undefined) ?? null,
+    offer_countdown_enabled: row.offer_countdown_enabled === true,
     archived_at: (row.archived_at as string | null | undefined) ?? null,
     certificate_template_url:
       (row.certificate_template_url as string | null | undefined) ?? null,

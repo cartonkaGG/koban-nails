@@ -8,6 +8,7 @@ export type CourseUpdateInput = {
   format?: unknown;
   price_uah?: unknown;
   sale_price_uah?: unknown;
+  offer_countdown_enabled?: unknown;
   badge?: unknown;
   featured?: unknown;
   published?: unknown;
@@ -56,6 +57,7 @@ export function buildCourseUpdatePayload(body: CourseUpdateInput) {
     format: (body.format === "offline" ? "offline" : "online") as CourseFormat,
     price_uah: asInt(body.price_uah, 0),
     sale_price_uah: asNullableInt(body.sale_price_uah),
+    offer_countdown_enabled: asBool(body.offer_countdown_enabled),
     badge: asNullableString(body.badge),
     featured: asBool(body.featured),
     published: asBool(body.published),
@@ -72,6 +74,10 @@ export function humanizeAdminDbError(message: string) {
 
   if (lower.includes("sale_price_uah")) {
     return "Колонка sale_price_uah відсутня в базі. Запустіть міграцію supabase/migrations/20260705_course_sale_price.sql у Supabase SQL Editor.";
+  }
+
+  if (lower.includes("offer_countdown_enabled")) {
+    return "Колонка offer_countdown_enabled відсутня в базі. Запустіть міграцію supabase/migrations/20260706_course_offer_countdown.sql у Supabase SQL Editor.";
   }
 
   if (lower.includes("archived_at")) {
