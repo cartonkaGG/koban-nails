@@ -58,14 +58,18 @@ export function CheckoutForm({ course }: { course: Course }) {
       </p>
       <p className="text-xs leading-relaxed text-muted">
         Натискаючи «Підтвердити покупку», ви погоджуєтесь з{" "}
-        <Link href="/terms" className="text-gold hover:underline">
-          умовами використання
-        </Link>{" "}
-        та{" "}
+        <Link href="/offer" className="text-gold hover:underline">
+          публічною офертою
+        </Link>
+        ,{" "}
         <Link href="/privacy" className="text-gold hover:underline">
           політикою конфіденційності
+        </Link>{" "}
+        та{" "}
+        <Link href="/refund" className="text-gold hover:underline">
+          політикою повернення коштів
         </Link>
-        . Цифрові продукти (онлайн-курси) поверненню не підлягають.
+        .
       </p>
       {error && <p className="text-sm text-red-300">{error}</p>}
       <div className="flex flex-wrap gap-3">

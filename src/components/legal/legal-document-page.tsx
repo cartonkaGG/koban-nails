@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { LandingTopbar } from "@/components/landing/topbar";
 import { SiteFooter } from "@/components/site-footer";
+import type { LegalDocSlug } from "@/content/legal-documents";
 import type { LegalSection } from "@/content/legal";
 
 type Props = {
   eyebrow: string;
   title: string;
+  subtitle?: string;
   sections: LegalSection[];
   relatedLinks?: { href: string; label: string }[];
+  pdfDoc?: LegalDocSlug;
 };
 
 function LegalBlock({ block }: { block: LegalSection["blocks"][number] }) {
@@ -24,7 +27,7 @@ function LegalBlock({ block }: { block: LegalSection["blocks"][number] }) {
   return <p>{block.value}</p>;
 }
 
-export function LegalDocumentPage({ eyebrow, title, sections, relatedLinks = [] }: Props) {
+export function LegalDocumentPage({ eyebrow, title, subtitle, sections, relatedLinks = [], pdfDoc }: Props) {
   return (
     <>
       <LandingTopbar />
@@ -37,9 +40,23 @@ export function LegalDocumentPage({ eyebrow, title, sections, relatedLinks = [] 
           <div className="mt-6 space-y-8">
             <div>
               <p className="eyebrow">{eyebrow}</p>
-              <h1 className="mt-2 font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl">
-                {title}
-              </h1>
+              <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
+                <h1 className="font-[family-name:var(--font-playfair)] text-3xl sm:text-4xl">
+                  {title}
+                </h1>
+                {pdfDoc && (
+                  <a
+                    href={`/api/legal/${pdfDoc}`}
+                    className="btn btn-ghost shrink-0 text-sm"
+                    download
+                  >
+                    Завантажити PDF
+                  </a>
+                )}
+              </div>
+              {subtitle && (
+                <p className="mt-3 text-sm text-muted">{subtitle}</p>
+              )}
             </div>
 
             {sections.map((section) => (
@@ -64,7 +81,7 @@ export function LegalDocumentPage({ eyebrow, title, sections, relatedLinks = [] 
         </div>
       </main>
 
-      <SiteFooter showAuthLink={false} />
+      <SiteFooter />
     </>
   );
 }

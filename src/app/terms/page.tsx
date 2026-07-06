@@ -1,18 +1,9 @@
-import { LegalDocumentPage } from "@/components/legal/legal-document-page";
-import { termsSections } from "@/content/legal";
+import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Умови використання | Koban nails",
-  description: "Умови використання сайту Koban Nails та правила надання онлайн-курсів.",
+  title: "Публічна оферта | Koban Nails",
 };
 
 export default function TermsPage() {
-  return (
-    <LegalDocumentPage
-      eyebrow="документи"
-      title="Умови використання"
-      sections={termsSections}
-      relatedLinks={[{ href: "/privacy", label: "Політика конфіденційності →" }]}
-    />
-  );
+  redirect("/offer");
 }

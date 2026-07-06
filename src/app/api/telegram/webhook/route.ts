@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isSupabaseConfigured } from "@/lib/auth";
+import { isSupabaseConfigured, requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { actorTag, enrichActor } from "@/lib/support/actor";
 import {
@@ -58,6 +58,12 @@ async function getTelegramWebhookInfo() {
 export async function POST(request: Request) {
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim();
   const header = request.headers.get("x-telegram-bot-api-secret-token")?.trim();
+  const isProd = process.env.NODE_ENV === "production";
+
+  if (isProd && !secret) {
+    console.error("telegram webhook: TELEGRAM_WEBHOOK_SECRET is required in production");
+    return NextResponse.json({ error: "Server misconfigured" }, { status: 503 });
+  }
 
   if (secret && header !== secret) {
     console.error("telegram webhook: secret mismatch", {
@@ -171,6 +177,12 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
+  try {
+    await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const webhook = await getTelegramWebhookInfo();
 
   return NextResponse.json({
