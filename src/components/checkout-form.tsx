@@ -3,12 +3,20 @@
 import Link from "next/link";
 import { useState } from "react";
 import { CoursePrice } from "@/components/course-price";
+import { LiqPayCheckoutRedirect } from "@/components/liqpay-checkout-redirect";
 import type { Course } from "@/lib/types";
 import { useAuthModal } from "@/components/auth/auth-modal-context";
+
+type LiqPayCheckout = {
+  url: string;
+  data: string;
+  signature: string;
+};
 
 export function CheckoutForm({ course }: { course: Course }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [liqpay, setLiqpay] = useState<LiqPayCheckout | null>(null);
   const { openAuth } = useAuthModal();
 
   async function buy() {
@@ -27,6 +35,11 @@ export function CheckoutForm({ course }: { course: Course }) {
       return;
     }
 
+    if (data.liqpay?.url && data.liqpay?.data && data.liqpay?.signature) {
+      setLiqpay(data.liqpay as LiqPayCheckout);
+      return;
+    }
+
     if (data.redirect?.startsWith("http")) {
       window.location.href = data.redirect;
       return;
@@ -38,6 +51,15 @@ export function CheckoutForm({ course }: { course: Course }) {
     }
 
     window.location.href = data.redirect ?? "/cabinet";
+  }
+
+  if (liqpay) {
+    return (
+      <div className="card space-y-4 py-10 text-center">
+        <p className="text-sm text-cream-body">Перенаправляємо на безпечну сторінку оплати LiqPay…</p>
+        <LiqPayCheckoutRedirect url={liqpay.url} data={liqpay.data} signature={liqpay.signature} />
+      </div>
+    );
   }
 
   return (

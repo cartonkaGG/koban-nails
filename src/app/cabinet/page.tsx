@@ -28,12 +28,12 @@ async function getCourseProgress(userId: string, lessonIds: string[]) {
 export default async function CabinetPage({
   searchParams,
 }: {
-  searchParams: Promise<{ pending?: string }>;
+  searchParams: Promise<{ pending?: string; payment?: string }>;
 }) {
   const profile = await getProfile();
   if (!profile) redirect("/?auth=login&next=/cabinet");
 
-  const { pending: pendingQuery } = await searchParams;
+  const { pending: pendingQuery, payment: paymentQuery } = await searchParams;
   const enrollments = await getUserEnrollments(profile.id);
   const pendingEnrollments = enrollments.filter((item) => item.status === "pending");
   const activeEnrollments = enrollments.filter(
@@ -65,7 +65,13 @@ export default async function CabinetPage({
         </p>
       </div>
 
-      {(pendingQuery === "1" || pendingEnrollments.length > 0) && (
+      {paymentQuery === "processing" && (
+        <div className="mb-6 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-cream-body">
+          Оплату отримано. Якщо курс ще не відкрився — зачекайте кілька секунд і оновіть сторінку.
+        </div>
+      )}
+
+      {(pendingQuery === "1" || pendingEnrollments.length > 0) && paymentQuery !== "processing" && (
         <div className="mb-6 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-cream-body">
           {pendingEnrollments.length > 0 ? (
             <>

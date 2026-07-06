@@ -18,6 +18,7 @@ type Props = {
   course: Course;
   lessons: Lesson[];
   enrollmentCount?: number;
+  liqPayEnabled?: boolean;
 };
 
 const TABS: { id: Tab; label: string; onlineOnly?: boolean }[] = [
@@ -28,7 +29,12 @@ const TABS: { id: Tab; label: string; onlineOnly?: boolean }[] = [
   { id: "publish", label: "Публікація" },
 ];
 
-export function CourseEditor({ course, lessons: initialLessons, enrollmentCount = 0 }: Props) {
+export function CourseEditor({
+  course,
+  lessons: initialLessons,
+  enrollmentCount = 0,
+  liqPayEnabled = false,
+}: Props) {
   const router = useRouter();
   const [courseState, setCourseState] = useState(course);
   const [lessons, setLessons] = useState(initialLessons);
@@ -497,14 +503,25 @@ export function CourseEditor({ course, lessons: initialLessons, enrollmentCount 
             </label>
           </div>
 
-          <label className="block text-sm">
-            <span className="mb-2 block text-muted">Посилання на оплату (Monobank / LiqPay)</span>
-            <input
-              className="field"
-              value={courseState.payment_url ?? ""}
-              onChange={(e) => setCourseState({ ...courseState, payment_url: e.target.value })}
-            />
-          </label>
+          {liqPayEnabled ? (
+            <div className="rounded-xl border border-gold/25 bg-gold/10 px-4 py-3 text-sm text-cream-body">
+              <p className="font-medium text-cream">Оплата через LiqPay</p>
+              <p className="mt-1 text-xs text-muted">
+                Платіж створюється автоматично при покупці. Сума береться з полів «Ціна» та «Акційна
+                ціна» — клієнт не може змінити її. Після успішної оплати курс відкривається в кабінеті
+                автоматично.
+              </p>
+            </div>
+          ) : (
+            <label className="block text-sm">
+              <span className="mb-2 block text-muted">Посилання на оплату (Monobank / LiqPay)</span>
+              <input
+                className="field"
+                value={courseState.payment_url ?? ""}
+                onChange={(e) => setCourseState({ ...courseState, payment_url: e.target.value })}
+              />
+            </label>
+          )}
 
           <label className="block text-sm">
             <span className="mb-2 block text-muted">Порядок сортування</span>

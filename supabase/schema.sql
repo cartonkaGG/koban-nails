@@ -73,6 +73,32 @@ create index if not exists courses_published_idx on public.courses (published, s
 create index if not exists lessons_course_idx on public.lessons (course_id, sort_order);
 create index if not exists enrollments_user_idx on public.enrollments (user_id, status);
 
+create type payment_status as enum ('pending', 'success', 'failure', 'reversed');
+
+create table if not exists public.payments (
+  id uuid primary key default gen_random_uuid(),
+  order_id text not null unique,
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  course_id uuid not null references public.courses(id) on delete restrict,
+  amount_uah integer not null check (amount_uah > 0),
+  currency text not null default 'UAH' check (currency = 'UAH'),
+  status payment_status not null default 'pending',
+  liqpay_payment_id bigint,
+  liqpay_status text,
+  liqpay_raw jsonb,
+  paid_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists payments_user_idx on public.payments (user_id, created_at desc);
+create index if not exists payments_course_idx on public.payments (course_id);
+
+alter table public.payments enable row level security;
+
+create policy "payments_select_own_or_admin" on public.payments
+  for select using (auth.uid() = user_id or public.is_admin());
+
 alter table public.profiles enable row level security;
 alter table public.courses enable row level security;
 alter table public.lessons enable row level security;
@@ -158,6 +184,8 @@ for each row execute function public.prevent_profile_privilege_escalation();
 create trigger courses_updated_at before update on public.courses
 for each row execute function public.set_updated_at();
 create trigger lessons_updated_at before update on public.lessons
+for each row execute function public.set_updated_at();
+create trigger payments_updated_at before update on public.payments
 for each row execute function public.set_updated_at();
 
 -- Profiles

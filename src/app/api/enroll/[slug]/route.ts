@@ -5,6 +5,9 @@ import { requestPendingEnrollment } from "@/lib/enrollments";
 import { getCourseBySlug, getEnrollment } from "@/lib/data";
 import { getEffectiveCoursePrice } from "@/lib/types";
 import { notifyPurchaseRequest } from "@/lib/telegram/send";
+import { isLiqPayConfigured, getLiqPayPrivateKey } from "@/lib/liqpay/config";
+import { buildLiqPayCheckout } from "@/lib/liqpay/checkout";
+import { createCoursePayment } from "@/lib/payments";
 
 export async function POST(
   _request: Request,
@@ -25,11 +28,10 @@ export async function POST(
     return NextResponse.json({ error: "Курс більше не доступний для покупки" }, { status: 410 });
   }
 
-  if (course.payment_url) {
-    return NextResponse.json({ ok: true, redirect: course.payment_url });
-  }
-
   const payPrice = getEffectiveCoursePrice(course);
+  if (payPrice <= 0) {
+    return NextResponse.json({ error: "Курс недоступний для оплати" }, { status: 400 });
+  }
 
   if (!isSupabaseConfigured()) {
     await addDemoEnrollment(slug);
@@ -44,6 +46,39 @@ export async function POST(
 
   if (existing?.status === "active" || existing?.status === "completed") {
     return NextResponse.json({ ok: true, redirect: "/cabinet" });
+  }
+
+  if (isLiqPayConfigured()) {
+    const { payment, error: paymentError } = await createCoursePayment({
+      userId: profile.id,
+      courseId: course.id,
+      amountUah: payPrice,
+    });
+
+    if (!payment || paymentError) {
+      return NextResponse.json(
+        { error: paymentError ?? "Не вдалося створити платіж" },
+        { status: 500 },
+      );
+    }
+
+    await requestPendingEnrollment(profile.id, course.id);
+
+    const checkout = buildLiqPayCheckout({
+      orderId: payment.order_id,
+      amountUah: payPrice,
+      description: `Курс «${course.title}» — Koban nails`,
+      privateKey: getLiqPayPrivateKey(),
+    });
+
+    return NextResponse.json({
+      ok: true,
+      liqpay: checkout,
+    });
+  }
+
+  if (course.payment_url) {
+    return NextResponse.json({ ok: true, redirect: course.payment_url });
   }
 
   if (existing?.status === "pending") {

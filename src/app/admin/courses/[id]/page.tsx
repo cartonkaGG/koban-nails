@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { CourseEditor } from "@/components/admin/course-editor";
 import { requireAdmin } from "@/lib/auth";
+import { isLiqPayConfigured } from "@/lib/liqpay/config";
 import { getCourseById, getCourseEnrollmentCount, getLessonsForCourse } from "@/lib/data";
 
 export default async function EditCoursePage({
@@ -25,7 +26,12 @@ export default async function EditCoursePage({
 
   return (
     <AdminShell profile={profile}>
-      <CourseEditor course={course} lessons={lessons} enrollmentCount={enrollmentCount} />
+      <CourseEditor
+        course={course}
+        lessons={lessons}
+        enrollmentCount={enrollmentCount}
+        liqPayEnabled={isLiqPayConfigured()}
+      />
     </AdminShell>
   );
 }

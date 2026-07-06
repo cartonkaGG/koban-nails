@@ -86,6 +86,10 @@ export function humanizeAdminDbError(message: string) {
     return "Колонка detailed_description відсутня в базі. Запустіть міграцію supabase/migrations/20260706_course_detailed_description.sql у Supabase SQL Editor.";
   }
 
+  if (lower.includes("payments") && (lower.includes("does not exist") || lower.includes("relation"))) {
+    return "Таблиця payments відсутня в базі. Запустіть міграцію supabase/migrations/20260706_liqpay_payments.sql у Supabase SQL Editor.";
+  }
+
   if (lower.includes("bucket") && lower.includes("not found")) {
     return "Bucket course-images не створений. Запустіть міграцію supabase/migrations/20260705_course_images.sql у Supabase SQL Editor.";
   }
