@@ -8,6 +8,7 @@ import { notifyPurchaseRequest } from "@/lib/telegram/send";
 import { isLiqPayConfigured, getLiqPayPrivateKey } from "@/lib/liqpay/config";
 import { buildLiqPayCheckout } from "@/lib/liqpay/checkout";
 import { createCoursePayment } from "@/lib/payments";
+import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 
 export async function POST(
   _request: Request,
@@ -49,6 +50,16 @@ export async function POST(
   }
 
   if (isLiqPayConfigured()) {
+    if (!isSupabaseAdminConfigured()) {
+      return NextResponse.json(
+        {
+          error:
+            "Оплата не налаштована на сервері. Додайте SUPABASE_SERVICE_ROLE_KEY у Vercel.",
+        },
+        { status: 503 },
+      );
+    }
+
     const { payment, error: paymentError } = await createCoursePayment({
       userId: profile.id,
       courseId: course.id,
@@ -56,13 +67,26 @@ export async function POST(
     });
 
     if (!payment || paymentError) {
+      console.error("createCoursePayment:", paymentError);
       return NextResponse.json(
-        { error: paymentError ?? "Не вдалося створити платіж" },
+        {
+          error:
+            paymentError?.includes("payments")
+              ? "Таблиця payments відсутня. Запустіть міграцію 20260706_liqpay_payments.sql у Supabase."
+              : (paymentError ?? "Не вдалося створити платіж"),
+        },
         { status: 500 },
       );
     }
 
-    await requestPendingEnrollment(profile.id, course.id);
+    const { error: enrollError } = await requestPendingEnrollment(profile.id, course.id);
+    if (enrollError) {
+      console.error("requestPendingEnrollment (liqpay):", enrollError);
+      return NextResponse.json(
+        { error: enrollError || "Не вдалося створити заявку на оплату" },
+        { status: 500 },
+      );
+    }
 
     const checkout = buildLiqPayCheckout({
       orderId: payment.order_id,
@@ -92,7 +116,16 @@ export async function POST(
 
   const { error } = await requestPendingEnrollment(profile.id, course.id);
   if (error) {
-    return NextResponse.json({ error: "Не вдалося створити заявку" }, { status: 500 });
+    console.error("requestPendingEnrollment:", error);
+    return NextResponse.json(
+      {
+        error:
+          error.includes("payments") || error.includes("service")
+            ? error
+            : "Не вдалося створити заявку. Перевірте налаштування LiqPay у Vercel (LIQPAY_PUBLIC_KEY, LIQPAY_PRIVATE_KEY, LIQPAY_SANDBOX=1).",
+      },
+      { status: 500 },
+    );
   }
 
   await notifyPurchaseRequest({

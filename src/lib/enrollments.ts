@@ -23,19 +23,45 @@ export async function activateEnrollment(userId: string, courseId: string) {
   return { error: error?.message ?? null };
 }
 
-/** Create a pending enrollment request (RLS — user cannot self-activate). */
+/** Create a pending enrollment request (server-side, after auth in API routes). */
 export async function requestPendingEnrollment(userId: string, courseId: string) {
-  const supabase = await createClient();
+  if (isSupabaseAdminConfigured()) {
+    const admin = await createAdminClient();
+    const { error } = await admin.from("enrollments").upsert(
+      {
+        user_id: userId,
+        course_id: courseId,
+        status: "pending",
+        purchased_at: null,
+      },
+      { onConflict: "user_id,course_id" },
+    );
 
-  const { error } = await supabase.from("enrollments").upsert(
-    {
-      user_id: userId,
-      course_id: courseId,
-      status: "pending",
-      purchased_at: null,
-    },
-    { onConflict: "user_id,course_id" },
-  );
+    return { error: error?.message ?? null };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("enrollments").insert({
+    user_id: userId,
+    course_id: courseId,
+    status: "pending",
+    purchased_at: null,
+  });
+
+  if (error?.code === "23505") {
+    const { data } = await supabase
+      .from("enrollments")
+      .select("status")
+      .eq("user_id", userId)
+      .eq("course_id", courseId)
+      .maybeSingle();
+
+    if (data?.status === "pending") return { error: null };
+    return {
+      error:
+        "Запис про покупку вже існує. Зверніться до підтримки або адміністратора.",
+    };
+  }
 
   return { error: error?.message ?? null };
 }
