@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { LiqPayCheckoutRedirect } from "@/components/liqpay-checkout-redirect";
 
 type Props = {
   url: string;
@@ -11,28 +10,36 @@ type Props = {
 };
 
 export function PaymentRedirectOverlay({ url, data, signature }: Props) {
-  const [mounted, setMounted] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const submittedRef = useRef(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useLayoutEffect(() => {
+    document.body.classList.add("payment-overlay-open");
 
-  if (!mounted) return null;
+    if (!submittedRef.current) {
+      submittedRef.current = true;
+      formRef.current?.submit();
+    }
+
+    return () => {
+      document.body.classList.remove("payment-overlay-open");
+    };
+  }, [url, data, signature]);
 
   return createPortal(
-    <div className="payment-overlay-root" role="dialog" aria-modal="true" aria-live="polite">
+    <div className="payment-overlay-root" role="alertdialog" aria-modal="true" aria-busy="true">
       <div className="payment-overlay-panel">
-        <div className="payment-overlay-icon" aria-hidden="true">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-            <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M2 10h20" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M6 15h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </div>
-        <p className="payment-overlay-title">Підтвердження оплати</p>
-        <p className="payment-overlay-text">Перенаправляємо на безпечну сторінку LiqPay…</p>
         <div className="payment-overlay-spinner" aria-hidden="true" />
-        <LiqPayCheckoutRedirect url={url} data={data} signature={signature} />
+        <p className="payment-overlay-title">Перехід до оплати</p>
+        <p className="payment-overlay-text">Зачекайте, відкриваємо безпечну сторінку LiqPay…</p>
+
+        <form ref={formRef} method="POST" action={url} className="payment-overlay-form">
+          <input type="hidden" name="data" value={data} />
+          <input type="hidden" name="signature" value={signature} />
+          <button type="submit" className="payment-overlay-fallback">
+            Натисніть тут, якщо сторінка не відкрилась
+          </button>
+        </form>
       </div>
     </div>,
     document.body,
