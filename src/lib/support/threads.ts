@@ -35,9 +35,10 @@ function messageIdColumn(actor: SupportActor) {
   return actor.type === "user" ? "user_id" : "guest_id";
 }
 
-export function shouldFilterBySession(sessionStartedAt: string | null) {
-  if (!sessionStartedAt) return false;
-  return new Date(sessionStartedAt).getTime() > new Date(SESSION_EPOCH).getTime() + 86_400_000;
+export function shouldFilterBySession(_sessionStartedAt: string | null) {
+  // Session cutoff hid admin replies when session_started_at was wrong in DB.
+  // forceOpenThread resets to epoch; keep fetch showing full thread history.
+  return false;
 }
 
 export async function getThreadInfo(actor: SupportActor): Promise<SupportThreadInfo> {
@@ -340,17 +341,17 @@ async function resolveActorFromSingleTelegramReply(
   replyTo: TelegramReplyMessage,
   messageText?: string,
 ): Promise<SupportActor | null> {
-  if (messageText) {
-    const fromMessage = extractActorFromText(messageText);
-    if (fromMessage) return fromMessage;
+  if (replyTo.message_id) {
+    const fromId = await resolveActorFromTelegramMessageId(replyTo.message_id);
+    if (fromId) return fromId;
   }
 
   const fromReply = extractActorFromText(telegramMessagePlainText(replyTo));
   if (fromReply) return fromReply;
 
-  if (replyTo.message_id) {
-    const fromId = await resolveActorFromTelegramMessageId(replyTo.message_id);
-    if (fromId) return fromId;
+  if (messageText) {
+    const fromMessage = extractActorFromText(messageText);
+    if (fromMessage) return fromMessage;
   }
 
   if (replyTo.reply_to_message) {
@@ -508,6 +509,11 @@ export async function fetchSupportMessages(actor: SupportActor, thread: SupportT
   ]);
 
   if (error) {
+    console.error("fetchSupportMessages failed:", error.message, {
+      actorType: actor.type,
+      actorId: actor.id,
+      filterSession,
+    });
     return { messages: [], unreadCount: 0 };
   }
 

@@ -22,15 +22,29 @@ export function actorTag(actor: SupportActor) {
   return actor.type === "user" ? `#user:${actor.id}` : `#guest:${actor.id}`;
 }
 
+function normalizeActorSearchText(text: string) {
+  return text
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0*39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function extractActorFromText(text?: string | null): SupportActor | null {
   if (!text) return null;
 
-  const guest = text.match(/#guest:([0-9a-f-]{36})/i);
+  const normalized = normalizeActorSearchText(text);
+
+  const guest = normalized.match(/#guest:([0-9a-f-]{36})/i);
   if (guest?.[1]) {
     return { type: "guest", id: guest[1], name: "Гість" };
   }
 
-  const user = text.match(/#user:([0-9a-f-]{36})/i);
+  const user = normalized.match(/#user:([0-9a-f-]{36})/i);
   if (user?.[1]) {
     return { type: "user", id: user[1], name: "Користувач", email: "" };
   }

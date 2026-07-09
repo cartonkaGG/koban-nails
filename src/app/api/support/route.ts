@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isSupabaseConfigured } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import {
   actorTag,
   attachGuestCookie,
@@ -40,7 +41,29 @@ export async function GET(request: Request) {
     return response;
   }
 
+  if (!isSupabaseAdminConfigured()) {
+    console.error("GET /api/support: SUPABASE_SERVICE_ROLE_KEY missing or invalid");
+    const response = NextResponse.json(
+      withGuestPayload(actor, {
+        messages: [],
+        unreadCount: 0,
+        status: "open",
+        mode: actor.type,
+        displayName: actor.name,
+        error: "support_unavailable",
+      }),
+      { status: 503 },
+    );
+    if (actor.type === "guest") attachGuestCookie(response, actor.id);
+    return response;
+  }
+
   let thread = await getThreadInfo(actor);
+
+  if (thread.available && thread.status === "open") {
+    await forceOpenThread(actor);
+    thread = await getThreadInfo(actor);
+  }
 
   if (thread.available && thread.status === "closed") {
     const pending = await countUnreadAdminMessages(actor);
@@ -136,10 +159,16 @@ export async function POST(request: Request) {
     await linkTelegramMessage(telegram.messageId, actor);
     if (saved?.id) {
       const supabase = await createAdminClient();
-      await supabase
+      const { error: tgUpdateError } = await supabase
         .from("support_messages")
         .update({ telegram_message_id: telegram.messageId })
         .eq("id", saved.id);
+      if (tgUpdateError) {
+        console.error("support POST: failed to store telegram_message_id", tgUpdateError.message, {
+          messageId: saved.id,
+          telegramMessageId: telegram.messageId,
+        });
+      }
     }
   }
 

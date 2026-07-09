@@ -20,15 +20,25 @@ function readStoredGuestId() {
   return value && /^[0-9a-f-]{36}$/i.test(value) ? value : null;
 }
 
+/** Stable guest id before any API call — avoids parallel requests each minting a new UUID. */
+function ensureGuestId() {
+  const existing = readStoredGuestId();
+  if (existing) return existing;
+  const id = crypto.randomUUID();
+  localStorage.setItem(GUEST_ID_KEY, id);
+  return id;
+}
+
 function persistGuestId(guestId: unknown) {
   if (typeof guestId !== "string" || !/^[0-9a-f-]{36}$/i.test(guestId)) return;
+  const current = readStoredGuestId();
+  if (current && current !== guestId) return;
   localStorage.setItem(GUEST_ID_KEY, guestId);
 }
 
 function supportFetchInit(init: RequestInit = {}): RequestInit {
   const headers = new Headers(init.headers);
-  const guestId = readStoredGuestId();
-  if (guestId) headers.set("x-support-guest-id", guestId);
+  headers.set("x-support-guest-id", ensureGuestId());
   return { ...init, headers, credentials: "include" };
 }
 
@@ -66,6 +76,7 @@ export function SupportChat() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
+    ensureGuestId();
     const saved = localStorage.getItem(GUEST_NAME_KEY);
     if (saved) setGuestName(saved);
   }, []);
@@ -126,10 +137,16 @@ export function SupportChat() {
 
   useEffect(() => {
     if (!open) return;
-    loadMessages();
-    markRead();
-    const timer = setInterval(loadMessages, POLL_OPEN_MS);
-    return () => clearInterval(timer);
+    let cancelled = false;
+    void (async () => {
+      await loadMessages();
+      if (!cancelled) await markRead();
+    })();
+    const timer = setInterval(() => void loadMessages(), POLL_OPEN_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
   }, [open, loadMessages, markRead]);
 
   useEffect(() => {
@@ -192,14 +209,7 @@ export function SupportChat() {
   }
 
   function toggleOpen() {
-    setOpen((value) => {
-      const next = !value;
-      if (next) {
-        void markRead();
-        void loadMessages();
-      }
-      return next;
-    });
+    setOpen((value) => !value);
   }
 
   const isClosed = threadStatus === "closed";
