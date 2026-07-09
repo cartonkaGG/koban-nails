@@ -17,7 +17,7 @@ export function CourseFinalCta({ course }: Props) {
       <div className="shell course-final-cta-inner">
         <p className="course-final-cta-eyebrow">{marketing.tagline}</p>
         <h2 id="course-final-cta-title" className="course-final-cta-title">
-          Готова почати навчання?
+          Готові почати навчання?
         </h2>
         <p className="course-final-cta-lead">{marketing.subheadline}</p>
 

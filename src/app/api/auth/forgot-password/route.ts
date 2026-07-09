@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendEmail } from "@/lib/emails/send";
 import { renderResetPasswordEmail } from "@/lib/emails/templates";
+import { sendEmail } from "@/lib/emails/send";
 import { fixAuthActionLink, getSiteOrigin } from "@/lib/site-url";
+import { getClientIp, rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { isResendConfigured } from "@/lib/resend/config";
 
@@ -17,6 +18,10 @@ export async function POST(request: NextRequest) {
       { status: 503 },
     );
   }
+
+  const ip = getClientIp(request);
+  const limited = rateLimit({ key: `forgot-password:${ip}`, limit: 5, windowMs: 60_000 });
+  if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
 
   const { email } = await request.json();
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";

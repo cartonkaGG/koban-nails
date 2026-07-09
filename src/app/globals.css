@@ -2,18 +2,55 @@
 @import "./landing.css";
 
 @theme {
-  --color-black: #070806;
-  --color-panel: #0d100d;
-  --color-green: #102f23;
-  --color-green-soft: #1f4d39;
-  --color-gold: #d7b46a;
-  --color-gold-bright: #e4c780;
-  --color-cream: #f4eddf;
-  --color-cream-body: #ded6c7;
-  --color-muted: #a9a190;
-  --color-line: rgba(215, 180, 106, 0.24);
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  /* Flipped to the v2 light theme. Names are kept so every existing
+     utility (bg-black, text-cream, text-gold, bg-panel, border-line, …)
+     and raw var(--color-*) reference inherits the new palette. */
+  --color-black: #fbf7f3;        /* page background + text on accent buttons */
+  --color-panel: #ffffff;        /* card / panel surfaces */
+  --color-green: #f3eae2;        /* soft accent background (was deep green) */
+  --color-green-soft: #ede2d9;   /* softer accent background */
+  --color-gold: #c97f72;         /* clay accent (was gold) */
+  --color-gold-bright: #b36b5e;  /* clay-dark for hover */
+  --color-cream: #2e2a26;        /* primary text (ink) */
+  --color-cream-body: #4a433d;   /* secondary text (ink-soft) */
+  --color-muted: #8a7f76;        /* muted text */
+  --color-line: rgba(46, 42, 38, 0.12);
+  --font-display: var(--font-cormorant), "Playfair Display", Georgia, serif;
+  --font-sans: var(--font-manrope), Inter, ui-sans-serif, system-ui, sans-serif;
+
+  /* v2 landing (light theme) — namespaced so it never collides with the dark UI */
+  --color-v2-cream: #fbf7f3;
+  --color-v2-sand: #f3eae2;
+  --color-v2-beige: #ede2d9;
+  --color-v2-clay: #c97f72;
+  --color-v2-clay-dark: #b36b5e;
+  --color-v2-rose: #e7a0aa;
+  --color-v2-ink: #2e2a26;
+  --color-v2-ink-soft: #4a433d;
+  --color-v2-mute: #8a7f76;
+  --font-v2-display: var(--font-cormorant), Georgia, serif;
+  --font-v2-sans: var(--font-manrope), system-ui, sans-serif;
+  --shadow-v2-soft: 0 20px 60px -20px rgba(90, 70, 55, 0.25);
+  --shadow-v2-card: 0 16px 40px -18px rgba(90, 70, 55, 0.28);
+}
+
+/* v2 landing scope: light background + Manrope base, isolated from the dark app shell */
+@layer components {
+  .v2-landing {
+    background-color: var(--color-v2-cream);
+    color: var(--color-v2-ink);
+    font-family: var(--font-v2-sans);
+    min-height: 100dvh;
+  }
+
+  .v2-landing .container-px {
+    @apply mx-auto w-full max-w-[1180px] px-5 sm:px-8;
+  }
+
+  .v2-landing ::selection {
+    background-color: rgba(201, 127, 114, 0.2);
+    color: var(--color-v2-ink);
+  }
 }
 
 @layer base {
@@ -26,8 +63,8 @@
     @apply bg-black text-cream antialiased;
     font-family: var(--font-sans);
     background-image:
-      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(31, 77, 57, 0.35), transparent 55%),
-      radial-gradient(ellipse 60% 40% at 95% 20%, rgba(215, 180, 106, 0.08), transparent 50%);
+      radial-gradient(ellipse 80% 50% at 10% -10%, rgba(231, 160, 170, 0.14), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 95% 20%, rgba(201, 127, 114, 0.08), transparent 50%);
     min-height: 100dvh;
   }
 
@@ -140,7 +177,7 @@ body.checkout-modal-open {
   position: absolute;
   inset: 0;
   border: none;
-  background: rgba(7, 8, 6, 0.78);
+  background: rgba(46, 42, 38, 0.5);
   backdrop-filter: blur(8px);
   cursor: pointer;
 }
@@ -152,11 +189,13 @@ body.checkout-modal-open {
   max-width: 32rem;
   max-height: min(90dvh, 760px);
   overflow-y: auto;
-  border-radius: 1rem;
-  border: 1px solid var(--color-line);
-  background: rgba(13, 16, 13, 0.96);
-  padding: 24px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(46, 42, 38, 0.08);
+  background: #ffffff;
+  padding: 28px;
+  color: var(--color-v2-ink);
+  font-family: var(--font-v2-sans);
+  box-shadow: var(--shadow-v2-soft);
 }
 
 .checkout-modal-close {
@@ -167,17 +206,18 @@ body.checkout-modal-open {
   place-items: center;
   width: 36px;
   height: 36px;
-  border: 1px solid var(--color-line);
-  border-radius: 8px;
-  color: var(--color-muted);
-  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(46, 42, 38, 0.1);
+  border-radius: 999px;
+  color: var(--color-v2-mute);
+  background: var(--color-v2-sand);
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 
 .checkout-modal-close:hover {
-  color: var(--color-gold);
-  border-color: rgba(215, 180, 106, 0.45);
+  color: var(--color-v2-clay);
+  border-color: rgba(201, 127, 114, 0.5);
+  background: #ffffff;
 }
 
 body.payment-overlay-open {
@@ -192,41 +232,43 @@ body.payment-overlay-open {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: rgba(7, 8, 6, 0.9);
+  background: rgba(46, 42, 38, 0.5);
+  backdrop-filter: blur(8px);
 }
 
 .payment-overlay-panel {
   width: 100%;
   max-width: 20rem;
   min-height: 11rem;
-  border-radius: 1rem;
-  border: 1px solid rgba(215, 180, 106, 0.3);
-  background: rgba(13, 16, 13, 0.98);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(46, 42, 38, 0.08);
+  background: #ffffff;
   padding: 32px 24px 24px;
   text-align: center;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  font-family: var(--font-v2-sans);
+  box-shadow: var(--shadow-v2-soft);
 }
 
 .payment-overlay-title {
   margin-top: 20px;
-  font-family: var(--font-playfair), serif;
-  font-size: 1.25rem;
-  color: var(--color-cream);
+  font-family: var(--font-v2-display), serif;
+  font-size: 1.35rem;
+  color: var(--color-v2-ink);
 }
 
 .payment-overlay-text {
   margin-top: 8px;
   font-size: 0.875rem;
   line-height: 1.5;
-  color: var(--color-cream-body);
+  color: var(--color-v2-ink-soft);
 }
 
 .payment-overlay-spinner {
   width: 32px;
   height: 32px;
   margin: 0 auto;
-  border: 2px solid rgba(215, 180, 106, 0.2);
-  border-top-color: var(--color-gold);
+  border: 2px solid rgba(201, 127, 114, 0.22);
+  border-top-color: var(--color-v2-clay);
   border-radius: 999px;
   animation: payment-spin 0.9s linear infinite;
 }
@@ -240,14 +282,14 @@ body.payment-overlay-open {
   background: none;
   padding: 0;
   font-size: 0.75rem;
-  color: var(--color-muted);
+  color: var(--color-v2-mute);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
 }
 
 .payment-overlay-fallback:hover {
-  color: var(--color-gold);
+  color: var(--color-v2-clay);
 }
 
 @keyframes payment-spin {
@@ -270,7 +312,7 @@ body.payment-overlay-open {
   position: absolute;
   inset: 0;
   border: none;
-  background: rgba(7, 8, 6, 0.78);
+  background: rgba(46, 42, 38, 0.5);
   backdrop-filter: blur(8px);
   cursor: pointer;
 }
@@ -282,11 +324,13 @@ body.payment-overlay-open {
   max-width: 28rem;
   max-height: min(90dvh, 760px);
   overflow-y: auto;
-  border-radius: 1rem;
-  border: 1px solid var(--color-line);
-  background: rgba(13, 16, 13, 0.96);
-  padding: 24px;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(46, 42, 38, 0.08);
+  background: #ffffff;
+  padding: 28px;
+  color: var(--color-v2-ink);
+  font-family: var(--font-v2-sans);
+  box-shadow: var(--shadow-v2-soft);
 }
 
 .auth-modal-close {
@@ -297,17 +341,18 @@ body.payment-overlay-open {
   place-items: center;
   width: 36px;
   height: 36px;
-  border: 1px solid var(--color-line);
-  border-radius: 8px;
-  color: var(--color-muted);
-  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(46, 42, 38, 0.1);
+  border-radius: 999px;
+  color: var(--color-v2-mute);
+  background: var(--color-v2-sand);
   cursor: pointer;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 
 .auth-modal-close:hover {
-  color: var(--color-gold);
-  border-color: rgba(215, 180, 106, 0.45);
+  color: var(--color-v2-clay);
+  border-color: rgba(201, 127, 114, 0.5);
+  background: #ffffff;
 }
 
 body.auth-modal-open {
@@ -327,14 +372,176 @@ body.support-chat-open {
   cursor: pointer;
 }
 
+/* ---- v2 light-theme form + button helpers (auth/checkout modals) ---- */
+.v2-eyebrow {
+  font-size: 0.7rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-v2-clay);
+  font-weight: 600;
+}
+
+.v2-modal-title {
+  font-family: var(--font-v2-display), serif;
+  color: var(--color-v2-ink);
+  line-height: 1.15;
+}
+
+.v2-modal-subtitle {
+  color: var(--color-v2-ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.v2-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-v2-ink-soft);
+  margin-bottom: 6px;
+}
+
+.v2-field {
+  width: 100%;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(46, 42, 38, 0.14);
+  background: var(--color-v2-cream);
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  color: var(--color-v2-ink);
+  font-family: var(--font-v2-sans);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.v2-field::placeholder {
+  color: var(--color-v2-mute);
+}
+
+.v2-field:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: var(--color-v2-clay);
+  box-shadow: 0 0 0 3px rgba(201, 127, 114, 0.18);
+}
+
+.v2-field:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.v2-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 13px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--color-v2-clay);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: var(--shadow-v2-card);
+}
+
+.v2-btn-primary:hover:not(:disabled) {
+  background: var(--color-v2-clay-dark);
+  transform: translateY(-1px);
+}
+
+.v2-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.v2-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  border-radius: 999px;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-v2-ink);
+  background: var(--color-v2-sand);
+  border: 1px solid rgba(46, 42, 38, 0.1);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.v2-btn-ghost:hover:not(:disabled) {
+  background: var(--color-v2-beige);
+  border-color: rgba(201, 127, 114, 0.4);
+}
+
+.v2-btn-ghost:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.v2-modal-link {
+  border: none;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: var(--color-v2-clay);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.v2-modal-link:hover {
+  color: var(--color-v2-clay-dark);
+}
+
+.v2-alert-error {
+  border-radius: 0.9rem;
+  border: 1px solid rgba(179, 107, 94, 0.3);
+  background: rgba(201, 127, 114, 0.1);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--color-v2-clay-dark);
+}
+
+.v2-alert-success {
+  border-radius: 0.9rem;
+  border: 1px solid rgba(103, 148, 122, 0.35);
+  background: rgba(103, 148, 122, 0.12);
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: #4c7a5f;
+}
+
+.v2-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-v2-mute);
+  font-size: 0.78rem;
+}
+
+.v2-divider::before,
+.v2-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(46, 42, 38, 0.12);
+}
+
 /* Cabinet — minimal learner UI */
 .cabinet-layout {
   background: var(--color-black);
 }
 
 .cabinet-header {
-  border-bottom: 1px solid rgba(215, 180, 106, 0.16);
-  background: rgba(7, 8, 6, 0.92);
+  border-bottom: 1px solid rgba(201, 127, 114, 0.16);
+  background: rgba(251, 247, 243, 0.85);
   backdrop-filter: blur(12px);
 }
 
@@ -371,7 +578,7 @@ body.support-chat-open {
 .cabinet-header-btn {
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(215, 180, 106, 0.2);
+  border: 1px solid rgba(201, 127, 114, 0.2);
   border-radius: 8px;
   padding: 8px 12px;
   font-size: 0.8125rem;
@@ -384,7 +591,7 @@ body.support-chat-open {
 
 .cabinet-header-btn:hover {
   color: var(--color-cream);
-  border-color: rgba(215, 180, 106, 0.45);
+  border-color: rgba(201, 127, 114, 0.45);
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -414,9 +621,9 @@ body.support-chat-open {
 }
 
 .cabinet-empty {
-  border: 1px solid rgba(215, 180, 106, 0.18);
+  border: 1px solid rgba(201, 127, 114, 0.18);
   border-radius: 16px;
-  background: rgba(13, 16, 13, 0.7);
+  background: rgba(255, 255, 255, 0.7);
   padding: 40px 24px;
   text-align: center;
   color: var(--color-cream-body);
@@ -433,15 +640,15 @@ body.support-chat-open {
 .cabinet-course-card {
   display: flex;
   gap: 16px;
-  border: 1px solid rgba(215, 180, 106, 0.18);
+  border: 1px solid rgba(201, 127, 114, 0.18);
   border-radius: 16px;
-  background: rgba(13, 16, 13, 0.72);
+  background: rgba(255, 255, 255, 0.72);
   padding: 14px;
   transition: border-color 0.2s;
 }
 
 .cabinet-course-card:hover {
-  border-color: rgba(215, 180, 106, 0.35);
+  border-color: rgba(201, 127, 114, 0.35);
 }
 
 .cabinet-course-thumb {
@@ -457,7 +664,7 @@ body.support-chat-open {
 .cabinet-course-thumb-fallback {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(31, 77, 57, 0.45), rgba(215, 180, 106, 0.12));
+  background: linear-gradient(135deg, rgba(231, 160, 170, 0.45), rgba(201, 127, 114, 0.12));
 }
 
 .cabinet-course-body {
@@ -525,9 +732,9 @@ body.support-chat-open {
 .cabinet-profile-card {
   display: grid;
   gap: 16px;
-  border: 1px solid rgba(215, 180, 106, 0.18);
+  border: 1px solid rgba(201, 127, 114, 0.18);
   border-radius: 16px;
-  background: rgba(13, 16, 13, 0.72);
+  background: rgba(255, 255, 255, 0.72);
   padding: 20px;
 }
 
@@ -594,9 +801,9 @@ body.support-chat-open {
   min-width: 220px;
   align-items: flex-start;
   gap: 10px;
-  border: 1px solid rgba(215, 180, 106, 0.14);
+  border: 1px solid rgba(201, 127, 114, 0.14);
   border-radius: 12px;
-  background: rgba(13, 16, 13, 0.65);
+  background: rgba(255, 255, 255, 0.65);
   padding: 12px;
   text-align: left;
   cursor: pointer;
@@ -604,12 +811,12 @@ body.support-chat-open {
 }
 
 .cabinet-lesson-btn:hover {
-  border-color: rgba(215, 180, 106, 0.32);
+  border-color: rgba(201, 127, 114, 0.32);
 }
 
 .cabinet-lesson-btn.active {
-  border-color: rgba(215, 180, 106, 0.55);
-  background: rgba(215, 180, 106, 0.08);
+  border-color: rgba(201, 127, 114, 0.55);
+  background: rgba(201, 127, 114, 0.08);
 }
 
 .cabinet-lesson-index {
@@ -626,7 +833,7 @@ body.support-chat-open {
 
 .cabinet-lesson-btn.done .cabinet-lesson-index {
   background: var(--color-gold);
-  color: #070806;
+  color: #ffffff;
 }
 
 .cabinet-lesson-text {
@@ -647,9 +854,9 @@ body.support-chat-open {
 .cabinet-lesson-view {
   display: grid;
   gap: 16px;
-  border: 1px solid rgba(215, 180, 106, 0.18);
+  border: 1px solid rgba(201, 127, 114, 0.18);
   border-radius: 16px;
-  background: rgba(13, 16, 13, 0.72);
+  background: rgba(255, 255, 255, 0.72);
   padding: 16px;
 }
 
@@ -758,9 +965,9 @@ body.support-chat-open {
     width: 44px;
     height: 44px;
     flex-shrink: 0;
-    border: 1px solid rgba(215, 180, 106, 0.24);
+    border: 1px solid rgba(201, 127, 114, 0.24);
     border-radius: 10px;
-    background: rgba(13, 16, 13, 0.8);
+    background: rgba(255, 255, 255, 0.8);
     color: var(--color-cream);
     font-size: 1.125rem;
     cursor: pointer;
@@ -774,9 +981,9 @@ body.support-chat-open {
   .cabinet-lesson-nav-current {
     flex: 1;
     min-height: 44px;
-    border: 1px solid rgba(215, 180, 106, 0.24);
+    border: 1px solid rgba(201, 127, 114, 0.24);
     border-radius: 10px;
-    background: rgba(215, 180, 106, 0.08);
+    background: rgba(201, 127, 114, 0.08);
     color: var(--color-gold);
     font-size: 0.875rem;
     font-weight: 600;
@@ -850,11 +1057,11 @@ body.support-chat-open {
   place-items: center;
   width: 56px;
   height: 56px;
-  border: 1px solid rgba(215, 180, 106, 0.45);
+  border: 1px solid rgba(201, 127, 114, 0.45);
   border-radius: 999px;
-  color: #070806;
+  color: #ffffff;
   background: var(--color-gold);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 8px 24px rgba(90, 70, 55, 0.25);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -877,7 +1084,7 @@ body.support-chat-open {
   place-items: center;
   width: 20px;
   height: 20px;
-  border: 2px solid #070806;
+  border: 2px solid #ffffff;
   border-radius: 999px;
   background: #e53935;
   color: #fff;
@@ -901,9 +1108,9 @@ body.support-chat-open {
   flex-direction: column;
   width: min(360px, calc(100vw - 32px));
   height: min(480px, calc(100dvh - 120px));
-  border: 1px solid rgba(215, 180, 106, 0.24);
+  border: 1px solid rgba(201, 127, 114, 0.24);
   border-radius: 16px;
-  background: rgba(13, 16, 13, 0.98);
+  background: rgba(255, 255, 255, 0.98);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
   overflow: hidden;
 }
@@ -914,7 +1121,7 @@ body.support-chat-open {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(215, 180, 106, 0.16);
+  border-bottom: 1px solid rgba(201, 127, 114, 0.16);
   flex-shrink: 0;
 }
 
@@ -1017,7 +1224,7 @@ body.support-chat-open {
 }
 
 .support-chat-bubble.mine {
-  background: rgba(215, 180, 106, 0.22);
+  background: rgba(201, 127, 114, 0.22);
   color: var(--color-cream);
   border-bottom-right-radius: 4px;
 }
@@ -1065,8 +1272,8 @@ body.support-chat-open {
   display: grid;
   gap: 8px;
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid rgba(215, 180, 106, 0.16);
-  background: rgba(13, 16, 13, 0.98);
+  border-top: 1px solid rgba(201, 127, 114, 0.16);
+  background: rgba(255, 255, 255, 0.98);
 }
 
 .support-chat-close-thread {
@@ -1081,7 +1288,7 @@ body.support-chat-open {
 
 .support-chat-closed-banner {
   padding: 10px 12px;
-  border-bottom: 1px solid rgba(215, 180, 106, 0.16);
+  border-bottom: 1px solid rgba(201, 127, 114, 0.16);
   background: rgba(229, 57, 53, 0.12);
   color: #ffb4b0;
   font-size: 0.8125rem;
@@ -1564,9 +1771,9 @@ body.support-chat-open {
   gap: 1rem;
   margin-bottom: 1.25rem;
   padding: 1rem 1.25rem;
-  border: 1px solid rgb(215 180 106 / 0.35);
+  border: 1px solid rgb(201 127 114 / 0.35);
   border-radius: 14px;
-  background: linear-gradient(135deg, rgb(215 180 106 / 0.12), rgb(13 16 13 / 0.8));
+  background: linear-gradient(135deg, rgb(201 127 114 / 0.12), rgb(13 16 13 / 0.8));
 }
 
 .certificate-complete-title {
@@ -1802,7 +2009,7 @@ body.support-chat-open {
 .course-card-wrap-featured {
   padding: 1px;
   border-radius: 1.0625rem;
-  background: linear-gradient(140deg, rgb(215 180 106 / 0.75), rgb(16 47 35 / 0.8));
+  background: linear-gradient(140deg, rgb(201 127 114 / 0.75), rgb(231 160 170 / 0.8));
 }
 
 .course-card {
@@ -1811,9 +2018,9 @@ body.support-chat-open {
   height: 100%;
   overflow: hidden;
   border-radius: 1rem;
-  border: 1px solid rgb(255 255 255 / 0.08);
-  background: rgb(12 14 12 / 0.98);
-  box-shadow: 0 4px 24px rgb(0 0 0 / 0.35);
+  border: 1px solid rgb(46 42 38 / 0.08);
+  background: #ffffff;
+  box-shadow: 0 16px 40px -18px rgb(90 70 55 / 0.28);
 }
 
 .course-card-wrap-featured .course-card {
@@ -1837,7 +2044,7 @@ body.support-chat-open {
 .course-card-media-fallback {
   position: absolute;
   inset: 0;
-  background: linear-gradient(145deg, rgb(31 77 57 / 0.35), rgb(0 0 0 / 0.65));
+  background: linear-gradient(145deg, rgb(231 160 170 / 0.35), rgb(0 0 0 / 0.65));
 }
 
 .course-card-media-fade {
@@ -2016,7 +2223,7 @@ body.support-chat-open {
 .format-section {
   position: relative;
   isolation: isolate;
-  border-block: 1px solid rgb(215 180 106 / 0.12);
+  border-block: 1px solid rgb(201 127 114 / 0.12);
   padding: 4rem 0;
   overflow: hidden;
 }
@@ -2026,8 +2233,8 @@ body.support-chat-open {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 55% 45% at 0% 50%, rgb(31 77 57 / 0.12), transparent 65%),
-    radial-gradient(ellipse 45% 40% at 100% 30%, rgb(215 180 106 / 0.06), transparent 60%);
+    radial-gradient(ellipse 55% 45% at 0% 50%, rgb(231 160 170 / 0.12), transparent 65%),
+    radial-gradient(ellipse 45% 40% at 100% 30%, rgb(201 127 114 / 0.06), transparent 60%);
 }
 
 .format-section-grid {
@@ -2102,7 +2309,7 @@ body.support-chat-open {
 .format-step-wrap-featured {
   padding: 1px;
   border-radius: 1rem;
-  background: linear-gradient(135deg, rgb(215 180 106 / 0.85), rgb(16 47 35 / 0.9));
+  background: linear-gradient(135deg, rgb(201 127 114 / 0.85), rgb(231 160 170 / 0.9));
 }
 
 .format-step-card {
@@ -2116,7 +2323,7 @@ body.support-chat-open {
 }
 
 .format-step-wrap:not(.format-step-wrap-featured):hover .format-step-card {
-  border-color: rgb(215 180 106 / 0.28);
+  border-color: rgb(201 127 114 / 0.28);
 }
 
 .format-step-wrap-featured .format-step-card {
@@ -2131,8 +2338,8 @@ body.support-chat-open {
   width: 2.75rem;
   height: 2.75rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(215 180 106 / 0.2);
-  background: rgb(215 180 106 / 0.08);
+  border: 1px solid rgb(201 127 114 / 0.2);
+  background: rgb(201 127 114 / 0.08);
   color: var(--color-gold);
 }
 
@@ -2143,7 +2350,7 @@ body.support-chat-open {
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.2em;
-  color: rgb(215 180 106 / 0.45);
+  color: rgb(201 127 114 / 0.45);
 }
 
 .format-step-title {
@@ -2211,7 +2418,7 @@ body.support-chat-open {
 }
 
 .reviews-card:hover {
-  border-color: rgb(215 180 106 / 0.22);
+  border-color: rgb(201 127 114 / 0.22);
   transform: translateY(-2px);
 }
 
@@ -2222,7 +2429,7 @@ body.support-chat-open {
   font-family: var(--font-display);
   font-size: 4.5rem;
   line-height: 1;
-  color: rgb(215 180 106 / 0.28);
+  color: rgb(201 127 114 / 0.28);
   user-select: none;
   pointer-events: none;
 }
@@ -2265,7 +2472,7 @@ body.support-chat-open {
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
-  border-top: 1px solid rgb(215 180 106 / 0.14);
+  border-top: 1px solid rgb(201 127 114 / 0.14);
   padding-top: 2rem;
   text-align: center;
 }
@@ -2378,7 +2585,7 @@ body.support-chat-open {
   aspect-ratio: 16 / 10;
   overflow: hidden;
   border-radius: 1rem;
-  border: 1px solid rgb(215 180 106 / 0.14);
+  border: 1px solid rgb(201 127 114 / 0.14);
 }
 
 .course-detail-features {
@@ -2430,7 +2637,7 @@ body.support-chat-open {
 }
 
 .site-footer-dot {
-  color: rgb(215 180 106 / 0.35);
+  color: rgb(201 127 114 / 0.35);
 }
 
 .site-footer-bottom {
@@ -2487,10 +2694,10 @@ body.support-chat-open {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  color: var(--color-cream);
+  color: #f5efe6;
   min-height: min(68vh, 34rem);
   padding: calc(100px + var(--safe-top, 0px)) 0 2.75rem;
-  border-bottom: 1px solid rgb(215 180 106 / 0.12);
+  border-bottom: 1px solid rgb(201 127 114 / 0.12);
 }
 
 .course-hero-bg {
@@ -2517,12 +2724,12 @@ body.support-chat-open {
   background:
     linear-gradient(
       100deg,
-      rgba(5, 6, 5, 0.96) 0%,
-      rgba(5, 6, 5, 0.82) 42%,
-      rgba(5, 6, 5, 0.45) 68%,
-      rgba(5, 6, 5, 0.2) 100%
+      rgba(5, 6, 5, 0.97) 0%,
+      rgba(5, 6, 5, 0.88) 42%,
+      rgba(5, 6, 5, 0.5) 68%,
+      rgba(5, 6, 5, 0.25) 100%
     ),
-    linear-gradient(180deg, rgba(5, 6, 5, 0.25) 0%, transparent 40%, rgba(5, 6, 5, 0.88) 100%);
+    linear-gradient(180deg, rgba(5, 6, 5, 0.6) 0%, rgba(5, 6, 5, 0.28) 45%, rgba(5, 6, 5, 0.9) 100%);
 }
 
 .course-hero-inner {
@@ -2551,7 +2758,8 @@ body.support-chat-open {
   font-weight: 500;
   line-height: 1.06;
   letter-spacing: -0.025em;
-  color: var(--color-cream);
+  color: #ffffff;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.6), 0 1px 4px rgba(0, 0, 0, 0.55);
 }
 
 .course-hero-subtitle {
@@ -2574,7 +2782,7 @@ body.support-chat-open {
 .course-hero-proof li {
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  border: 1px solid rgb(215 180 106 / 0.32);
+  border: 1px solid rgb(201 127 114 / 0.32);
   background: rgb(8 10 8 / 0.65);
   font-size: 0.75rem;
   font-weight: 600;
@@ -2617,7 +2825,7 @@ body.support-chat-open {
   font-size: 0.9375rem;
   font-weight: 700;
   border-radius: 999px;
-  box-shadow: 0 8px 28px rgb(215 180 106 / 0.28);
+  box-shadow: 0 8px 28px rgb(201 127 114 / 0.28);
 }
 
 .course-hero-price-wrap {
@@ -2628,7 +2836,7 @@ body.support-chat-open {
 .course-hero-bonuses {
   padding: 1rem 1.1rem;
   border-radius: 0.875rem;
-  border: 1px solid rgb(215 180 106 / 0.24);
+  border: 1px solid rgb(201 127 114 / 0.24);
   background: linear-gradient(145deg, rgb(14 16 13 / 0.82), rgb(8 10 8 / 0.72));
   backdrop-filter: blur(12px);
   box-shadow: 0 12px 40px rgb(0 0 0 / 0.28);
@@ -2671,8 +2879,8 @@ body.support-chat-open {
 
 /* Social proof strip */
 .course-proof-bar {
-  border-bottom: 1px solid rgb(215 180 106 / 0.12);
-  background: rgb(12 14 12 / 0.92);
+  border-bottom: 1px solid rgb(201 127 114 / 0.12);
+  background: rgb(255 255 255 / 0.7);
 }
 
 .course-proof-bar-inner {
@@ -2697,7 +2905,7 @@ body.support-chat-open {
   height: 0.4rem;
   border-radius: 999px;
   background: var(--color-gold);
-  box-shadow: 0 0 10px rgb(215 180 106 / 0.55);
+  box-shadow: 0 0 10px rgb(201 127 114 / 0.55);
 }
 
 /* Final CTA */
@@ -2706,10 +2914,10 @@ body.support-chat-open {
   margin-top: 0.5rem;
   padding: 3rem 0 4rem;
   overflow: hidden;
-  border-top: 1px solid rgb(215 180 106 / 0.14);
+  border-top: 1px solid rgb(201 127 114 / 0.14);
   background:
-    radial-gradient(ellipse 70% 80% at 50% 0%, rgb(31 77 57 / 0.22), transparent 65%),
-    linear-gradient(180deg, rgb(12 14 12 / 0.4), var(--color-black));
+    radial-gradient(ellipse 70% 80% at 50% 0%, rgb(231 160 170 / 0.22), transparent 65%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.5), var(--color-black));
 }
 
 .course-final-cta-glow {
@@ -2717,7 +2925,7 @@ body.support-chat-open {
   inset: -40% 10% auto;
   height: 280px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgb(215 180 106 / 0.12), transparent 70%);
+  background: radial-gradient(circle, rgb(201 127 114 / 0.12), transparent 70%);
   pointer-events: none;
 }
 
@@ -2800,7 +3008,7 @@ body.support-chat-open {
   isolation: isolate;
   overflow: hidden;
   padding: calc(88px + var(--safe-top, 0px)) 0 2.5rem;
-  border-bottom: 1px solid rgb(215 180 106 / 0.12);
+  border-bottom: 1px solid rgb(201 127 114 / 0.12);
 }
 
 .course-hero-landing::before {
@@ -2809,7 +3017,7 @@ body.support-chat-open {
   inset: 0;
   z-index: 0;
   background:
-    linear-gradient(105deg, rgba(7, 8, 6, 0.94) 0%, rgba(7, 8, 6, 0.78) 38%, rgba(7, 8, 6, 0.42) 68%, rgba(16, 47, 35, 0.18) 100%),
+    linear-gradient(105deg, rgba(7, 8, 6, 0.94) 0%, rgba(7, 8, 6, 0.78) 38%, rgba(7, 8, 6, 0.42) 68%, rgba(231, 160, 170, 0.18) 100%),
     url("/hero-koban-owner.webp") center right / cover no-repeat;
   filter: saturate(0.94);
 }
@@ -2896,8 +3104,8 @@ body.support-chat-open {
   margin-top: 1rem;
   padding: 0.85rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(215 180 106 / 0.22);
-  background: rgb(12 14 12 / 0.72);
+  border: 1px solid rgb(201 127 114 / 0.22);
+  background: rgb(255 255 255 / 0.7);
   backdrop-filter: blur(8px);
 }
 
@@ -2956,7 +3164,7 @@ body.support-chat-open {
   inset: 8% 0 auto;
   height: 70%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgb(215 180 106 / 0.22), rgb(31 77 57 / 0.12) 45%, transparent 72%);
+  background: radial-gradient(circle, rgb(201 127 114 / 0.22), rgb(231 160 170 / 0.12) 45%, transparent 72%);
   filter: blur(8px);
 }
 
@@ -2967,7 +3175,7 @@ body.support-chat-open {
   height: 100%;
   overflow: hidden;
   border-radius: 1rem;
-  border: 1px solid rgb(215 180 106 / 0.28);
+  border: 1px solid rgb(201 127 114 / 0.28);
   box-shadow: 0 20px 48px rgb(0 0 0 / 0.45);
 }
 
@@ -2993,8 +3201,8 @@ body.support-chat-open {
   gap: 0.65rem;
   padding: 0.75rem 0.85rem;
   border-radius: 0.75rem;
-  border: 1px solid rgb(215 180 106 / 0.18);
-  background: rgb(12 14 12 / 0.82);
+  border: 1px solid rgb(201 127 114 / 0.18);
+  background: rgb(255 255 255 / 0.75);
 }
 
 .course-hero-feature-icon {
@@ -3005,7 +3213,7 @@ body.support-chat-open {
   width: 2rem;
   height: 2rem;
   border-radius: 0.5rem;
-  background: rgb(215 180 106 / 0.14);
+  background: rgb(201 127 114 / 0.14);
   color: var(--gold);
 }
 
@@ -3051,17 +3259,17 @@ body.support-chat-open {
 }
 
 .course-hero-price-pill-sale {
-  background: var(--cream);
-  color: #080907;
+  background: var(--color-gold);
+  color: #ffffff;
 }
 
 .course-hero-price-pill-old {
-  border-color: rgb(215 180 106 / 0.35);
-  background: rgb(12 14 12 / 0.85);
+  border-color: rgb(201 127 114 / 0.35);
+  background: rgb(255 255 255 / 0.75);
 }
 
 .course-hero-price-pill-old .course-hero-price-pill-value {
-  color: #fca5a5;
+  color: var(--color-muted);
   text-decoration: line-through;
 }
 
@@ -3082,15 +3290,15 @@ body.support-chat-open {
 .course-hero-buy-landing {
   border: none;
   border-radius: 999px;
-  background: linear-gradient(90deg, #c9922e 0%, var(--gold) 45%, #f0d9a0 100%);
-  color: #080907;
-  box-shadow: 0 8px 28px rgb(215 180 106 / 0.28);
+  background: linear-gradient(90deg, var(--color-gold-bright) 0%, var(--gold) 55%, #e7a0aa 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 28px rgb(201 127 114 / 0.28);
   transition: box-shadow 0.2s ease, filter 0.2s ease;
 }
 
 .course-hero-buy-landing:hover:not(:disabled) {
   filter: brightness(1.04);
-  box-shadow: 0 10px 32px rgb(215 180 106 / 0.38);
+  box-shadow: 0 10px 32px rgb(201 127 114 / 0.38);
 }
 
 .course-buy-sell {
@@ -3127,7 +3335,7 @@ body.support-chat-open {
 .course-for-you-line {
   flex: 1;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(215 180 106 / 0.35), transparent);
+  background: linear-gradient(90deg, transparent, rgb(201 127 114 / 0.35), transparent);
 }
 
 .course-for-you-title {
@@ -3163,8 +3371,8 @@ body.support-chat-open {
 .course-for-you-card {
   padding: 1.15rem;
   border-radius: 0.875rem;
-  border: 1px solid rgb(215 180 106 / 0.16);
-  background: rgb(12 14 12 / 0.72);
+  border: 1px solid rgb(201 127 114 / 0.16);
+  background: rgb(255 255 255 / 0.75);
 }
 
 .course-for-you-icon {
@@ -3175,7 +3383,7 @@ body.support-chat-open {
   height: 2rem;
   margin-bottom: 0.65rem;
   border-radius: 0.5rem;
-  background: rgb(215 180 106 / 0.14);
+  background: rgb(201 127 114 / 0.14);
   color: var(--color-gold);
 }
 
@@ -3205,9 +3413,9 @@ body.support-chat-open {
   margin-top: 1rem;
   padding: 2.5rem 0 3rem;
   background:
-    linear-gradient(180deg, rgb(12 14 12 / 0.2) 0%, rgb(7 8 6 / 1) 30%),
-    radial-gradient(ellipse 80% 60% at 50% 0%, rgb(31 77 57 / 0.18), transparent 70%);
-  border-top: 1px solid rgb(215 180 106 / 0.1);
+    linear-gradient(180deg, rgb(255 255 255 / 0.4) 0%, var(--color-black) 30%),
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgb(231 160 170 / 0.18), transparent 70%);
+  border-top: 1px solid rgb(201 127 114 / 0.1);
 }
 
 .course-pain-head {
@@ -3253,7 +3461,7 @@ body.support-chat-open {
   gap: 0.85rem;
   padding: 1.15rem;
   border-radius: 0.875rem;
-  border: 1px solid rgb(215 180 106 / 0.14);
+  border: 1px solid rgb(201 127 114 / 0.14);
   background: rgb(0 0 0 / 0.38);
 }
 
@@ -3262,7 +3470,7 @@ body.support-chat-open {
   font-size: 1.5rem;
   font-weight: 700;
   line-height: 1;
-  color: rgb(215 180 106 / 0.45);
+  color: rgb(201 127 114 / 0.45);
   font-variant-numeric: tabular-nums;
 }
 
@@ -3439,8 +3647,8 @@ body.support-chat-open {
 .offer-countdown-hero,
 .offer-countdown-panel {
   border-radius: 0.75rem;
-  border: 1px solid rgb(215 180 106 / 0.22);
-  background: rgb(215 180 106 / 0.05);
+  border: 1px solid rgb(201 127 114 / 0.22);
+  background: rgb(201 127 114 / 0.05);
   padding: 0.85rem 0.9rem;
 }
 
@@ -3501,7 +3709,7 @@ body.support-chat-open {
 
 .offer-countdown-card {
   border-radius: 0.625rem;
-  border: 1px solid rgb(215 180 106 / 0.35);
+  border: 1px solid rgb(201 127 114 / 0.35);
   background: rgb(0 0 0 / 0.65);
   backdrop-filter: blur(8px);
   padding: 0.5rem 0.65rem;
@@ -3568,8 +3776,8 @@ body.support-chat-open {
   bottom: 0;
   z-index: 120;
   padding: 0.65rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid rgb(215 180 106 / 0.22);
-  background: rgb(7 8 6 / 0.94);
+  border-top: 1px solid rgb(201 127 114 / 0.22);
+  background: rgb(251 247 243 / 0.94);
   backdrop-filter: blur(12px);
 }
 

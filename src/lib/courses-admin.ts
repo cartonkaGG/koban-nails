@@ -1,4 +1,5 @@
 import type { CourseFormat } from "@/lib/types";
+import { validatePaymentUrl } from "@/lib/security/payment-url";
 
 export type CourseUpdateInput = {
   title?: unknown;
@@ -62,7 +63,7 @@ export function buildCourseUpdatePayload(body: CourseUpdateInput) {
     featured: asBool(body.featured),
     published: asBool(body.published),
     features: asFeatures(body.features),
-    payment_url: asNullableString(body.payment_url),
+    payment_url: validatePaymentUrl(asNullableString(body.payment_url)),
     sort_order: asInt(body.sort_order, 0),
     image_url: asNullableString(body.image_url),
     certificate_template_url: asNullableString(body.certificate_template_url),

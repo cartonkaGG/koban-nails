@@ -7,10 +7,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/cabinet/:path*",
-    "/admin/:path*",
-    "/checkout/:path*",
-    "/auth/callback",
-    "/api/:path*",
+    /*
+     * Refresh Supabase auth cookies on every document/API request (not static assets).
+     * Without this, sessions expire on public pages like / and /courses/*.
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

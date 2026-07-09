@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { applyAuthCookieDefaults } from "@/lib/supabase/cookies";
+import { getSafeRedirectPath } from "@/lib/security/redirect";
 import { getSupabaseEnv, isAdminEmail, isSupabaseAdminConfigured, isSupabaseConfigured } from "@/lib/supabase/config";
 
 export async function GET(request: NextRequest) {
@@ -11,9 +12,9 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/cabinet";
+  const next = searchParams.get("next");
   const origin = new URL(request.url).origin;
-  const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/cabinet";
+  const safeNext = getSafeRedirectPath(next);
 
   if (!code) {
     return NextResponse.redirect(`${origin}/?auth=login&error=auth`);

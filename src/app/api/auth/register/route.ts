@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendSignupConfirmationEmail, getSignupOrigin } from "@/lib/auth/signup-email";
 import { applyAuthCookieDefaults } from "@/lib/supabase/cookies";
+import { getClientIp, rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
+import { getSafeRedirectPath } from "@/lib/security/redirect";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { isResendConfigured } from "@/lib/resend/config";
-
-function getRedirectPath(value: unknown) {
-  if (typeof value !== "string") return "/cabinet";
-  if (!value.startsWith("/") || value.startsWith("//")) return "/cabinet";
-  return value;
-}
 
 export async function POST(request: NextRequest) {
   if (!isSupabaseAdminConfigured()) {
     return NextResponse.json({ error: "Supabase admin key is not configured" }, { status: 400 });
   }
+
+  const ip = getClientIp(request);
+  const limited = rateLimit({ key: `register:${ip}`, limit: 10, windowMs: 60_000 });
+  if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
 
   const { email, password, redirectTo, repairUnconfirmedOnly, firstName, lastName } =
     await request.json();
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   const normalizedPassword = typeof password === "string" ? password : "";
   const normalizedFirstName = typeof firstName === "string" ? firstName.trim() : "";
   const normalizedLastName = typeof lastName === "string" ? lastName.trim() : "";
-  const safeRedirectTo = getRedirectPath(redirectTo);
+  const safeRedirectTo = getSafeRedirectPath(redirectTo);
   const origin = getSignupOrigin(request);
   const fullName =
     normalizedFirstName && normalizedLastName

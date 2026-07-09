@@ -2,6 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { applyAuthCookieDefaults } from "@/lib/supabase/cookies";
+import { getClientIp, rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
+import { getSafeRedirectPath } from "@/lib/security/redirect";
 import {
   getSupabaseEnv,
   isAdminEmail,
@@ -9,21 +11,19 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/config";
 
-function getRedirectPath(value: unknown) {
-  if (typeof value !== "string") return "/cabinet";
-  if (!value.startsWith("/") || value.startsWith("//")) return "/cabinet";
-  return value;
-}
-
 export async function POST(request: NextRequest) {
   if (!isSupabaseConfigured()) {
     return NextResponse.json({ error: "Supabase is not configured" }, { status: 400 });
   }
 
+  const ip = getClientIp(request);
+  const limited = rateLimit({ key: `login:${ip}`, limit: 15, windowMs: 60_000 });
+  if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
+
   const { email, password, redirectTo } = await request.json();
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
   const normalizedPassword = typeof password === "string" ? password : "";
-  const safeRedirectTo = getRedirectPath(redirectTo);
+  const safeRedirectTo = getSafeRedirectPath(redirectTo);
 
   if (!normalizedEmail || normalizedPassword.length < 6) {
     return NextResponse.json({ error: "Email and password are required" }, { status: 400 });

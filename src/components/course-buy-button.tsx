@@ -10,7 +10,7 @@ import { IconArrowRight } from "@/components/icons";
 
 type Props = {
   course: Course;
-  variant?: "default" | "sell";
+  variant?: "default" | "sell" | "v2";
   className?: string;
   label?: string;
   icon?: ReactNode;
@@ -44,9 +44,11 @@ export function CourseBuyButton({
   const checkoutPath = `/checkout/${course.slug}`;
   const buttonLabel = label ?? (variant === "sell" ? "Отримати доступ" : "Купити");
   const btnClass =
-    variant === "sell"
-      ? `btn btn-primary course-buy-sell ${className}`.trim()
-      : `btn btn-primary ${className}`.trim();
+    variant === "v2"
+      ? className.trim()
+      : variant === "sell"
+        ? `btn btn-primary course-buy-sell ${className}`.trim()
+        : `btn btn-primary ${className}`.trim();
 
   async function handleBuy() {
     setLoading(true);

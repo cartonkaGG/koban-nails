@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { isSupabaseConfigured } from "@/lib/auth";
+import { isDemoAuthAllowed } from "@/lib/security/demo-auth";
+import { getClientIp, rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 
 export async function POST(request: Request) {
-  if (process.env.NODE_ENV === "production" && isSupabaseConfigured()) {
+  if (!isDemoAuthAllowed()) {
     return NextResponse.json({ error: "Not available" }, { status: 404 });
   }
+
+  const ip = getClientIp(request);
+  const limited = rateLimit({ key: `demo-login:${ip}`, limit: 10, windowMs: 60_000 });
+  if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
 
   const { role } = await request.json();
   const store = await cookies();
@@ -23,7 +28,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE() {
-  if (process.env.NODE_ENV === "production" && isSupabaseConfigured()) {
+  if (!isDemoAuthAllowed()) {
     return NextResponse.json({ error: "Not available" }, { status: 404 });
   }
 

@@ -16,7 +16,7 @@ export function CourseWhyBuy({ course }: Props) {
       <div className="course-for-you-head">
         <span className="course-for-you-line" aria-hidden="true" />
         <h2 id="course-for-you-title" className="course-for-you-title">
-          Цей курс для тебе, якщо
+          Цей курс для вас, якщо
         </h2>
         <span className="course-for-you-line" aria-hidden="true" />
       </div>

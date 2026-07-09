@@ -58,19 +58,19 @@ async function getTelegramWebhookInfo() {
 export async function POST(request: Request) {
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim();
   const header = request.headers.get("x-telegram-bot-api-secret-token")?.trim();
-  const isProd = process.env.NODE_ENV === "production";
 
-  if (isProd && !secret) {
-    console.error("telegram webhook: TELEGRAM_WEBHOOK_SECRET is required in production");
-    return NextResponse.json({ error: "Server misconfigured" }, { status: 503 });
-  }
-
-  if (secret && header !== secret) {
-    console.error("telegram webhook: secret mismatch", {
-      hasHeader: Boolean(header),
-      hasEnvSecret: Boolean(secret),
-    });
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (isTelegramConfigured()) {
+    if (!secret) {
+      console.error("telegram webhook: TELEGRAM_WEBHOOK_SECRET is required when Telegram is configured");
+      return NextResponse.json({ error: "Server misconfigured" }, { status: 503 });
+    }
+    if (header !== secret) {
+      console.error("telegram webhook: secret mismatch", {
+        hasHeader: Boolean(header),
+        hasEnvSecret: Boolean(secret),
+      });
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
   }
 
   if (!isTelegramConfigured()) {

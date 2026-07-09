@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
+import { isDemoAuthAllowed } from "@/lib/security/demo-auth";
+import { validatePaymentUrl } from "@/lib/security/payment-url";
 import { addDemoEnrollment } from "@/lib/demo-enrollments";
 import { requestPendingEnrollment } from "@/lib/enrollments";
 import { getCourseBySlug, getEnrollment } from "@/lib/data";
@@ -35,6 +37,9 @@ export async function POST(
   }
 
   if (!isSupabaseConfigured()) {
+    if (!isDemoAuthAllowed()) {
+      return NextResponse.json({ error: "Service unavailable" }, { status: 503 });
+    }
     await addDemoEnrollment(slug);
     return NextResponse.json({
       ok: true,
@@ -101,8 +106,9 @@ export async function POST(
     });
   }
 
-  if (course.payment_url) {
-    return NextResponse.json({ ok: true, redirect: course.payment_url });
+  const safePaymentUrl = validatePaymentUrl(course.payment_url);
+  if (safePaymentUrl) {
+    return NextResponse.json({ ok: true, redirect: safePaymentUrl });
   }
 
   if (existing?.status === "pending") {

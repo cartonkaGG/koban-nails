@@ -9,6 +9,7 @@ import {
   saveGuestName,
 } from "@/lib/support/actor";
 import { notifySupportMessage } from "@/lib/telegram/send";
+import { getClientIp, rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import {
   countUnreadAdminMessages,
   fetchSupportMessages,
@@ -69,6 +70,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const limited = rateLimit({ key: `support:${ip}`, limit: 20, windowMs: 60_000 });
+  if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
+
   const payload = await request.json();
   const text = typeof payload.body === "string" ? payload.body.trim() : "";
   const guestName = typeof payload.name === "string" ? payload.name.trim() : "";

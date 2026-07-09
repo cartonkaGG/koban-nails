@@ -32,7 +32,7 @@ export function CheckoutModal({ course, open, onClose }: Props) {
         <button type="button" className="checkout-modal-close" aria-label="Закрити" onClick={onClose}>
           <IconClose width={18} height={18} />
         </button>
-        <CheckoutForm course={course} onClose={onClose} compact />
+        <CheckoutForm course={course} onClose={onClose} />
       </div>
     </div>
   );

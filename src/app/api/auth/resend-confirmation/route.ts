@@ -1,13 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendSignupConfirmationEmail, getSignupOrigin } from "@/lib/auth/signup-email";
+import { getClientIp, rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
+import { getSafeRedirectPath } from "@/lib/security/redirect";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { isResendConfigured } from "@/lib/resend/config";
-
-function getRedirectPath(value: unknown) {
-  if (typeof value !== "string") return "/cabinet";
-  if (!value.startsWith("/") || value.startsWith("//")) return "/cabinet";
-  return value;
-}
 
 export async function POST(request: NextRequest) {
   if (!isSupabaseAdminConfigured()) {
@@ -18,12 +14,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Email service is not configured" }, { status: 503 });
   }
 
+  const ip = getClientIp(request);
+  const limited = rateLimit({ key: `resend-confirmation:${ip}`, limit: 5, windowMs: 60_000 });
+  if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
+
   const { email, password, redirectTo, firstName, lastName } = await request.json();
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
   const normalizedPassword = typeof password === "string" ? password : "";
   const normalizedFirstName = typeof firstName === "string" ? firstName.trim() : "";
   const normalizedLastName = typeof lastName === "string" ? lastName.trim() : "";
-  const safeRedirectTo = getRedirectPath(redirectTo);
+  const safeRedirectTo = getSafeRedirectPath(redirectTo);
   const origin = getSignupOrigin(request);
   const fullName =
     normalizedFirstName && normalizedLastName

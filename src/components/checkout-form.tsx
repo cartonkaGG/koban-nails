@@ -5,6 +5,8 @@ import { useState } from "react";
 import { CoursePrice } from "@/components/course-price";
 import { PaymentRedirectOverlay } from "@/components/payment-redirect-overlay";
 import type { Course } from "@/lib/types";
+import { isAllowedPaymentUrl } from "@/lib/security/payment-url";
+import { getSafeRedirectPath } from "@/lib/security/redirect";
 import { useAuthModal } from "@/components/auth/auth-modal-context";
 
 type LiqPayCheckout = {
@@ -16,10 +18,9 @@ type LiqPayCheckout = {
 type Props = {
   course: Course;
   onClose?: () => void;
-  compact?: boolean;
 };
 
-export function CheckoutForm({ course, onClose, compact = false }: Props) {
+export function CheckoutForm({ course, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [liqpay, setLiqpay] = useState<LiqPayCheckout | null>(null);
@@ -49,17 +50,23 @@ export function CheckoutForm({ course, onClose, compact = false }: Props) {
         return;
       }
 
-      if (data.redirect?.startsWith("http")) {
+      if (typeof data.redirect === "string" && data.redirect.startsWith("http")) {
+        if (!isAllowedPaymentUrl(data.redirect)) {
+          setError("Недійсне посилання для оплати. Зверніться до підтримки.");
+          return;
+        }
         window.location.href = data.redirect;
         return;
       }
 
+      const safeRedirect = getSafeRedirectPath(data.redirect);
+
       if (data.pending && data.message) {
-        window.location.href = `${data.redirect ?? "/cabinet"}?pending=1`;
+        window.location.href = `${safeRedirect}?pending=1`;
         return;
       }
 
-      window.location.href = data.redirect ?? "/cabinet";
+      window.location.href = safeRedirect;
     } finally {
       if (!redirecting) {
         setLoading(false);
@@ -78,52 +85,52 @@ export function CheckoutForm({ course, onClose, compact = false }: Props) {
   }
 
   return (
-    <div className={compact ? "space-y-5" : "card space-y-5"}>
+    <div className="space-y-5">
       <div>
-        <p className="eyebrow">оформлення</p>
+        <p className="v2-eyebrow">оформлення</p>
         <h1
           id="checkout-modal-title"
-          className="mt-2 font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl"
+          className="v2-modal-title mt-2 text-2xl sm:text-3xl"
         >
           {course.title}
         </h1>
-        <p className="mt-2 text-sm text-cream-body">{course.description}</p>
+        <p className="v2-modal-subtitle mt-2">{course.description}</p>
       </div>
-      <div className="rounded-xl border border-line bg-black/30 p-4">
+      <div className="rounded-2xl border border-[rgba(46,42,38,0.08)] bg-v2-sand p-4">
         <div className="flex items-center justify-between gap-4">
-          <span className="text-muted">До сплати</span>
+          <span className="text-v2-mute">До сплати</span>
           <CoursePrice course={course} size="lg" />
         </div>
       </div>
-      <p className="text-sm text-cream-body">
+      <p className="text-sm text-v2-ink-soft">
         Після оплати курс відкриється у вашому кабінеті з уроками та прогресом.
       </p>
-      <p className="text-xs leading-relaxed text-muted">
+      <p className="text-xs leading-relaxed text-v2-mute">
         Натискаючи «Підтвердити покупку», ви погоджуєтесь з{" "}
-        <Link href="/offer" className="text-gold hover:underline" onClick={onClose}>
+        <Link href="/offer" className="v2-modal-link" onClick={onClose}>
           публічною офертою
         </Link>
         ,{" "}
-        <Link href="/privacy" className="text-gold hover:underline" onClick={onClose}>
+        <Link href="/privacy" className="v2-modal-link" onClick={onClose}>
           політикою конфіденційності
         </Link>{" "}
         та{" "}
-        <Link href="/refund" className="text-gold hover:underline" onClick={onClose}>
+        <Link href="/refund" className="v2-modal-link" onClick={onClose}>
           політикою повернення коштів
         </Link>
         .
       </p>
-      {error && <p className="text-sm text-red-300">{error}</p>}
-      <div className="flex flex-wrap gap-3">
-        <button type="button" className="btn btn-primary" onClick={buy} disabled={loading}>
+      {error && <p className="v2-alert-error">{error}</p>}
+      <div className="flex flex-col gap-3">
+        <button type="button" className="v2-btn-primary" onClick={buy} disabled={loading}>
           {loading ? "Обробка..." : "Підтвердити покупку"}
         </button>
         {onClose ? (
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={loading}>
+          <button type="button" className="v2-btn-ghost" onClick={onClose} disabled={loading}>
             Скасувати
           </button>
         ) : (
-          <Link href="/#courses" className="btn btn-ghost">
+          <Link href="/#courses" className="v2-btn-ghost">
             Назад до курсів
           </Link>
         )}

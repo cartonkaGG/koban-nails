@@ -1,12 +1,7 @@
 import { notFound } from "next/navigation";
-import { CourseDetailedDescription } from "@/components/course-detailed-description";
-import { CourseDetailHero } from "@/components/course/course-detail-hero";
-import { CourseFinalCta } from "@/components/course/course-final-cta";
-import { CourseWhyBuy } from "@/components/course/course-why-buy";
-import { CoursePainPoints } from "@/components/course/course-pain-points";
-import { CourseStickyCta } from "@/components/course/course-sticky-cta";
-import { LandingTopbar } from "@/components/landing/topbar";
-import { SiteFooter } from "@/components/site-footer";
+import { CourseDetailV2 } from "@/components/course-v2/course-detail-v2";
+import { LandingV2Header } from "@/components/landing-v2/header";
+import { LandingV2Footer } from "@/components/landing-v2/footer";
 import { JsonLd } from "@/components/seo/json-ld";
 import { getCourseBySlug } from "@/lib/data";
 import { resolveCourseImageUrl } from "@/lib/images";
@@ -43,33 +38,16 @@ export default async function CourseDetailPage({ params }: Props) {
   const schemaImageUrl = schemaImage ? absoluteUrl(schemaImage) : null;
 
   return (
-    <>
+    <div className="v2-landing">
       <JsonLd
         data={{
           "@context": "https://schema.org",
           "@graph": [buildCourseSchema(course, schemaImageUrl)],
         }}
       />
-      <LandingTopbar />
-      <main className="course-detail-page">
-        <CourseDetailHero course={course} imageUrl={schemaImage} />
-
-        <div className="shell course-detail-body">
-          <CourseWhyBuy course={course} />
-
-          {course.detailed_description && (
-            <section className="course-program">
-              <h2 className="course-program-title">Програма</h2>
-              <CourseDetailedDescription text={course.detailed_description} />
-            </section>
-          )}
-        </div>
-
-        <CoursePainPoints course={course} />
-        <CourseFinalCta course={course} />
-        <CourseStickyCta course={course} />
-      </main>
-      <SiteFooter />
-    </>
+      <LandingV2Header linkBase="/" />
+      <CourseDetailV2 course={course} imageUrl={schemaImage} />
+      <LandingV2Footer />
+    </div>
   );
 }

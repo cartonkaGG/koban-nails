@@ -1,10 +1,18 @@
-import { absoluteUrl } from "@/lib/site";
+import { getSiteOrigin } from "@/lib/site-url";
 import {
   getLiqPayPublicKey,
   isLiqPaySandbox,
   LIQPAY_CHECKOUT_URL,
 } from "@/lib/liqpay/config";
 import { encodeLiqPayData, signLiqPayPayload } from "@/lib/liqpay/crypto";
+
+/** Where LiqPay sends the buyer after payment (Мої курси). */
+export const LIQPAY_RESULT_PATH = "/cabinet?payment=success";
+
+function liqPayAbsoluteUrl(path: string) {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${getSiteOrigin()}${normalized}`;
+}
 
 type BuildCheckoutInput = {
   orderId: string;
@@ -23,8 +31,8 @@ export function buildLiqPayCheckout(input: BuildCheckoutInput) {
     currency: "UAH",
     description: input.description.slice(0, 255),
     order_id: input.orderId,
-    result_url: absoluteUrl("/cabinet?payment=processing"),
-    server_url: absoluteUrl("/api/payments/liqpay/callback"),
+    result_url: liqPayAbsoluteUrl(LIQPAY_RESULT_PATH),
+    server_url: liqPayAbsoluteUrl("/api/payments/liqpay/callback"),
   };
 
   if (isLiqPaySandbox()) {

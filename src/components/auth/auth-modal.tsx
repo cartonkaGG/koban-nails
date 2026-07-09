@@ -273,10 +273,13 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
           </svg>
         </button>
 
-        <h2 id="auth-modal-title" className="font-[family-name:var(--font-playfair)] text-2xl sm:text-3xl">
+        <p className="v2-eyebrow">
+          {mode === "forgot" ? "Відновлення" : mode === "login" ? "Ласкаво просимо" : "Приєднуйтесь"}
+        </p>
+        <h2 id="auth-modal-title" className="v2-modal-title mt-2 text-2xl sm:text-3xl">
           {title}
         </h2>
-        <p className="mt-3 text-sm leading-relaxed text-cream-body">
+        <p className="v2-modal-subtitle mt-3">
           {mode === "forgot"
             ? "Введіть email — надішлемо посилання для створення нового пароля."
             : isCheckoutFlow
@@ -289,10 +292,10 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
         </p>
 
         {mode !== "forgot" && (
-          <div className="mt-6 grid grid-cols-2 rounded-xl border border-line bg-black/25 p-1 text-sm">
+          <div className="mt-6 grid grid-cols-2 gap-1 rounded-full bg-v2-sand p-1 text-sm">
             <button
               type="button"
-              className={`rounded-lg px-3 py-2 transition ${mode === "login" ? "bg-gold text-black" : "text-cream-body hover:text-cream"}`}
+              className={`rounded-full px-3 py-2 font-semibold transition ${mode === "login" ? "bg-v2-clay text-white shadow-v2-card" : "text-v2-ink-soft hover:text-v2-ink"}`}
               onClick={() => {
                 setMode("login");
                 setStatus("idle");
@@ -304,7 +307,7 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
             </button>
             <button
               type="button"
-              className={`rounded-lg px-3 py-2 transition ${mode === "register" ? "bg-gold text-black" : "text-cream-body hover:text-cream"}`}
+              className={`rounded-full px-3 py-2 font-semibold transition ${mode === "register" ? "bg-v2-clay text-white shadow-v2-card" : "text-v2-ink-soft hover:text-v2-ink"}`}
               onClick={() => {
                 setMode("register");
                 setStatus("idle");
@@ -319,24 +322,24 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
 
         {mode === "forgot" ? (
           <form className="mt-6 space-y-4" onSubmit={onForgotSubmit}>
-            <label className="block text-sm">
-              <span className="mb-2 block text-muted">Email</span>
+            <div>
+              <label className="v2-label">Email</label>
               <input
                 type="email"
                 required
-                className="field"
+                className="v2-field"
                 placeholder="you@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
               />
-            </label>
-            <button type="submit" className="btn btn-primary w-full" disabled={status === "loading"}>
+            </div>
+            <button type="submit" className="v2-btn-primary" disabled={status === "loading"}>
               {status === "loading" ? "Зачекайте..." : "Надіслати лист"}
             </button>
             <button
               type="button"
-              className="w-full text-sm text-muted transition hover:text-gold"
+              className="w-full text-center text-sm font-semibold text-v2-mute transition hover:text-v2-clay"
               onClick={() => {
                 setMode("login");
                 setStatus("idle");
@@ -351,54 +354,54 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
           <form className="mt-6 space-y-4" onSubmit={onSubmit} autoComplete="off">
             {mode === "register" && (
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="block text-sm">
-                  <span className="mb-2 block text-muted">Ім&apos;я</span>
+                <div>
+                  <label className="v2-label">Ім&apos;я</label>
                   <input
                     type="text"
                     required
-                    className="field"
+                    className="v2-field"
                     placeholder=""
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     autoComplete="off"
                     name="koban-register-first-name"
                   />
-                </label>
-                <label className="block text-sm">
-                  <span className="mb-2 block text-muted">Прізвище</span>
+                </div>
+                <div>
+                  <label className="v2-label">Прізвище</label>
                   <input
                     type="text"
                     required
-                    className="field"
+                    className="v2-field"
                     placeholder=""
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
                     autoComplete="off"
                     name="koban-register-last-name"
                   />
-                </label>
+                </div>
               </div>
             )}
-            <label className="block text-sm">
-              <span className="mb-2 block text-muted">Email</span>
+            <div>
+              <label className="v2-label">Email</label>
               <input
                 type="email"
                 required
-                className="field"
+                className="v2-field"
                 placeholder="you@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
               />
-            </label>
-            <label className="block text-sm">
-              <span className="mb-2 block text-muted">Пароль</span>
+            </div>
+            <div>
+              <label className="v2-label">Пароль</label>
               <span className="relative block">
                 <input
                   type={showPassword ? "text" : "password"}
                   required
                   minLength={6}
-                  className="field pr-12"
+                  className="v2-field pr-12"
                   placeholder="Мінімум 6 символів"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -406,7 +409,7 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
                 />
                 <button
                   type="button"
-                  className="absolute right-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-md text-muted transition hover:bg-white/5 hover:text-gold"
+                  className="absolute right-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-full text-v2-mute transition hover:bg-v2-sand hover:text-v2-clay"
                   aria-label={showPassword ? "Сховати пароль" : "Показати пароль"}
                   onClick={() => setShowPassword((value) => !value)}
                 >
@@ -422,11 +425,11 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
                   )}
                 </button>
               </span>
-            </label>
+            </div>
             {mode === "login" && supabaseReady && (
               <button
                 type="button"
-                className="text-sm text-muted transition hover:text-gold"
+                className="v2-modal-link text-sm"
                 onClick={() => {
                   setMode("forgot");
                   setStatus("idle");
@@ -437,23 +440,23 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
                 Забули пароль?
               </button>
             )}
-            <button type="submit" className="btn btn-primary w-full" disabled={status === "loading"}>
+            <button type="submit" className="v2-btn-primary" disabled={status === "loading"}>
               {status === "loading" ? "Зачекайте..." : mode === "login" ? "Увійти" : "Створити акаунт"}
             </button>
           </form>
         )}
 
         {status === "success" && successMessage && (
-          <div className="mt-4 space-y-3 rounded-lg border border-gold/30 bg-gold/10 p-4 text-sm text-cream">
+          <div className="v2-alert-success mt-4 space-y-3">
             <p>{successMessage}</p>
             {pendingConfirmation && (
               <>
-                <p className="text-cream-body">
+                <p className="text-v2-ink-soft">
                   Після підтвердження email увійдіть з тим самим паролем — відкриється кабінет.
                 </p>
                 <button
                   type="button"
-                  className="btn btn-ghost w-full"
+                  className="v2-btn-ghost"
                   disabled={isBusy}
                   onClick={resendConfirmation}
                 >
@@ -463,7 +466,7 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
             )}
           </div>
         )}
-        {error && <p className="mt-4 text-sm text-red-300">{error}</p>}
+        {error && <p className="v2-alert-error mt-4">{error}</p>}
       </div>
     </div>
   );
