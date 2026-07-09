@@ -12,6 +12,31 @@ type Message = {
 const POLL_OPEN_MS = 3000;
 const POLL_CLOSED_MS = 12000;
 const GUEST_NAME_KEY = "support_guest_name";
+const GUEST_ID_KEY = "support_guest_id";
+
+function readStoredGuestId() {
+  if (typeof window === "undefined") return null;
+  const value = localStorage.getItem(GUEST_ID_KEY);
+  return value && /^[0-9a-f-]{36}$/i.test(value) ? value : null;
+}
+
+function persistGuestId(guestId: unknown) {
+  if (typeof guestId !== "string" || !/^[0-9a-f-]{36}$/i.test(guestId)) return;
+  localStorage.setItem(GUEST_ID_KEY, guestId);
+}
+
+function supportFetchInit(init: RequestInit = {}): RequestInit {
+  const headers = new Headers(init.headers);
+  const guestId = readStoredGuestId();
+  if (guestId) headers.set("x-support-guest-id", guestId);
+  return { ...init, headers, credentials: "include" };
+}
+
+async function parseSupportResponse<T>(res: Response): Promise<T> {
+  const data = (await res.json()) as T & { guestId?: string };
+  persistGuestId(data.guestId);
+  return data;
+}
 
 function formatTime(iso: string) {
   try {
@@ -36,6 +61,7 @@ export function SupportChat() {
   const [ready, setReady] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [threadStatus, setThreadStatus] = useState<"open" | "closed">("open");
+  const [sendError, setSendError] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -53,8 +79,8 @@ export function SupportChat() {
 
   const checkUnread = useCallback(async () => {
     try {
-      const res = await fetch("/api/support/unread", { cache: "no-store" });
-      const data = await res.json();
+      const res = await fetch("/api/support/unread", supportFetchInit({ cache: "no-store" }));
+      const data = await parseSupportResponse<{ unreadCount?: number; mode?: "user" | "guest" }>(res);
       setUnreadCount(data.unreadCount ?? 0);
       if (data.mode) setMode(data.mode);
     } catch {
@@ -63,11 +89,17 @@ export function SupportChat() {
   }, []);
 
   const loadMessages = useCallback(async () => {
-    const res = await fetch("/api/support", { cache: "no-store" });
+    const res = await fetch("/api/support", supportFetchInit({ cache: "no-store" }));
     if (!res.ok) return;
 
     setReady(true);
-    const data = await res.json();
+    const data = await parseSupportResponse<{
+      messages?: Message[];
+      unreadCount?: number;
+      status?: string;
+      mode?: "user" | "guest";
+      displayName?: string;
+    }>(res);
     setMessages(data.messages ?? []);
     setUnreadCount(data.unreadCount ?? 0);
     setThreadStatus(data.status === "closed" ? "closed" : "open");
@@ -76,7 +108,7 @@ export function SupportChat() {
   }, []);
 
   const markRead = useCallback(async () => {
-    await fetch("/api/support/read", { method: "POST" });
+    await fetch("/api/support/read", supportFetchInit({ method: "POST" }));
     setUnreadCount(0);
   }, []);
 
@@ -117,31 +149,40 @@ export function SupportChat() {
     if (!body || sending) return;
 
     setSending(true);
+    setSendError("");
     const payload: { body: string; name?: string } = { body };
     if (mode === "guest" && guestName.trim()) {
       payload.name = guestName.trim();
       localStorage.setItem(GUEST_NAME_KEY, guestName.trim());
     }
 
-    const res = await fetch("/api/support", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const res = await fetch(
+      "/api/support",
+      supportFetchInit({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }),
+    );
     setSending(false);
 
     if (res.ok) {
       setText("");
       setThreadStatus("open");
       if (payload.name) setDisplayName(payload.name);
+      await parseSupportResponse(res);
       await loadMessages();
+      return;
     }
+
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    setSendError(data.error ?? "Не вдалося надіслати повідомлення. Спробуйте ще раз.");
   }
 
   async function closeChat() {
     if (closing) return;
     setClosing(true);
-    const res = await fetch("/api/support/close", { method: "POST" });
+    const res = await fetch("/api/support/close", supportFetchInit({ method: "POST" }));
     setClosing(false);
     if (res.ok) {
       setMessages([]);
@@ -257,6 +298,8 @@ export function SupportChat() {
                   maxLength={80}
                 />
               )}
+
+              {sendError && <p className="support-chat-error">{sendError}</p>}
 
               <div className="support-chat-input">
                 <textarea

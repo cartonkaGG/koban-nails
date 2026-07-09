@@ -26,6 +26,7 @@ import {
   isCourseOnSale,
   isOfferCountdownEnabled,
   type Course,
+  type LessonCatalogItem,
 } from "@/lib/types";
 import { getCourseHeroCopy, getCourseMarketing } from "@/content/course-marketing";
 import { resolveCourseImageUrl } from "@/lib/images";
@@ -47,6 +48,15 @@ const viewportOnce = { once: true, amount: 0.25 } as const;
 const learnIcons = [Scissors, Fingerprint, Palette, Sparkles, Camera, Award];
 
 type ProgramItem = { title: string; body: string };
+
+function lessonsToProgram(lessons: LessonCatalogItem[]): ProgramItem[] {
+  return lessons
+    .filter((lesson) => lesson.title.trim())
+    .map((lesson) => ({
+      title: lesson.title.trim(),
+      body: lesson.summary.trim(),
+    }));
+}
 
 function parseProgram(course: Course, fallback: ProgramItem[]): ProgramItem[] {
   const text = course.detailed_description?.trim();
@@ -122,10 +132,11 @@ function ProgramAccordion({ items }: { items: ProgramItem[] }) {
 
 type Props = {
   course: Course;
+  lessons?: LessonCatalogItem[];
   imageUrl?: string | null;
 };
 
-export function CourseDetailV2({ course, imageUrl }: Props) {
+export function CourseDetailV2({ course, lessons = [], imageUrl }: Props) {
   const marketing = getCourseMarketing(course);
   const hero = getCourseHeroCopy(marketing);
   const onSale = isCourseOnSale(course);
@@ -135,10 +146,14 @@ export function CourseDetailV2({ course, imageUrl }: Props) {
   const heroImage = imageUrl || resolveCourseImageUrl(course.image_url) || "/galyna-hero.png";
   const badge = course.badge || (course.featured ? "Найпопулярніший курс" : marketing.tagline);
 
+  const lessonCount = lessons.length;
+
   const checklist = [
-    course.features.length > 0
-      ? `${course.features.length} уроків`
-      : "Покрокова програма",
+    lessonCount > 0
+      ? `${lessonCount} ${lessonCount === 1 ? "урок" : lessonCount < 5 ? "уроки" : "уроків"}`
+      : course.features.length > 0
+        ? `${course.features.length} уроків`
+        : "Покрокова програма",
     "Сертифікат після курсу",
     "Підтримка куратора 24/7",
     course.format === "online" ? "Доступ назавжди" : "Практика на моделях",
@@ -149,10 +164,14 @@ export function CourseDetailV2({ course, imageUrl }: Props) {
       ? course.features.slice(0, 6)
       : marketing.forYouIf.slice(0, 5).map((f) => f.title);
 
-  const programItems = parseProgram(
-    course,
-    marketing.reasons.map((r) => ({ title: r.title, body: r.text })),
-  );
+  const programFromLessons = lessonsToProgram(lessons);
+  const programItems =
+    programFromLessons.length > 0
+      ? programFromLessons
+      : parseProgram(
+          course,
+          marketing.reasons.map((r) => ({ title: r.title, body: r.text })),
+        );
 
   return (
     <main className="course-v2 bg-v2-cream pb-28 pt-[72px] text-v2-ink md:pb-0">
@@ -261,9 +280,13 @@ export function CourseDetailV2({ course, imageUrl }: Props) {
             transition={{ duration: 0.8, ease }}
             className="order-2 lg:order-2"
           >
-            <div className="relative aspect-[4/3] max-h-[min(52vw,280px)] overflow-hidden rounded-[2rem] bg-gradient-to-br from-v2-beige to-[#dcc7ba] shadow-[var(--shadow-v2-card)] sm:max-h-none sm:aspect-[4/4] lg:aspect-[4/5]">
+            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-v2-beige to-[#dcc7ba] p-3 shadow-[var(--shadow-v2-card)] sm:p-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={heroImage} alt={course.title} className="h-full w-full object-cover" />
+              <img
+                src={heroImage}
+                alt={course.title}
+                className="mx-auto h-auto max-h-[min(72vw,420px)] w-full object-contain sm:max-h-[480px] lg:max-h-[560px]"
+              />
             </div>
           </motion.div>
         </div>
@@ -333,9 +356,13 @@ export function CourseDetailV2({ course, imageUrl }: Props) {
             transition={{ duration: 0.7, ease }}
             className="hidden lg:block"
           >
-            <div className="sticky top-24 aspect-[4/5] overflow-hidden rounded-[2rem] bg-gradient-to-br from-v2-beige to-[#dcc7ba] shadow-[var(--shadow-v2-card)]">
+            <div className="sticky top-24 overflow-hidden rounded-[2rem] bg-gradient-to-br from-v2-beige to-[#dcc7ba] p-4 shadow-[var(--shadow-v2-card)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={heroImage} alt={course.title} className="h-full w-full object-cover" />
+              <img
+                src={heroImage}
+                alt={course.title}
+                className="mx-auto h-auto max-h-[min(70vh,560px)] w-full object-contain"
+              />
             </div>
           </motion.div>
         </div>

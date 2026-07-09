@@ -137,16 +137,18 @@ function loadBodyFontBytes(): FontFamilyBundle {
 
   const root = process.cwd();
   bodyFontBytes = {
+    // Prefer full Cyrillic subset (Ukrainian months, «р.») over cyrillic-ext — ext alone
+    // can map glyphs incorrectly in pdf-lib (e.g. month name rendering as «ллллл»).
     cyrillic: readFontFile([
-      path.join(root, "src/assets/fonts/noto-serif-cyrillic-ext-400-normal.woff2"),
       path.join(root, "src/assets/fonts/noto-serif-cyrillic-400-normal.woff2"),
       path.join(
         root,
-        "node_modules/@fontsource/noto-serif/files/noto-serif-cyrillic-ext-400-normal.woff2",
+        "node_modules/@fontsource/noto-serif/files/noto-serif-cyrillic-400-normal.woff2",
       ),
+      path.join(root, "src/assets/fonts/noto-serif-cyrillic-ext-400-normal.woff2"),
       path.join(
         root,
-        "node_modules/@fontsource/noto-serif/files/noto-serif-cyrillic-400-normal.woff2",
+        "node_modules/@fontsource/noto-serif/files/noto-serif-cyrillic-ext-400-normal.woff2",
       ),
     ]),
     latin: readFontFile([
@@ -216,11 +218,21 @@ async function fetchTemplateBytes(templateUrl: string) {
   return new Uint8Array(await res.arrayBuffer());
 }
 
+/** A4 landscape at ~300 DPI — enough for crisp print and PDF embedding. */
+const CERTIFICATE_PNG_WIDTH = 3508;
+const CERTIFICATE_PNG_HEIGHT = 2480;
+
 async function templateToPngBytes(templateBytes: Uint8Array) {
   return sharp(Buffer.from(templateBytes))
     .rotate()
-    .resize({ width: 3508, height: 2480, fit: "inside", withoutEnlargement: true })
-    .png()
+    .resize({
+      width: CERTIFICATE_PNG_WIDTH,
+      height: CERTIFICATE_PNG_HEIGHT,
+      fit: "inside",
+      kernel: sharp.kernel.lanczos3,
+      withoutEnlargement: false,
+    })
+    .png({ compressionLevel: 6, adaptiveFiltering: true })
     .toBuffer();
 }
 
@@ -239,17 +251,21 @@ function fitFontSize(
 }
 
 
-function getDateSegments(value: string): TextSegment[] | null {
+function formatCertificateDateUk(value: string): string | null {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
 
-  return [
-    { text: `${date.getDate()} `, kind: "latin" },
-    { text: MONTHS_UK[date.getMonth()], kind: "cyrillic" },
-    { text: ` ${date.getFullYear()}`, kind: "latin" },
-    { text: " р", kind: "cyrillic" },
-    { text: ".", kind: "latin" },
-  ];
+  const month = MONTHS_UK[date.getMonth()];
+  if (!month) return null;
+
+  return `${date.getDate()} ${month} ${date.getFullYear()} р.`;
+}
+
+function getDateSegments(value: string): TextSegment[] | null {
+  const formatted = formatCertificateDateUk(value);
+  if (!formatted) return null;
+
+  return splitTextByFont(formatted);
 }
 
 function fontCanEncode(font: PDFFont, text: string) {

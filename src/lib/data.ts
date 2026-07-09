@@ -10,7 +10,7 @@ import {
   DEMO_PROFILE,
   DEMO_ADMIN,
 } from "@/lib/demo-data";
-import type { Course, Enrollment, Lesson } from "@/lib/types";
+import type { Course, Enrollment, Lesson, LessonCatalogItem } from "@/lib/types";
 
 function mapCourse(row: Record<string, unknown>): Course {
   return {
@@ -117,6 +117,40 @@ export async function getLessonsForCourse(courseId: string, admin = false): Prom
     .order("sort_order");
 
   return (data ?? []) as Lesson[];
+}
+
+const LESSON_CATALOG_COLUMNS =
+  "id, course_id, title, summary, duration_min, sort_order" as const;
+
+function mapLessonCatalog(row: Record<string, unknown>): LessonCatalogItem {
+  return {
+    id: row.id as string,
+    course_id: row.course_id as string,
+    title: (row.title as string) ?? "",
+    summary: (row.summary as string) ?? "",
+    duration_min: (row.duration_min as number) ?? 0,
+    sort_order: (row.sort_order as number) ?? 0,
+  };
+}
+
+/** Lesson titles for public course pages (RLS blocks anon; server-only). */
+export async function getLessonsForCourseCatalog(
+  courseId: string,
+): Promise<LessonCatalogItem[]> {
+  if (!isSupabaseConfigured()) {
+    return DEMO_LESSONS.filter((l) => l.course_id === courseId).map((l) =>
+      mapLessonCatalog(l as unknown as Record<string, unknown>),
+    );
+  }
+
+  const supabase = await createAdminClient();
+  const { data } = await supabase
+    .from("lessons")
+    .select(LESSON_CATALOG_COLUMNS)
+    .eq("course_id", courseId)
+    .order("sort_order");
+
+  return (data ?? []).map((row) => mapLessonCatalog(row as Record<string, unknown>));
 }
 
 export async function getUserEnrollments(userId: string): Promise<Enrollment[]> {

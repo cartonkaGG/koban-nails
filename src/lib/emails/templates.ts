@@ -83,19 +83,33 @@ export function renderEmailLayout({
 }
 
 export function renderConfirmEmailEmail(params: { firstName: string; confirmUrl: string }) {
+  const paragraphs = [
+    "Дякуємо за реєстрацію на Koban nails. Натисніть кнопку нижче — після підтвердження ви одразу потрапите в особистий кабінет, повторно вводити пароль не потрібно.",
+    "Якщо листа немає у «Вхідних», перевірте «Спам» або «Небажана пошта» (Junk) — особливо для @icloud.com, @me.com та @mac.com.",
+    `Або скопіюйте посилання в браузер:\n${params.confirmUrl}`,
+  ];
+
   return {
     subject: "Підтвердіть email — Koban nails",
     html: renderEmailLayout({
-      preheader: "Підтвердіть email, щоб отримати доступ до курсів.",
+      preheader: "Підтвердіть email одним кліком — без повторного входу.",
       title: "Підтвердіть вашу пошту",
       greeting: `${params.firstName}, лишився один крок.`,
-      paragraphs: [
-        "Дякуємо за реєстрацію на Koban nails. Натисніть кнопку нижче, щоб підтвердити email і отримати доступ до особистого кабінету з курсами.",
-        "Посилання діє обмежений час. Після підтвердження ви зможете увійти та обрати програму навчання.",
-      ],
+      paragraphs: paragraphs.slice(0, 2),
       ctaLabel: "Підтвердити email",
       ctaUrl: params.confirmUrl,
+      footerNote: `Якщо кнопка не відкривається, скопіюйте посилання: ${params.confirmUrl}`,
     }),
+    text: [
+      `${params.firstName}, підтвердіть email на Koban nails`,
+      "",
+      "Натисніть посилання нижче — після підтвердження ви одразу потрапите в кабінет:",
+      params.confirmUrl,
+      "",
+      "Якщо листа немає у «Вхідних», перевірте «Спам» або «Небажана пошта» (Junk), зокрема для iCloud (@icloud.com, @me.com).",
+      "",
+      "Якщо ви не реєструвались — проігноруйте цей лист.",
+    ].join("\n"),
   };
 }
 

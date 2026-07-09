@@ -45,6 +45,12 @@ export type Lesson = {
   sort_order: number;
 };
 
+/** Public course page: lesson titles for «Програма курсу» without video/content */
+export type LessonCatalogItem = Pick<
+  Lesson,
+  "id" | "course_id" | "title" | "summary" | "duration_min" | "sort_order"
+>;
+
 export type Enrollment = {
   id: string;
   user_id: string;

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       needsEmailConfirmation: true,
-      message: `Лист надіслано на ${normalizedEmail}. Відкрийте його та натисніть «Підтвердити email». Перевірте також папку «Спам».`,
+      message: `Ми надіслали лист на ${normalizedEmail}. Відкрийте його та натисніть «Підтвердити email» — після цього ви одразу потрапите в кабінет без повторного входу. Перевірте «Спам» або «Небажана пошта» (Junk), зокрема для iCloud.`,
     });
   }
 

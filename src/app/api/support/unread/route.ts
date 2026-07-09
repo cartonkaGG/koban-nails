@@ -3,7 +3,9 @@ import { isSupabaseConfigured } from "@/lib/auth";
 import {
   attachGuestCookie,
   enrichActor,
+  guestIdFromRequest,
   resolveSupportActor,
+  withGuestPayload,
 } from "@/lib/support/actor";
 import {
   countUnreadAdminMessages,
@@ -12,11 +14,11 @@ import {
 } from "@/lib/support/threads";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function GET() {
-  let actor = await resolveSupportActor();
+export async function GET(request: Request) {
+  let actor = await resolveSupportActor(guestIdFromRequest(request));
 
   if (!isSupabaseConfigured()) {
-    const response = NextResponse.json({ unreadCount: 0, mode: actor.type });
+    const response = NextResponse.json(withGuestPayload(actor, { unreadCount: 0, mode: actor.type }));
     if (actor.type === "guest") attachGuestCookie(response, actor.id);
     return response;
   }
@@ -25,7 +27,7 @@ export async function GET() {
 
   if (thread.available && thread.status === "closed") {
     const pending = await countUnreadAdminMessages(actor);
-    const response = NextResponse.json({ unreadCount: pending, mode: actor.type });
+    const response = NextResponse.json(withGuestPayload(actor, { unreadCount: pending, mode: actor.type }));
     if (actor.type === "guest") attachGuestCookie(response, actor.id);
     return response;
   }
@@ -46,10 +48,12 @@ export async function GET() {
 
   const { count, error } = await query;
 
-  const response = NextResponse.json({
-    unreadCount: error ? 0 : (count ?? 0),
-    mode: actor.type,
-  });
+  const response = NextResponse.json(
+    withGuestPayload(actor, {
+      unreadCount: error ? 0 : (count ?? 0),
+      mode: actor.type,
+    }),
+  );
   if (actor.type === "guest") attachGuestCookie(response, actor.id);
   return response;
 }

@@ -51,6 +51,6 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    message: `Лист повторно надіслано на ${normalizedEmail}. Перевірте «Вхідні» та «Спам».`,
+    message: `Лист повторно надіслано на ${normalizedEmail}. Перевірте «Вхідні», «Спам» і «Небажана пошта» (Junk) — для iCloud лист часто там. Після кліку по посиланню ви одразу потрапите в кабінет.`,
   });
 }

@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/emails/send";
 import { renderConfirmEmailEmail } from "@/lib/emails/templates";
+import { isAdminEmail } from "@/lib/supabase/config";
 import { fixAuthActionLink, getSiteOrigin } from "@/lib/site-url";
 
 type Params = {
@@ -65,6 +66,20 @@ export async function sendSignupConfirmationEmail(params: Params) {
   }
 
   const confirmUrl = fixAuthActionLink(rawConfirmUrl, params.origin);
+  const userId = linkData.user?.id;
+
+  if (userId) {
+    const { error: profileError } = await supabase.from("profiles").upsert({
+      id: userId,
+      email: params.email.toLowerCase(),
+      full_name: params.fullName,
+      role: isAdminEmail(params.email) ? "admin" : "student",
+    });
+
+    if (profileError && !profileError.message.includes("public.profiles")) {
+      console.error("[signup-email] profile upsert:", profileError.message);
+    }
+  }
 
   const template = renderConfirmEmailEmail({
     firstName: params.firstName,
@@ -75,6 +90,7 @@ export async function sendSignupConfirmationEmail(params: Params) {
     to: params.email,
     subject: template.subject,
     html: template.html,
+    text: template.text,
   });
 
   if (!sent.ok) {

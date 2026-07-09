@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { applyAuthCookieDefaults } from "@/lib/supabase/cookies";
 
 export const SUPPORT_GUEST_COOKIE = "support_guest_id";
+export const SUPPORT_GUEST_ID_HEADER = "x-support-guest-id";
 
 export type SupportActor =
   | { type: "user"; id: string; name: string; email: string }
@@ -87,16 +88,43 @@ export async function getGuestName(guestId: string) {
   return data?.guest_name?.trim() || null;
 }
 
+export function guestIdFromRequest(request: Request) {
+  const value = request.headers.get(SUPPORT_GUEST_ID_HEADER);
+  return value && isValidSupportId(value) ? value : null;
+}
+
+export function withGuestPayload<T extends Record<string, unknown>>(actor: SupportActor, payload: T) {
+  if (actor.type !== "guest") return payload;
+  return { ...payload, guestId: actor.id };
+}
+
 export async function saveGuestName(guestId: string, name: string) {
   const trimmed = name.trim().slice(0, 80);
   if (!trimmed) return;
 
   const supabase = await createAdminClient();
   const now = new Date().toISOString();
-  await supabase.from("support_guest_threads").upsert({
+  const sessionEpoch = "1970-01-01T00:00:00.000Z";
+
+  const { data: existing } = await supabase
+    .from("support_guest_threads")
+    .select("guest_id")
+    .eq("guest_id", guestId)
+    .maybeSingle();
+
+  if (existing) {
+    await supabase
+      .from("support_guest_threads")
+      .update({ guest_name: trimmed, updated_at: now })
+      .eq("guest_id", guestId);
+    return;
+  }
+
+  await supabase.from("support_guest_threads").insert({
     guest_id: guestId,
     guest_name: trimmed,
     status: "open",
+    session_started_at: sessionEpoch,
     updated_at: now,
   });
 }

@@ -14,7 +14,8 @@ export type SupportThreadInfo = {
   available: boolean;
 };
 
-const SESSION_EPOCH = "1970-01-01T00:00:00.000Z";
+export const SUPPORT_SESSION_EPOCH = "1970-01-01T00:00:00.000Z";
+const SESSION_EPOCH = SUPPORT_SESSION_EPOCH;
 
 const DEFAULT_THREAD: SupportThreadInfo = {
   status: "open",
@@ -73,25 +74,43 @@ export async function getThreadStatus(actor: SupportActor): Promise<SupportThrea
 export async function forceOpenThread(actor: SupportActor) {
   const supabase = await createAdminClient();
   const now = new Date().toISOString();
+  const table = threadTable(actor);
+  const idCol = threadIdColumn(actor);
 
-  if (actor.type === "user") {
-    await supabase.from("support_threads").upsert({
-      user_id: actor.id,
+  const { data: existing } = await supabase
+    .from(table)
+    .select("status")
+    .eq(idCol, actor.id)
+    .maybeSingle();
+
+  if (!existing) {
+    if (actor.type === "user") {
+      await supabase.from("support_threads").insert({
+        user_id: actor.id,
+        status: "open",
+        session_started_at: SESSION_EPOCH,
+        updated_at: now,
+      });
+    } else {
+      await supabase.from("support_guest_threads").insert({
+        guest_id: actor.id,
+        status: "open",
+        session_started_at: SESSION_EPOCH,
+        updated_at: now,
+      });
+    }
+    return;
+  }
+
+  await supabase
+    .from(table)
+    .update({
       status: "open",
       closed_at: null,
       closed_by: null,
       updated_at: now,
-    });
-    return;
-  }
-
-  await supabase.from("support_guest_threads").upsert({
-    guest_id: actor.id,
-    status: "open",
-    closed_at: null,
-    closed_by: null,
-    updated_at: now,
-  });
+    })
+    .eq(idCol, actor.id);
 }
 
 export async function openThread(actor: SupportActor) {
@@ -146,25 +165,47 @@ export async function openThread(actor: SupportActor) {
 export async function closeThread(actor: SupportActor, closedBy: "user" | "admin") {
   const supabase = await createAdminClient();
   const closedAt = new Date().toISOString();
+  const table = threadTable(actor);
+  const idCol = threadIdColumn(actor);
 
-  if (actor.type === "user") {
-    await supabase.from("support_threads").upsert({
-      user_id: actor.id,
+  const { data: existing } = await supabase
+    .from(table)
+    .select(idCol)
+    .eq(idCol, actor.id)
+    .maybeSingle();
+
+  if (!existing) {
+    if (actor.type === "user") {
+      await supabase.from("support_threads").insert({
+        user_id: actor.id,
+        status: "closed",
+        session_started_at: SESSION_EPOCH,
+        closed_at: closedAt,
+        closed_by: closedBy,
+        updated_at: closedAt,
+      });
+    } else {
+      await supabase.from("support_guest_threads").insert({
+        guest_id: actor.id,
+        status: "closed",
+        session_started_at: SESSION_EPOCH,
+        closed_at: closedAt,
+        closed_by: closedBy,
+        updated_at: closedAt,
+      });
+    }
+    return;
+  }
+
+  await supabase
+    .from(table)
+    .update({
       status: "closed",
       closed_at: closedAt,
       closed_by: closedBy,
       updated_at: closedAt,
-    });
-    return;
-  }
-
-  await supabase.from("support_guest_threads").upsert({
-    guest_id: actor.id,
-    status: "closed",
-    closed_at: closedAt,
-    closed_by: closedBy,
-    updated_at: closedAt,
-  });
+    })
+    .eq(idCol, actor.id);
 }
 
 export async function linkTelegramMessage(telegramMessageId: number, actor: SupportActor) {

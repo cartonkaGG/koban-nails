@@ -14,6 +14,8 @@ export async function sendEmail(params: {
   to: string;
   subject: string;
   html: string;
+  text?: string;
+  replyTo?: string;
 }) {
   if (!isResendConfigured()) {
     console.warn("[email] Resend is not configured — skipping send to", params.to);
@@ -27,6 +29,8 @@ export async function sendEmail(params: {
     to: params.to,
     subject: params.subject,
     html: params.html,
+    text: params.text,
+    replyTo: params.replyTo ?? "hello@koban-nails.beauty",
   });
 
   if (error) {

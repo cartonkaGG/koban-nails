@@ -5,8 +5,10 @@ import {
   actorTag,
   attachGuestCookie,
   enrichActor,
+  guestIdFromRequest,
   resolveSupportActor,
   saveGuestName,
+  withGuestPayload,
 } from "@/lib/support/actor";
 import { notifySupportMessage } from "@/lib/telegram/send";
 import { getClientIp, rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
@@ -20,18 +22,20 @@ import {
   openThread,
 } from "@/lib/support/threads";
 
-export async function GET() {
-  let actor = await resolveSupportActor();
+export async function GET(request: Request) {
+  let actor = await resolveSupportActor(guestIdFromRequest(request));
   actor = await enrichActor(actor);
 
   if (!isSupabaseConfigured()) {
-    const response = NextResponse.json({
-      messages: [],
-      unreadCount: 0,
-      status: "open",
-      mode: actor.type,
-      displayName: actor.name,
-    });
+    const response = NextResponse.json(
+      withGuestPayload(actor, {
+        messages: [],
+        unreadCount: 0,
+        status: "open",
+        mode: actor.type,
+        displayName: actor.name,
+      }),
+    );
     if (actor.type === "guest") attachGuestCookie(response, actor.id);
     return response;
   }
@@ -44,13 +48,15 @@ export async function GET() {
       await forceOpenThread(actor);
       thread = await getThreadInfo(actor);
     } else {
-      const response = NextResponse.json({
-        messages: [],
-        unreadCount: 0,
-        status: "closed",
-        mode: actor.type,
-        displayName: actor.name,
-      });
+      const response = NextResponse.json(
+        withGuestPayload(actor, {
+          messages: [],
+          unreadCount: 0,
+          status: "closed",
+          mode: actor.type,
+          displayName: actor.name,
+        }),
+      );
       if (actor.type === "guest") attachGuestCookie(response, actor.id);
       return response;
     }
@@ -58,13 +64,15 @@ export async function GET() {
 
   const { messages, unreadCount } = await fetchSupportMessages(actor, thread);
 
-  const response = NextResponse.json({
-    messages,
-    unreadCount,
-    status: thread.status,
-    mode: actor.type,
-    displayName: actor.name,
-  });
+  const response = NextResponse.json(
+    withGuestPayload(actor, {
+      messages,
+      unreadCount,
+      status: thread.status,
+      mode: actor.type,
+      displayName: actor.name,
+    }),
+  );
   if (actor.type === "guest") attachGuestCookie(response, actor.id);
   return response;
 }
@@ -82,7 +90,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid message" }, { status: 400 });
   }
 
-  let actor = await resolveSupportActor();
+  let actor = await resolveSupportActor(guestIdFromRequest(request));
   if (actor.type === "guest" && guestName) {
     await saveGuestName(actor.id, guestName);
     actor = { ...actor, name: guestName };
@@ -98,14 +106,16 @@ export async function POST(request: Request) {
       isGuest: actor.type === "guest",
       body: text,
     });
-    const response = NextResponse.json({ ok: true, demo: true });
+    const response = NextResponse.json(withGuestPayload(actor, { ok: true, demo: true }));
     if (actor.type === "guest") attachGuestCookie(response, actor.id);
     return response;
   }
 
   const thread = await getThreadInfo(actor);
-  if (thread.status === "closed") {
+  if (thread.status === "closed" || !thread.available) {
     await openThread(actor);
+  } else {
+    await forceOpenThread(actor);
   }
 
   const { data: saved, error } = await insertUserSupportMessage(actor, text);
@@ -113,8 +123,6 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
-
-  await forceOpenThread(actor);
 
   const telegram = await notifySupportMessage({
     actorTag: actorTag(actor),
@@ -135,7 +143,9 @@ export async function POST(request: Request) {
     }
   }
 
-  const response = NextResponse.json({ ok: true, status: "open", mode: actor.type });
+  const response = NextResponse.json(
+    withGuestPayload(actor, { ok: true, status: "open", mode: actor.type }),
+  );
   if (actor.type === "guest") attachGuestCookie(response, actor.id);
   return response;
 }

@@ -255,6 +255,87 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
 
   if (!open) return null;
 
+  const isIcloudEmail = /@(icloud|me|mac)\.com$/i.test(email.trim());
+
+  if (pendingConfirmation) {
+    return (
+      <div className="auth-modal-root" role="presentation">
+        <button type="button" className="auth-modal-backdrop" aria-label="Закрити" onClick={onClose} />
+        <div
+          className="auth-modal-panel auth-modal-panel--confirm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="auth-confirm-title"
+        >
+          <button type="button" className="auth-modal-close" aria-label="Закрити" onClick={onClose}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+
+          <div className="auth-confirm-screen">
+            <div className="auth-confirm-icon" aria-hidden="true">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M4 6h16v12H4V6zm2 2v8h12V8H6zm2 1h8v2H8V9zm0 3h5v2H8v-2z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+
+            <div>
+              <p className="v2-eyebrow">Майже готово</p>
+              <h2 id="auth-confirm-title" className="v2-modal-title mt-2 text-2xl">
+                Підтвердіть email
+              </h2>
+              <p className="v2-modal-subtitle mt-3">
+                Ми надіслали лист на
+                <span className="auth-confirm-email">{email}</span>
+              </p>
+            </div>
+
+            <ul className="auth-confirm-tips">
+              <li>Відкрийте лист і натисніть «Підтвердити email» — ви одразу потрапите в кабінет, повторно вводити пароль не потрібно.</li>
+              <li>
+                {isIcloudEmail
+                  ? "Для iCloud перевірте папку «Небажана пошта» (Junk) та «Спам» — листи з нових доменів часто потрапляють туди."
+                  : "Якщо листа немає у «Вхідних», перевірте «Спам» або «Небажана пошта» (Junk)."}
+              </li>
+              <li>Доставка може зайняти 1–3 хвилини. «Надіслано» означає, що лист передано поштовому серверу — не завжди, що він уже у вхідних.</li>
+            </ul>
+
+            {status === "success" && successMessage && (
+              <p className="v2-alert-success text-sm">{successMessage}</p>
+            )}
+            {error && <p className="v2-alert-error text-sm">{error}</p>}
+
+            <button
+              type="button"
+              className="v2-btn-primary w-full"
+              disabled={isBusy}
+              onClick={resendConfirmation}
+            >
+              {isBusy ? "Надсилаємо..." : "Надіслати лист ще раз"}
+            </button>
+
+            <button
+              type="button"
+              className="text-sm font-semibold text-v2-mute transition hover:text-v2-clay"
+              onClick={() => {
+                setPendingConfirmation(false);
+                setStatus("idle");
+                setSuccessMessage("");
+                setError("");
+              }}
+            >
+              ← Змінити email
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const title =
     mode === "forgot" ? "Зміна пароля" : mode === "login" ? "Вхід" : "Створити акаунт";
 
@@ -446,25 +527,8 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
           </form>
         )}
 
-        {status === "success" && successMessage && (
-          <div className="v2-alert-success mt-4 space-y-3">
-            <p>{successMessage}</p>
-            {pendingConfirmation && (
-              <>
-                <p className="text-v2-ink-soft">
-                  Після підтвердження email увійдіть з тим самим паролем — відкриється кабінет.
-                </p>
-                <button
-                  type="button"
-                  className="v2-btn-ghost"
-                  disabled={isBusy}
-                  onClick={resendConfirmation}
-                >
-                  {isBusy ? "Надсилаємо..." : "Надіслати лист ще раз"}
-                </button>
-              </>
-            )}
-          </div>
+        {mode === "forgot" && status === "success" && successMessage && (
+          <p className="v2-alert-success mt-4">{successMessage}</p>
         )}
         {error && <p className="v2-alert-error mt-4">{error}</p>}
       </div>
