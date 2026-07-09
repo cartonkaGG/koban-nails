@@ -38,6 +38,11 @@ export function extractActorFromText(text?: string | null): SupportActor | null 
   return null;
 }
 
+/** Remove #user:/#guest: tags copied into an admin reply before showing in the widget. */
+export function stripActorTagsFromText(text: string) {
+  return text.replace(/#(?:guest|user):[0-9a-f-]{36}\s*/gi, "").trim();
+}
+
 export async function readGuestIdFromCookie() {
   const store = await cookies();
   const value = store.get(SUPPORT_GUEST_COOKIE)?.value;
@@ -68,7 +73,11 @@ export async function resolveSupportActor(guestIdFromRequest?: string | null): P
     };
   }
 
-  let guestId = guestIdFromRequest ?? (await readGuestIdFromCookie());
+  // Widget sends x-support-guest-id from localStorage; prefer it over a stale cookie.
+  const guestFromHeader =
+    guestIdFromRequest && isValidSupportId(guestIdFromRequest) ? guestIdFromRequest : null;
+  const guestFromCookie = await readGuestIdFromCookie();
+  let guestId = guestFromHeader ?? guestFromCookie;
   if (!guestId || !isValidSupportId(guestId)) {
     guestId = createGuestId();
   }

@@ -95,7 +95,7 @@ export async function notifySupportMessage(params: {
   }
 
   lines.push(
-    params.actorTag,
+    `<code>${escapeHtml(params.actorTag)}</code>`,
     "",
     escapeHtml(params.body),
     "",
@@ -131,7 +131,7 @@ export async function notifySupportChatClosed(params: {
     lines.push(`📧 ${escapeHtml(params.email)}`);
   }
 
-  lines.push(params.actorTag, "", who);
+  lines.push(`<code>${escapeHtml(params.actorTag)}</code>`, "", who);
 
   return sendTelegramMessage(lines.join("\n"), {
     replyToMessageId: params.replyToMessageId ?? undefined,

@@ -1,26 +1,34 @@
 import { NextResponse } from "next/server";
 import { isSupabaseConfigured, requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { actorTag, enrichActor } from "@/lib/support/actor";
+import { actorTag, enrichActor, stripActorTagsFromText } from "@/lib/support/actor";
 import {
   closeThread,
   forceOpenThread,
   insertAdminSupportMessage,
+  isAdminTelegramChat,
   linkTelegramMessage,
   resolveSupportActorFromTelegramUpdate,
 } from "@/lib/support/threads";
 import { getTelegramConfig, isTelegramConfigured } from "@/lib/telegram/config";
-import { notifySupportChatClosed } from "@/lib/telegram/send";
+import { notifySupportChatClosed, sendTelegramMessage } from "@/lib/telegram/send";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 
 type TelegramUpdate = {
   message?: {
     text?: string;
+    caption?: string;
     message_id?: number;
     chat?: { id?: number };
     reply_to_message?: {
       text?: string;
+      caption?: string;
       message_id?: number;
+      reply_to_message?: {
+        text?: string;
+        caption?: string;
+        message_id?: number;
+      };
     };
   };
 };
@@ -89,7 +97,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const replyText = update.message?.text?.trim();
+  const replyText = update.message?.text?.trim() || update.message?.caption?.trim();
   const replyTo = update.message?.reply_to_message;
   const messageId = update.message?.message_id;
   const chatId = update.message?.chat?.id;
@@ -100,8 +108,7 @@ export async function POST(request: Request) {
 
   let actor = await resolveSupportActorFromTelegramUpdate({
     chatId,
-    replyToMessageId: replyTo?.message_id,
-    replyText: replyTo?.text,
+    replyTo,
     messageText: replyText,
   });
 
@@ -109,7 +116,22 @@ export async function POST(request: Request) {
     console.error("telegram webhook: actor not resolved", {
       chatId,
       replyToMessageId: replyTo?.message_id,
+      hasReplyText: Boolean(replyTo?.text || replyTo?.caption),
     });
+
+    if (isAdminTelegramChat(chatId)) {
+      await sendTelegramMessage(
+        [
+          "⚠️ <b>Не вдалося визначити користувача</b>",
+          "",
+          "Натисніть <b>Reply</b> саме на повідомлення бота з тегом",
+          "<code>#user:...</code> або <code>#guest:...</code>,",
+          "потім напишіть відповідь.",
+        ].join("\n"),
+        { replyToMessageId: messageId },
+      );
+    }
+
     return NextResponse.json({ ok: true, skipped: "actor_not_resolved" });
   }
 
@@ -160,9 +182,11 @@ export async function POST(request: Request) {
 
   await forceOpenThread(actor);
 
+  const bodyForUser = stripActorTagsFromText(replyText) || replyText;
+
   const inserted = await insertAdminSupportMessage({
     actor,
-    body: replyText,
+    body: bodyForUser,
     telegramMessageId: messageId,
   });
 
