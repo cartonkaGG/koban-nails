@@ -3,7 +3,8 @@ import { CourseDetailV2 } from "@/components/course-v2/course-detail-v2";
 import { LandingV2Header } from "@/components/landing-v2/header";
 import { LandingV2Footer } from "@/components/landing-v2/footer";
 import { JsonLd } from "@/components/seo/json-ld";
-import { getCourseBySlug, getLessonsForCourseCatalog } from "@/lib/data";
+import { getCachedCourseBySlug } from "@/lib/courses-cache";
+import { getLessonsForCourseCatalog } from "@/lib/data";
 import { resolveCourseImageUrl } from "@/lib/images";
 import { buildCourseSchema, courseMetadata } from "@/lib/seo";
 import { absoluteUrl } from "@/lib/site";
@@ -14,7 +15,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const course = await getCourseBySlug(slug);
+  const course = await getCachedCourseBySlug(slug);
 
   if (!course?.published) {
     return { title: "Курс не знайдено" };
@@ -28,7 +29,7 @@ export const revalidate = 60;
 
 export default async function CourseDetailPage({ params }: Props) {
   const { slug } = await params;
-  const course = await getCourseBySlug(slug);
+  const course = await getCachedCourseBySlug(slug);
 
   if (!course?.published) {
     notFound();

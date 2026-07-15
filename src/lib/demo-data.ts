@@ -138,6 +138,7 @@ export const DEMO_ENROLLMENTS: Enrollment[] = [
     course_id: "2",
     status: "active",
     purchased_at: new Date().toISOString(),
+    completed_at: null,
     created_at: new Date().toISOString(),
     course: DEMO_COURSES[0],
   },

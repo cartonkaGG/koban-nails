@@ -1,0 +1,24 @@
+---
+description: Always use codebase-memory-mcp for code exploration before Grep/Glob/Read sweeps
+alwaysApply: true
+---
+
+# Codebase Memory MCP
+
+Use **`user-codebase-memory-mcp`** as the primary way to explore this codebase. Project name: **`dasd`**.
+
+## Required workflow
+
+1. If the graph looks missing or stale: `index_repository` with `repo_path` = workspace root (absolute path), prefer `mode: "fast"` then fuller modes if needed.
+2. Prefer graph tools over blind file search:
+   - Architecture / overview → `get_architecture`
+   - Find symbols → `search_graph` (`query` or `name_pattern`) or `search_code`
+   - Callers/callees / impact → `trace_path`
+   - Complex relations → `query_graph` (after `get_graph_schema` if needed)
+   - Read a known symbol → `get_code_snippet` with qualified_name from `search_graph`
+3. Use Grep / Glob / Read for exact line edits or when the graph returns no useful hit — not as the first structural search.
+
+## Do not
+
+- Skip the graph and start a broad Grep/Glob tour for “how does X work?”
+- Ignore `user-codebase-memory-mcp` when it is available

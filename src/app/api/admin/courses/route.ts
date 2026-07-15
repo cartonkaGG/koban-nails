@@ -36,15 +36,24 @@ export async function POST(request: Request) {
     published: body.published ?? true,
   });
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("courses")
     .insert(payload)
     .select()
     .single();
 
+  if (error?.message?.toLowerCase().includes("offer_countdown_enabled")) {
+    const { offer_countdown_enabled: _omit, ...withoutCountdown } = payload;
+    ({ data, error } = await supabase
+      .from("courses")
+      .insert(withoutCountdown)
+      .select()
+      .single());
+  }
+
   if (error) {
     return NextResponse.json({ error: humanizeAdminDbError(error.message) }, { status: 400 });
   }
-  revalidateCoursesCatalog();
+  revalidateCoursesCatalog(payload.slug);
   return NextResponse.json(data);
 }

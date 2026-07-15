@@ -36,6 +36,7 @@ export async function getDemoEnrollmentsForUser(userId: string): Promise<Enrollm
         course_id: course.id,
         status: "active" as const,
         purchased_at: new Date().toISOString(),
+        completed_at: null,
         created_at: new Date().toISOString(),
         course,
       };

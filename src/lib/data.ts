@@ -66,14 +66,26 @@ export async function getCourseBySlug(slug: string): Promise<Course | null> {
     return DEMO_COURSES.find((c) => c.slug === slug) ?? null;
   }
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("courses")
-    .select("*")
-    .eq("slug", slug)
-    .maybeSingle();
+  // Public client (no cookies) — same as getPublishedCourses — so home cards and
+  // course detail share the same cache/revalidation path and stay in sync.
+  try {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .eq("slug", slug)
+      .maybeSingle();
 
-  return data ? mapCourse(data) : null;
+    if (error) {
+      console.error("getCourseBySlug:", error.message);
+      return null;
+    }
+
+    return data ? mapCourse(data) : null;
+  } catch (error) {
+    console.error("getCourseBySlug:", error);
+    return null;
+  }
 }
 
 export async function getCourseEnrollmentCount(courseId: string): Promise<number> {

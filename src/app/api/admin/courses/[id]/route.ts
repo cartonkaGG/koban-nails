@@ -67,12 +67,26 @@ export async function PUT(
 
   const supabase = await createAdminClient();
   const payload = buildCourseUpdatePayload(body);
-  const { error } = await supabase.from("courses").update(payload).eq("id", id);
+  let { error } = await supabase.from("courses").update(payload).eq("id", id);
+
+  // Price/content saves should succeed even if optional migration columns are missing.
+  if (error?.message?.toLowerCase().includes("offer_countdown_enabled")) {
+    const { offer_countdown_enabled: _omit, ...withoutCountdown } = payload;
+    ({ error } = await supabase.from("courses").update(withoutCountdown).eq("id", id));
+    if (!error) {
+      revalidateCoursesCatalog(payload.slug);
+      return NextResponse.json({
+        ok: true,
+        warning:
+          "Ціну збережено. Колонка offer_countdown_enabled відсутня — запустіть міграцію 20260706_course_offer_countdown.sql, щоб увімкнути таймер.",
+      });
+    }
+  }
 
   if (error) {
     return NextResponse.json({ error: humanizeAdminDbError(error.message) }, { status: 400 });
   }
-  revalidateCoursesCatalog();
+  revalidateCoursesCatalog(payload.slug);
   return NextResponse.json({ ok: true });
 }
 
@@ -102,7 +116,12 @@ export async function PATCH(
       .eq("id", id);
 
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-    revalidateCoursesCatalog();
+    const { data: restored } = await supabase
+      .from("courses")
+      .select("slug")
+      .eq("id", id)
+      .maybeSingle();
+    revalidateCoursesCatalog(restored?.slug);
     return NextResponse.json({ ok: true, restored: true });
   }
 
@@ -179,7 +198,7 @@ export async function DELETE(
     await removeCourseStorage(supabase, id);
     const { error } = await supabase.from("courses").delete().eq("id", id);
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-    revalidateCoursesCatalog();
+    revalidateCoursesCatalog(course.slug);
     return NextResponse.json({ ok: true, purged: true, title: course.title });
   }
 
@@ -197,6 +216,6 @@ export async function DELETE(
     .eq("id", id);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  revalidateCoursesCatalog();
+  revalidateCoursesCatalog(course.slug);
   return NextResponse.json({ ok: true, archived: true, title: course.title });
 }

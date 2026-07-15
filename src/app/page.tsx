@@ -8,7 +8,7 @@ import { LandingV2Reviews } from "@/components/landing-v2/reviews";
 import { LandingV2Cta } from "@/components/landing-v2/cta";
 import { LandingV2Footer } from "@/components/landing-v2/footer";
 import { JsonLd } from "@/components/seo/json-ld";
-import { getPublishedCourses } from "@/lib/data";
+import { getCachedPublishedCourses } from "@/lib/courses-cache";
 import { resolveCourseImageUrl } from "@/lib/images";
 import { buildHomeGraph } from "@/lib/seo";
 import type { Metadata } from "next";
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const courses = await getPublishedCourses();
+  const courses = await getCachedPublishedCourses();
   const onlineCourses = courses.filter((course) => course.format === "online");
   const courseImages = Object.fromEntries(
     onlineCourses.map((course) => [course.slug, resolveCourseImageUrl(course.image_url)]),

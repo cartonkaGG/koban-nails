@@ -35,12 +35,17 @@ export async function getCourseCompletionDate(
     .select("completed_at")
     .eq("user_id", userId)
     .eq("completed", true)
-    .in("lesson_id", lessonIds)
-    .order("completed_at", { ascending: false })
-    .limit(1);
+    .in("lesson_id", lessonIds);
 
-  const value = data?.[0]?.completed_at;
-  return typeof value === "string" ? value : null;
+  const timestamps = (data ?? [])
+    .map((row) => row.completed_at)
+    .filter((value): value is string => typeof value === "string");
+
+  if (timestamps.length === 0) return null;
+
+  return timestamps.reduce((latest, value) =>
+    new Date(value).getTime() > new Date(latest).getTime() ? value : latest,
+  );
 }
 
 export async function markEnrollmentCompletedIfReady(
@@ -52,9 +57,14 @@ export async function markEnrollmentCompletedIfReady(
   const completedIds = await getCompletedLessonIds(supabase, userId, lessonIds);
   if (!isCourseFullyCompleted(lessonIds, completedIds)) return false;
 
+  const completedAt = await getCourseCompletionDate(supabase, userId, lessonIds);
+
   const { error } = await supabase
     .from("enrollments")
-    .update({ status: "completed" })
+    .update({
+      status: "completed",
+      ...(completedAt ? { completed_at: completedAt } : {}),
+    })
     .eq("user_id", userId)
     .eq("course_id", courseId)
     .in("status", ["active", "completed"]);

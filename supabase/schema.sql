@@ -57,6 +57,7 @@ create table if not exists public.enrollments (
   course_id uuid not null references public.courses(id) on delete cascade,
   status enrollment_status not null default 'pending',
   purchased_at timestamptz,
+  completed_at timestamptz,
   created_at timestamptz not null default now(),
   unique (user_id, course_id)
 );

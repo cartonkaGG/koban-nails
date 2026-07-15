@@ -95,6 +95,7 @@ export async function notifySupportMessage(params: {
   }
 
   lines.push(
+    params.actorTag,
     `<code>${escapeHtml(params.actorTag)}</code>`,
     "",
     escapeHtml(params.body),

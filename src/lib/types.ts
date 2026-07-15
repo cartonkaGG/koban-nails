@@ -57,6 +57,7 @@ export type Enrollment = {
   course_id: string;
   status: EnrollmentStatus;
   purchased_at: string | null;
+  completed_at: string | null;
   created_at: string;
   course?: Course;
 };

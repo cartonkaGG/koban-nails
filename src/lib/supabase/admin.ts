@@ -8,6 +8,9 @@ import {
 
 export async function createAdminClient() {
   if (!isSupabaseAdminConfigured()) {
+    console.error(
+      "createAdminClient: SUPABASE_SERVICE_ROLE_KEY missing or too short — guest support will not work",
+    );
     return createUserClient();
   }
 

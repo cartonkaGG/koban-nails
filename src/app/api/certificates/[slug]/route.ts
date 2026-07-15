@@ -64,7 +64,15 @@ export async function GET(
   }
 
   const completedAt =
-    (await getCourseCompletionDate(supabase, profile.id, lessonIds)) ?? new Date().toISOString();
+    enrollment.completed_at ??
+    (await getCourseCompletionDate(supabase, profile.id, lessonIds));
+
+  if (!completedAt) {
+    return NextResponse.json(
+      { error: "Не вдалося визначити дату завершення курсу. Завершіть останній урок ще раз або зверніться в підтримку." },
+      { status: 400 },
+    );
+  }
 
   try {
     const pdfBytes = await generateCourseCertificatePdf({

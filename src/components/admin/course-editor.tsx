@@ -61,7 +61,7 @@ export function CourseEditor({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const data = (await res.json()) as { error?: string };
+    const data = (await res.json()) as { error?: string; warning?: string };
     setSaving(false);
 
     if (!res.ok) {
@@ -72,7 +72,7 @@ export function CourseEditor({
     if (partial) {
       setCourseState((prev) => ({ ...prev, ...partial }));
     }
-    setMessage("✓ Збережено");
+    setMessage(data.warning ? `✓ Збережено. ${data.warning}` : "✓ Збережено");
     return true;
   }
 
