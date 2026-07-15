@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { activateEnrollment } from "@/lib/enrollments";
+import { grantCourseAfterSuccessfulPayment } from "@/lib/enrollments";
 import { getLiqPayPrivateKey, getLiqPayPublicKey } from "@/lib/liqpay/config";
 import { decodeLiqPayData, verifyLiqPaySignature } from "@/lib/liqpay/crypto";
 import {
@@ -23,6 +23,48 @@ type LiqPayCallbackPayload = {
   payment_id?: number;
   err_description?: string;
 };
+
+async function unlockCourse(payment: {
+  user_id: string;
+  course_id: string;
+  order_id: string;
+}) {
+  const { error: enrollError, status } = await grantCourseAfterSuccessfulPayment(
+    payment.user_id,
+    payment.course_id,
+  );
+
+  if (enrollError) {
+    console.error("LiqPay callback: enrollment activation failed", {
+      orderId: payment.order_id,
+      enrollError,
+    });
+    return { ok: false as const, error: enrollError, status: null };
+  }
+
+  return { ok: true as const, status: status ?? "active" };
+}
+
+async function notifyPaidPurchase(payment: {
+  user_id: string;
+  course_id: string;
+  amount_uah: number;
+}) {
+  const admin = await createAdminClient();
+  const [{ data: profile }, course] = await Promise.all([
+    admin.from("profiles").select("email, full_name").eq("id", payment.user_id).maybeSingle(),
+    getCourseById(payment.course_id),
+  ]);
+
+  if (profile && course) {
+    await notifyPurchase({
+      userName: profile.full_name ?? profile.email,
+      email: profile.email,
+      courseTitle: course.title,
+      priceUah: payment.amount_uah,
+    });
+  }
+}
 
 export async function POST(request: Request) {
   if (!isSupabaseAdminConfigured()) {
@@ -81,9 +123,17 @@ export async function POST(request: Request) {
   }
 
   const mappedStatus = mapLiqPayStatus(payload.status);
+  const paidOk = isLiqPaySuccessStatus(payload.status);
 
+  // Idempotent path: payment already success — still ensure course is unlocked.
   if (payment.status === "success") {
-    return NextResponse.json({ ok: true, duplicate: true });
+    if (paidOk) {
+      const unlock = await unlockCourse(payment);
+      if (!unlock.ok) {
+        return NextResponse.json({ error: "Enrollment failed" }, { status: 500 });
+      }
+    }
+    return NextResponse.json({ ok: true, duplicate: true, enrolled: true });
   }
 
   const { payment: updated, error } = await markPaymentFromLiqPay({
@@ -98,30 +148,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error ?? "Update failed" }, { status: 500 });
   }
 
-  if (!isLiqPaySuccessStatus(payload.status)) {
+  if (!paidOk) {
     return NextResponse.json({ ok: true, status: mappedStatus });
   }
 
-  const { error: enrollError } = await activateEnrollment(payment.user_id, payment.course_id);
-  if (enrollError) {
-    console.error("LiqPay callback: enrollment activation failed", enrollError);
+  const unlock = await unlockCourse({
+    user_id: payment.user_id,
+    course_id: payment.course_id,
+    order_id: payment.order_id,
+  });
+
+  if (!unlock.ok) {
     return NextResponse.json({ error: "Enrollment failed" }, { status: 500 });
   }
 
-  const admin = await createAdminClient();
-  const [{ data: profile }, course] = await Promise.all([
-    admin.from("profiles").select("email, full_name").eq("id", payment.user_id).maybeSingle(),
-    getCourseById(payment.course_id),
-  ]);
+  await notifyPaidPurchase({
+    user_id: payment.user_id,
+    course_id: payment.course_id,
+    amount_uah: payment.amount_uah,
+  });
 
-  if (profile && course) {
-    await notifyPurchase({
-      userName: profile.full_name ?? profile.email,
-      email: profile.email,
-      courseTitle: course.title,
-      priceUah: payment.amount_uah,
-    });
-  }
-
-  return NextResponse.json({ ok: true, status: "success" });
+  return NextResponse.json({ ok: true, status: "success", enrolled: true });
 }

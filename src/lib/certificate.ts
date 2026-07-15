@@ -67,9 +67,21 @@ type CertificateFonts = {
 
 function fontKindForChar(char: string): "latin" | "cyrillic" {
   const code = char.codePointAt(0) ?? 0;
-  if (code >= 0x0400 && code <= 0x04ff) return "cyrillic";
-  if (code >= 0x0500 && code <= 0x052f) return "cyrillic";
+  // Cyrillic + extensions used in Ukrainian (incl. ґ U+0490/U+0491).
+  if (code >= 0x0400 && code <= 0x052f) return "cyrillic";
   return "latin";
+}
+
+/** Normalize profile names so PDF fonts can paint them reliably. */
+function sanitizeCertificateText(value: string) {
+  return value
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200D\uFEFF\u00AD]/g, "")
+    .replace(/[\u2018\u2019\u201A\u2032\u02BC\u02BB`´]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u2033]/g, '"')
+    .replace(/[\u2010-\u2015]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function splitTextByFont(text: string): TextSegment[] {
@@ -277,20 +289,31 @@ function fontCanEncode(font: PDFFont, text: string) {
   }
 }
 
+function fontsForSegment(
+  segment: TextSegment,
+  primary: CertificateFonts,
+  fallback: CertificateFonts,
+): PDFFont[] {
+  if (segment.kind === "latin") {
+    return [primary.latin, fallback.latin, primary.cyrillic, fallback.cyrillic];
+  }
+  return [primary.cyrillic, fallback.cyrillic, primary.latin, fallback.latin];
+}
+
+function pickFontForText(text: string, fonts: PDFFont[]) {
+  return fonts.find((font) => fontCanEncode(font, text)) ?? null;
+}
+
 function resolveSegment(
   segment: TextSegment,
   primary: CertificateFonts,
   fallback: CertificateFonts,
 ): ResolvedSegment[] {
-  const primaryFont = segment.kind === "latin" ? primary.latin : primary.cyrillic;
-  const fallbackFont = segment.kind === "latin" ? fallback.latin : fallback.cyrillic;
+  const fonts = fontsForSegment(segment, primary, fallback);
 
-  if (fontCanEncode(primaryFont, segment.text)) {
-    return [{ text: segment.text, font: primaryFont }];
-  }
-
-  if (fontCanEncode(fallbackFont, segment.text)) {
-    return [{ text: segment.text, font: fallbackFont }];
+  const whole = pickFontForText(segment.text, fonts);
+  if (whole) {
+    return [{ text: segment.text, font: whole }];
   }
 
   const runs: ResolvedSegment[] = [];
@@ -298,7 +321,10 @@ function resolveSegment(
   let currentFont: PDFFont | null = null;
 
   for (const char of segment.text) {
-    const font = fontCanEncode(primaryFont, char) ? primaryFont : fallbackFont;
+    const font = pickFontForText(char, fonts);
+    // Skip glyphs that no embedded subset can paint — never throw mid-draw.
+    if (!font) continue;
+
     if (currentFont === null || font === currentFont) {
       currentFont = font;
       buffer += char;
@@ -387,7 +413,8 @@ function drawResolvedRightAligned(
 }
 
 function formatCertificateName(fullName: string) {
-  const trimmed = fullName.trim();
+  const trimmed = sanitizeCertificateText(fullName);
+  if (!trimmed) return "";
   try {
     return trimmed.toLocaleUpperCase("uk-UA");
   } catch {
@@ -414,7 +441,15 @@ export async function generateCourseCertificatePdf(input: {
   page.drawImage(image, { x: 0, y: 0, width, height });
 
   const name = formatCertificateName(input.fullName);
+  if (!name) {
+    throw new Error("Certificate name is empty after sanitizing");
+  }
+
   const nameSegments = resolveSegments(splitTextByFont(name), fonts.name, fonts.body);
+  if (nameSegments.length === 0) {
+    throw new Error("Certificate name has no drawable characters");
+  }
+
   const nameBoxX = width * LAYOUT.nameX;
   const nameBoxWidth = width * LAYOUT.nameWidth;
   const nameSize = fitResolvedSize(
@@ -435,7 +470,11 @@ export async function generateCourseCertificatePdf(input: {
     LAYOUT.nameColor,
   );
 
-  const dateSegments = resolveSegments(getDateSegments(input.completedAt) ?? [], fonts.body, fonts.body);
+  const dateSegments = resolveSegments(
+    getDateSegments(input.completedAt) ?? [],
+    fonts.body,
+    fonts.body,
+  );
   const dateBoxX = width * LAYOUT.dateBoxX;
   const dateBoxWidth = width * LAYOUT.dateBoxWidth;
   const dateY = height * (1 - LAYOUT.dateY);
@@ -480,8 +519,7 @@ export async function generateCourseCertificatePdf(input: {
 }
 
 export function certificateFileName(courseSlug: string, fullName: string) {
-  const safeName = fullName
-    .trim()
+  const safeName = sanitizeCertificateText(fullName)
     .replace(/\s+/g, "-")
     .replace(/[^\p{L}\p{N}-]/gu, "")
     .slice(0, 40);
@@ -496,8 +534,14 @@ export function humanizeCertificateError(error: unknown) {
     return "Не вдалося завантажити шаблон сертифіката. Перезавантажте його в адмінці.";
   }
 
-  if (lower.includes("encode") || lower.includes("glyph") || lower.includes("character")) {
-    return "У імені є символ, який не підтримується сертифікатом. Спробуйте латиницю або скорочене ім'я.";
+  if (
+    lower.includes("empty after sanitizing") ||
+    lower.includes("no drawable characters") ||
+    lower.includes("encode") ||
+    lower.includes("glyph") ||
+    lower.includes("character")
+  ) {
+    return "Не вдалося записати ім'я на сертифікат. Перевірте ім'я в профілі (буквено-цифрове) і спробуйте знову.";
   }
 
   if (lower.includes("font") || lower.includes("woff")) {

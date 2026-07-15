@@ -2,11 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CabinetShell } from "@/components/cabinet/cabinet-shell";
+import { CertificateDownloadButton } from "@/components/cabinet/certificate-download-button";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
 import { getLessonsForCourse, getUserEnrollments } from "@/lib/data";
+import { syncPaidCoursesForUser } from "@/lib/enrollments";
 import { resolveCourseImageUrl } from "@/lib/images";
+import { isLiqPayConfigured } from "@/lib/liqpay/config";
 import { createClient } from "@/lib/supabase/server";
-import { CertificateDownloadButton } from "@/components/cabinet/certificate-download-button";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +43,25 @@ export default async function CabinetPage({
     redirect(`/?auth=login&next=${encodeURIComponent(nextPath)}`);
   }
 
-  const enrollments = await getUserEnrollments(profile.id);
+  let enrollments = await getUserEnrollments(profile.id);
+  const hadPending = enrollments.some((item) => item.status === "pending");
+
+  // Buyer return from LiqPay, or catch-up if webhook raced the redirect.
+  if (
+    isSupabaseConfigured() &&
+    (paymentQuery === "success" ||
+      paymentQuery === "processing" ||
+      pendingQuery === "1" ||
+      hadPending)
+  ) {
+    const sync = await syncPaidCoursesForUser(profile.id);
+    if (sync.error) {
+      console.error("cabinet syncPaidCoursesForUser:", sync.error);
+    } else if (sync.activated > 0 || hadPending) {
+      enrollments = await getUserEnrollments(profile.id);
+    }
+  }
+
   const pendingEnrollments = enrollments.filter((item) => item.status === "pending");
   const activeEnrollments = enrollments.filter(
     (item) =>
@@ -61,6 +81,15 @@ export default async function CabinetPage({
     }),
   );
 
+  const paymentJustSucceeded =
+    paymentQuery === "success" || paymentQuery === "processing";
+  const showAutoUnlockHint = paymentJustSucceeded && cards.length > 0;
+  const showWaitingPayment =
+    paymentJustSucceeded && cards.length === 0 && isLiqPayConfigured();
+  const showAdminPending =
+    !paymentJustSucceeded &&
+    (pendingQuery === "1" || pendingEnrollments.length > 0);
+
   return (
     <CabinetShell profile={profile}>
       <div className="cabinet-intro">
@@ -72,23 +101,40 @@ export default async function CabinetPage({
         </p>
       </div>
 
-      {(paymentQuery === "success" || paymentQuery === "processing") && (
+      {showAutoUnlockHint && (
         <div className="mb-6 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-cream-body">
-          Оплату отримано. Якщо курс ще не відкрився — зачекайте кілька секунд і оновіть сторінку.
+          Оплату підтверджено — курс уже у вашому кабінеті.
         </div>
       )}
 
-      {(pendingQuery === "1" || pendingEnrollments.length > 0) &&
-        paymentQuery !== "success" &&
-        paymentQuery !== "processing" && (
+      {showWaitingPayment && (
+        <div className="mb-6 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-cream-body">
+          Оплату отримано. Курс відкриється автоматично за кілька секунд — оновіть сторінку,
+          якщо ще не з&apos;явився.
+        </div>
+      )}
+
+      {showAdminPending && (
         <div className="mb-6 rounded-xl border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-cream-body">
           {pendingEnrollments.length > 0 ? (
             <>
-              Очікується підтвердження оплати:{" "}
-              <strong className="text-cream">
-                {pendingEnrollments.map((e) => e.course?.title).filter(Boolean).join(", ")}
-              </strong>
-              . Курс відкриється після перевірки адміністратором.
+              {isLiqPayConfigured() ? (
+                <>
+                  Очікується підтвердження оплати:{" "}
+                  <strong className="text-cream">
+                    {pendingEnrollments.map((e) => e.course?.title).filter(Boolean).join(", ")}
+                  </strong>
+                  . Після успішної оплати LiqPay курс відкриється автоматично.
+                </>
+              ) : (
+                <>
+                  Очікується підтвердження оплати:{" "}
+                  <strong className="text-cream">
+                    {pendingEnrollments.map((e) => e.course?.title).filter(Boolean).join(", ")}
+                  </strong>
+                  . Курс відкриється після перевірки адміністратором.
+                </>
+              )}
             </>
           ) : (
             <>Заявку на оплату надіслано. Курс з&apos;явиться після підтвердження.</>
