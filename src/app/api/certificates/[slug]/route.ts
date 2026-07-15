@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getProfile, isSupabaseConfigured } from "@/lib/auth";
-import { certificateFileName, generateCourseCertificatePdf, humanizeCertificateError } from "@/lib/certificate";
+import { certificateContentDisposition, certificateFileName, generateCourseCertificatePdf, humanizeCertificateError } from "@/lib/certificate";
 import { getCourseBySlug, getEnrollment, getLessonsForCourse } from "@/lib/data";
 import {
   getCompletedLessonIds,
@@ -81,13 +81,13 @@ export async function GET(
       completedAt,
     });
 
-    const fileName = certificateFileName(course.slug, fullName);
+    const fileName = certificateFileName(course.slug);
 
     return new NextResponse(Buffer.from(pdfBytes), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${fileName}"`,
+        "Content-Disposition": certificateContentDisposition(fileName),
         "Cache-Control": "private, no-store",
       },
     });

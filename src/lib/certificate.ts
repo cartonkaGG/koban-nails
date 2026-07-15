@@ -518,12 +518,21 @@ export async function generateCourseCertificatePdf(input: {
   return pdfDoc.save();
 }
 
-export function certificateFileName(courseSlug: string, fullName: string) {
-  const safeName = sanitizeCertificateText(fullName)
-    .replace(/\s+/g, "-")
-    .replace(/[^\p{L}\p{N}-]/gu, "")
-    .slice(0, 40);
-  return `certificate-${courseSlug}-${safeName || "student"}.pdf`;
+export function certificateFileName(courseSlug: string, _fullName?: string) {
+  // Content-Disposition headers must be ASCII / Latin-1. Keep the download
+  // name slug-only — never put Cyrillic profile names in HTTP headers.
+  const safeSlug = courseSlug
+    .normalize("NFKC")
+    .replace(/[^\w.-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return `certificate-${safeSlug || "course"}.pdf`;
+}
+
+export function certificateContentDisposition(fileName: string) {
+  const asciiName = fileName.replace(/[^\x20-\x7E]/g, "_");
+  const encoded = encodeURIComponent(fileName);
+  return `attachment; filename="${asciiName}"; filename*=UTF-8''${encoded}`;
 }
 
 export function humanizeCertificateError(error: unknown) {
@@ -534,14 +543,18 @@ export function humanizeCertificateError(error: unknown) {
     return "Не вдалося завантажити шаблон сертифіката. Перезавантажте його в адмінці.";
   }
 
+  if (lower.includes("bytestring") || lower.includes("content-disposition")) {
+    return "Не вдалося віддати файл сертифіката. Спробуйте ще раз.";
+  }
+
   if (
     lower.includes("empty after sanitizing") ||
     lower.includes("no drawable characters") ||
+    lower.includes("winansi") ||
     lower.includes("encode") ||
-    lower.includes("glyph") ||
-    lower.includes("character")
+    lower.includes("glyph")
   ) {
-    return "Не вдалося записати ім'я на сертифікат. Перевірте ім'я в профілі (буквено-цифрове) і спробуйте знову.";
+    return "Не вдалося записати ім'я на сертифікат. Перевірте ім'я в профілі і спробуйте знову.";
   }
 
   if (lower.includes("font") || lower.includes("woff")) {
