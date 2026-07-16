@@ -63,6 +63,38 @@ async function getTelegramWebhookInfo() {
   }
 }
 
+async function syncTelegramWebhook(request: Request, secret: string) {
+  try {
+    const { token } = getTelegramConfig();
+    const res = await fetch(`https://api.telegram.org/bot${token}/setWebhook`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: request.url,
+        secret_token: secret,
+      }),
+      cache: "no-store",
+    });
+    const data = (await res.json()) as { ok?: boolean; description?: string };
+
+    if (!res.ok || !data.ok) {
+      console.error("telegram webhook: setWebhook failed", {
+        status: res.status,
+        description: data.description ?? "Unknown Telegram error",
+      });
+      return false;
+    }
+
+    console.info("telegram webhook: secret synchronized");
+    return true;
+  } catch (error) {
+    console.error("telegram webhook: setWebhook request failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim();
   const header = request.headers.get("x-telegram-bot-api-secret-token")?.trim();
@@ -73,6 +105,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Server misconfigured" }, { status: 503 });
     }
     if (header !== secret) {
+      const synchronized = await syncTelegramWebhook(request, secret);
+      if (synchronized) {
+        return NextResponse.json({ ok: true, reconfigured: true });
+      }
+
       console.error("telegram webhook: secret mismatch", {
         hasHeader: Boolean(header),
         hasEnvSecret: Boolean(secret),
