@@ -128,7 +128,7 @@ export async function POST(
         error:
           error.includes("payments") || error.includes("service")
             ? error
-            : "Не вдалося створити заявку. Перевірте налаштування LiqPay у Vercel (LIQPAY_PUBLIC_KEY, LIQPAY_PRIVATE_KEY, LIQPAY_SANDBOX=1).",
+            : "Не вдалося створити заявку. Перевірте налаштування LiqPay у Vercel (LIQPAY_PUBLIC_KEY, LIQPAY_PRIVATE_KEY; для тестів LIQPAY_SANDBOX=1).",
       },
       { status: 500 },
     );

@@ -39,6 +39,21 @@ export function buildLiqPayCheckout(input: BuildCheckoutInput) {
     params.sandbox = 1;
   }
 
+  // Hard safety: never send sandbox=1 with non-sandbox keys mixed accidentally.
+  // LiqPay sandbox keys are prefixed with "sandbox_".
+  const keyLooksSandbox = publicKey.toLowerCase().startsWith("sandbox_");
+  if (params.sandbox === 1 && !keyLooksSandbox) {
+    console.warn(
+      "[liqpay] sandbox flag dropped because LIQPAY_PUBLIC_KEY is not a sandbox_ key",
+    );
+    delete params.sandbox;
+  }
+  if (!params.sandbox && keyLooksSandbox) {
+    console.warn(
+      "[liqpay] public key looks like sandbox_, but LIQPAY_SANDBOX is off — payments may fail or stay in test merchant",
+    );
+  }
+
   const data = encodeLiqPayData(params);
   const signature = signLiqPayPayload(data, input.privateKey);
 
