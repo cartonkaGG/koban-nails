@@ -33,30 +33,49 @@ export function CertificateTemplateUpload({ courseId, value, onChange, onSaved }
 
     setError("");
     setUploading(true);
-    setProgress("Завантаження...");
+    setProgress("0%");
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("courseId", courseId);
-
       const res = await fetch("/api/admin/certificate-template", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId,
+          fileName: file.name,
+          contentType: file.type,
+          fileSize: file.size,
+        }),
       });
 
-      const data = (await res.json()) as {
+      const data = (await res.json().catch(() => ({}))) as {
         error?: string;
+        signedUrl?: string;
         storagePath?: string;
-        publicUrl?: string;
       };
 
-      if (!res.ok) {
+      if (!res.ok || !data.signedUrl || !data.storagePath) {
         setError(data.error ?? "Помилка завантаження");
         return;
       }
 
-      const storedUrl = data.storagePath ?? data.publicUrl ?? null;
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", data.signedUrl!);
+        xhr.setRequestHeader("Content-Type", file.type);
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            setProgress(`${Math.round((event.loaded / event.total) * 100)}%`);
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`Upload failed (${xhr.status})`));
+        };
+        xhr.onerror = () => reject(new Error("Upload failed"));
+        xhr.send(file);
+      });
+
+      const storedUrl = data.storagePath;
       onChange(storedUrl);
       onSaved?.(storedUrl);
       setProgress("Готово");

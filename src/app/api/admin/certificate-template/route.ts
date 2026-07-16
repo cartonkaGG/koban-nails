@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, isSupabaseConfigured } from "@/lib/auth";
-import { humanizeAdminDbError } from "@/lib/courses-admin";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getSupabaseEnv, isSupabaseAdminConfigured } from "@/lib/supabase/config";
+import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { sanitizeUploadFileName } from "@/lib/video";
 
 const BUCKET = "course-images";
@@ -16,11 +15,6 @@ function adminNotConfiguredResponse() {
     },
     { status: 503 },
   );
-}
-
-function buildPublicUrl(path: string) {
-  const { url: supabaseUrl } = getSupabaseEnv();
-  return `${supabaseUrl}/storage/v1/object/public/${BUCKET}/${path}`;
 }
 
 export async function POST(request: Request) {
@@ -38,19 +32,22 @@ export async function POST(request: Request) {
     return adminNotConfiguredResponse();
   }
 
-  const formData = await request.formData();
-  const file = formData.get("file");
-  const courseId = String(formData.get("courseId") ?? "").trim();
+  const { courseId, fileName, contentType, fileSize } = (await request.json()) as {
+    courseId?: string;
+    fileName?: string;
+    contentType?: string;
+    fileSize?: number;
+  };
 
-  if (!(file instanceof File) || !courseId) {
-    return NextResponse.json({ error: "Потрібні file та courseId" }, { status: 400 });
+  if (!courseId?.trim() || !fileName?.trim() || !contentType || typeof fileSize !== "number") {
+    return NextResponse.json({ error: "Потрібні courseId та дані файлу" }, { status: 400 });
   }
 
-  if (!file.type.startsWith("image/")) {
+  if (!contentType.startsWith("image/")) {
     return NextResponse.json({ error: "Дозволені лише зображення (PNG, JPG, WebP)" }, { status: 400 });
   }
 
-  if (file.size > MAX_BYTES) {
+  if (fileSize <= 0 || fileSize > MAX_BYTES) {
     return NextResponse.json({ error: "Файл занадто великий (макс. 15 МБ)" }, { status: 400 });
   }
 
@@ -58,28 +55,26 @@ export async function POST(request: Request) {
   const { data: course, error: courseError } = await supabase
     .from("courses")
     .select("id")
-    .eq("id", courseId)
+    .eq("id", courseId.trim())
     .single();
 
   if (courseError || !course) {
     return NextResponse.json({ error: "Course not found" }, { status: 404 });
   }
 
-  const safeName = sanitizeUploadFileName(file.name);
+  const safeName = sanitizeUploadFileName(fileName);
   const storagePath = `${course.id}/certificate-${Date.now()}-${safeName}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const { data, error: uploadError } = await supabase.storage
+    .from(BUCKET)
+    .createSignedUploadUrl(storagePath);
 
-  const { error: uploadError } = await supabase.storage.from(BUCKET).upload(storagePath, buffer, {
-    contentType: file.type || "image/png",
-    upsert: true,
-  });
-
-  if (uploadError) {
-    return NextResponse.json({ error: humanizeAdminDbError(uploadError.message) }, { status: 400 });
+  if (uploadError || !data) {
+    return NextResponse.json({ error: uploadError?.message ?? "Не вдалося підготувати завантаження" }, { status: 400 });
   }
 
   return NextResponse.json({
+    signedUrl: data.signedUrl,
     storagePath: `storage:${storagePath}`,
-    publicUrl: buildPublicUrl(storagePath),
+    token: data.token,
   });
 }
