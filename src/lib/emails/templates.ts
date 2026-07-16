@@ -121,7 +121,7 @@ export function renderResetPasswordEmail(params: { firstName: string; resetUrl: 
       title: "Змініть пароль",
       greeting: params.firstName ? `${params.firstName}, ми отримали ваш запит.` : "Ми отримали ваш запит.",
       paragraphs: [
-        "Натисніть кнопку нижче, щоб створити новий пароль для акаунту Koban nails.",
+        "Натисніть кнопку нижче, щоб відкрити сторінку створення нового пароля для акаунту Koban nails.",
         "Якщо ви не запитували зміну пароля, просто проігноруйте цей лист — ваш пароль залишиться без змін.",
       ],
       ctaLabel: "Створити новий пароль",

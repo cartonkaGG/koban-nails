@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { renderResetPasswordEmail } from "@/lib/emails/templates";
 import { sendEmail } from "@/lib/emails/send";
-import { fixAuthActionLink, getSiteOrigin } from "@/lib/site-url";
+import { buildEmailConfirmCallbackUrl } from "@/lib/auth/signup-email";
+import { getSiteOrigin } from "@/lib/site-url";
 import { getClientIp, rateLimit, rateLimitResponse } from "@/lib/security/rate-limit";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 import { isResendConfigured } from "@/lib/resend/config";
+
+const RESET_PASSWORD_PATH = "/auth/reset-password";
 
 export async function POST(request: NextRequest) {
   if (!isSupabaseAdminConfigured()) {
@@ -32,15 +35,18 @@ export async function POST(request: NextRequest) {
 
   const supabase = await createAdminClient();
   const origin = getSiteOrigin(request);
-  const callbackUrl = `${origin}/auth/callback?next=${encodeURIComponent("/cabinet")}`;
 
   const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
     type: "recovery",
     email: normalizedEmail,
-    options: { redirectTo: callbackUrl },
+    options: {
+      redirectTo: `${origin}${RESET_PASSWORD_PATH}`,
+    },
   });
 
-  if (linkError || !linkData.properties?.action_link) {
+  // Always return the same message to avoid email enumeration.
+  if (linkError || !linkData.properties?.hashed_token) {
+    console.error("[forgot-password] generateLink:", linkError?.message ?? "missing hashed_token");
     return NextResponse.json({
       ok: true,
       message: "Якщо акаунт існує, ми надіслали лист для зміни пароля.",
@@ -52,9 +58,16 @@ export async function POST(request: NextRequest) {
     (linkData.user?.user_metadata?.full_name as string | undefined)?.split(" ")[0] ??
     "";
 
+  const resetUrl = buildEmailConfirmCallbackUrl({
+    origin,
+    tokenHash: linkData.properties.hashed_token,
+    type: "recovery",
+    next: RESET_PASSWORD_PATH,
+  });
+
   const template = renderResetPasswordEmail({
     firstName,
-    resetUrl: fixAuthActionLink(linkData.properties.action_link, origin),
+    resetUrl,
   });
 
   await sendEmail({

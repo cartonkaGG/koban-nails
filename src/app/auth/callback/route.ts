@@ -10,6 +10,13 @@ import {
   isSupabaseConfigured,
 } from "@/lib/supabase/config";
 
+const RESET_PASSWORD_PATH = "/auth/reset-password";
+
+function resolvePostAuthPath(next: string | null, otpType: string | null) {
+  if (otpType === "recovery") return RESET_PASSWORD_PATH;
+  return getSafeRedirectPath(next);
+}
+
 export async function GET(request: NextRequest) {
   if (!isSupabaseConfigured()) {
     return NextResponse.redirect(new URL("/?auth=login", request.url));
@@ -21,7 +28,7 @@ export async function GET(request: NextRequest) {
   const otpType = searchParams.get("type");
   const next = searchParams.get("next");
   const origin = new URL(request.url).origin;
-  const safeNext = getSafeRedirectPath(next);
+  const safeNext = resolvePostAuthPath(next, otpType);
 
   // Hash-based tokens (#access_token=...) never reach the server — send a
   // tiny HTML bridge that moves them into the session via the browser client.
@@ -42,7 +49,10 @@ export async function GET(request: NextRequest) {
       var params = new URLSearchParams(hash);
       var access_token = params.get("access_token");
       var refresh_token = params.get("refresh_token");
-      var nextPath = ${JSON.stringify(safeNext)};
+      var type = params.get("type") || "";
+      var nextPath = type === "recovery"
+        ? ${JSON.stringify(RESET_PASSWORD_PATH)}
+        : ${JSON.stringify(safeNext)};
       if (!access_token || !refresh_token) {
         window.location.replace(${JSON.stringify(`${origin}/?auth=login&error=auth`)});
         return;
