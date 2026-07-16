@@ -3,8 +3,7 @@ import { CourseDetailV2 } from "@/components/course-v2/course-detail-v2";
 import { LandingV2Header } from "@/components/landing-v2/header";
 import { LandingV2Footer } from "@/components/landing-v2/footer";
 import { JsonLd } from "@/components/seo/json-ld";
-import { getCachedCourseBySlug } from "@/lib/courses-cache";
-import { getLessonsForCourseCatalog } from "@/lib/data";
+import { getCourseBySlug, getLessonsForCourseCatalog } from "@/lib/data";
 import { resolveCourseImageUrl } from "@/lib/images";
 import { buildCourseSchema, courseMetadata } from "@/lib/seo";
 import { absoluteUrl } from "@/lib/site";
@@ -13,9 +12,12 @@ type Props = {
   params: Promise<{ slug: string }>;
 };
 
+/** Keep detail prices in sync with homepage / admin edits. */
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const course = await getCachedCourseBySlug(slug);
+  const course = await getCourseBySlug(slug);
 
   if (!course?.published) {
     return { title: "Курс не знайдено" };
@@ -25,11 +27,9 @@ export async function generateMetadata({ params }: Props) {
   return courseMetadata(course, imageUrl ? absoluteUrl(imageUrl) : null);
 }
 
-export const revalidate = 60;
-
 export default async function CourseDetailPage({ params }: Props) {
   const { slug } = await params;
-  const course = await getCachedCourseBySlug(slug);
+  const course = await getCourseBySlug(slug);
 
   if (!course?.published) {
     notFound();

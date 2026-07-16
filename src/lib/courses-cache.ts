@@ -1,16 +1,9 @@
 import { unstable_cache } from "next/cache";
-import { getCourseBySlug, getPublishedCourses } from "@/lib/data";
+import { getPublishedCourses } from "@/lib/data";
 
+/** Used only by low-traffic surfaces (sitemap). Storefront pages fetch live. */
 export const getCachedPublishedCourses = unstable_cache(
   async () => getPublishedCourses(),
   ["published-courses"],
-  { revalidate: 60, tags: ["courses"] },
+  { revalidate: 300, tags: ["courses"] },
 );
-
-export function getCachedCourseBySlug(slug: string) {
-  return unstable_cache(
-    async () => getCourseBySlug(slug),
-    ["course-by-slug", slug],
-    { revalidate: 60, tags: ["courses"] },
-  )();
-}

@@ -83,6 +83,20 @@ export async function PUT(
     }
   }
 
+  // Also retry without detailed_description if that column is missing.
+  if (error?.message?.toLowerCase().includes("detailed_description")) {
+    const { detailed_description: _omit, ...withoutDetailed } = payload;
+    ({ error } = await supabase.from("courses").update(withoutDetailed).eq("id", id));
+    if (!error) {
+      revalidateCoursesCatalog(payload.slug);
+      return NextResponse.json({
+        ok: true,
+        warning:
+          "Збережено без detailed_description — запустіть міграцію 20260706_course_detailed_description.sql.",
+      });
+    }
+  }
+
   if (error) {
     return NextResponse.json({ error: humanizeAdminDbError(error.message) }, { status: 400 });
   }
