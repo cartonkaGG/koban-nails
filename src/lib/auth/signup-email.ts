@@ -2,7 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/emails/send";
 import { renderConfirmEmailEmail } from "@/lib/emails/templates";
 import { isAdminEmail } from "@/lib/supabase/config";
-import { fixAuthActionLink, getSiteOrigin } from "@/lib/site-url";
+import { getSiteOrigin } from "@/lib/site-url";
 
 type Params = {
   email: string;
@@ -15,9 +15,26 @@ type Params = {
   deleteUnconfirmed?: boolean;
 };
 
+/**
+ * Build a confirm URL that hits our app directly with token_hash.
+ * Supabase action_link redirects often land with #access_token hashes that
+ * the server callback cannot read — verifyOtp on /auth/callback is reliable.
+ */
+export function buildEmailConfirmCallbackUrl(params: {
+  origin: string;
+  tokenHash: string;
+  type: string;
+  next: string;
+}) {
+  const url = new URL("/auth/callback", params.origin);
+  url.searchParams.set("token_hash", params.tokenHash);
+  url.searchParams.set("type", params.type);
+  url.searchParams.set("next", params.next);
+  return url.toString();
+}
+
 export async function sendSignupConfirmationEmail(params: Params) {
   const supabase = await createAdminClient();
-  const callbackUrl = `${params.origin}/auth/callback?next=${encodeURIComponent(params.redirectTo)}`;
 
   if (params.deleteUnconfirmed) {
     const { data: users, error: listError } = await supabase.auth.admin.listUsers();
@@ -46,7 +63,7 @@ export async function sendSignupConfirmationEmail(params: Params) {
     email: params.email,
     password: params.password,
     options: {
-      redirectTo: callbackUrl,
+      redirectTo: `${params.origin}/auth/callback?next=${encodeURIComponent(params.redirectTo)}`,
       data: {
         first_name: params.firstName,
         last_name: params.lastName,
@@ -60,12 +77,18 @@ export async function sendSignupConfirmationEmail(params: Params) {
     return { ok: false as const, error: linkError.message };
   }
 
-  const rawConfirmUrl = linkData.properties?.action_link;
-  if (!rawConfirmUrl) {
+  const tokenHash = linkData.properties?.hashed_token;
+  if (!tokenHash) {
     return { ok: false as const, error: "Не вдалося створити посилання підтвердження." };
   }
 
-  const confirmUrl = fixAuthActionLink(rawConfirmUrl, params.origin);
+  const confirmUrl = buildEmailConfirmCallbackUrl({
+    origin: params.origin,
+    tokenHash,
+    type: "signup",
+    next: params.redirectTo,
+  });
+
   const userId = linkData.user?.id;
 
   if (userId) {
