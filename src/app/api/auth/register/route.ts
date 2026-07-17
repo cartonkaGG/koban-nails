@@ -64,11 +64,12 @@ export async function POST(request: NextRequest) {
   const limited = rateLimit({ key: `register:${ip}`, limit: 10, windowMs: 60_000 });
   if (!limited.ok) return rateLimitResponse(limited.retryAfterSec);
 
-  const { email, password, redirectTo, firstName, lastName } = await request.json();
+  const { email, password, redirectTo, firstName, lastName, acceptTerms } = await request.json();
   const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
   const normalizedPassword = typeof password === "string" ? password : "";
   const normalizedFirstName = typeof firstName === "string" ? firstName.trim() : "";
   const normalizedLastName = typeof lastName === "string" ? lastName.trim() : "";
+  const acceptedTerms = acceptTerms === true;
   const safeRedirectTo = getSafeRedirectPath(redirectTo);
   const origin = getSignupOrigin(request);
   const fullName =
@@ -82,6 +83,13 @@ export async function POST(request: NextRequest) {
 
   if (!normalizedFirstName || !normalizedLastName) {
     return NextResponse.json({ error: "First and last name are required" }, { status: 400 });
+  }
+
+  if (!acceptedTerms) {
+    return NextResponse.json(
+      { error: "Потрібно погодитись з умовами користування та політикою конфіденційності." },
+      { status: 400 },
+    );
   }
 
   const supabase = await createAdminClient();

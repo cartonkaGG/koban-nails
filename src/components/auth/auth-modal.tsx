@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
@@ -19,6 +20,7 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [successMessage, setSuccessMessage] = useState("");
@@ -38,6 +40,7 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
     setPassword("");
     setFirstName("");
     setLastName("");
+    setAcceptedTerms(false);
     setStatus("idle");
     setSuccessMessage("");
     setPendingConfirmation(false);
@@ -77,6 +80,7 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
           password,
           firstName: firstName.trim(),
           lastName: lastName.trim(),
+          acceptTerms: acceptedTerms,
           redirectTo,
           repairUnconfirmedOnly,
         }),
@@ -191,6 +195,12 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
     if (mode === "register" && (!firstName.trim() || !lastName.trim())) {
       setStatus("error");
       setError("Вкажіть ім'я та прізвище — вони потрібні для сертифіката.");
+      return;
+    }
+
+    if (mode === "register" && !acceptedTerms) {
+      setStatus("error");
+      setError("Щоб створити акаунт, погодьтесь з умовами користування та політикою конфіденційності.");
       return;
     }
 
@@ -520,6 +530,40 @@ export function AuthModal({ open, mode: initialMode, redirectTo, onClose }: Prop
               >
                 Забули пароль?
               </button>
+            )}
+            {mode === "register" && (
+              <label className="flex cursor-pointer items-start gap-3 text-sm leading-snug text-v2-mute">
+                <input
+                  type="checkbox"
+                  className="mt-1 size-4 shrink-0 accent-[#C97F72]"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  required
+                />
+                <span>
+                  Я погоджуюсь з{" "}
+                  <Link
+                    href="/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-v2-clay underline-offset-2 hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    умовами користування
+                  </Link>
+                  {" "}та{" "}
+                  <Link
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-v2-clay underline-offset-2 hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    політикою конфіденційності
+                  </Link>
+                  .
+                </span>
+              </label>
             )}
             <button type="submit" className="v2-btn-primary" disabled={status === "loading"}>
               {status === "loading" ? "Зачекайте..." : mode === "login" ? "Увійти" : "Створити акаунт"}

@@ -23,16 +23,26 @@ type Props = {
 export function CheckoutForm({ course, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [liqpay, setLiqpay] = useState<LiqPayCheckout | null>(null);
   const { openAuth } = useAuthModal();
 
   async function buy() {
+    if (!acceptedTerms) {
+      setError("Щоб продовжити оплату, погодьтесь з умовами оферти та політиками сайту.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     let redirecting = false;
 
     try {
-      const res = await fetch(`/api/enroll/${course.slug}`, { method: "POST" });
+      const res = await fetch(`/api/enroll/${course.slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ acceptTerms: true }),
+      });
       const data = await res.json();
 
       if (!res.ok) {
@@ -105,24 +115,51 @@ export function CheckoutForm({ course, onClose }: Props) {
       <p className="text-sm text-v2-ink-soft">
         Після оплати курс відкриється у вашому кабінеті з уроками та прогресом.
       </p>
-      <p className="text-xs leading-relaxed text-v2-mute">
-        Натискаючи «Підтвердити покупку», ви погоджуєтесь з{" "}
-        <Link href="/offer" className="v2-modal-link" onClick={onClose}>
-          публічною офертою
-        </Link>
-        ,{" "}
-        <Link href="/privacy" className="v2-modal-link" onClick={onClose}>
-          політикою конфіденційності
-        </Link>{" "}
-        та{" "}
-        <Link href="/refund" className="v2-modal-link" onClick={onClose}>
-          політикою повернення коштів
-        </Link>
-        .
-      </p>
+      <label className="flex cursor-pointer items-start gap-3 text-sm leading-snug text-v2-mute">
+        <input
+          type="checkbox"
+          className="mt-1 size-4 shrink-0 accent-[#C97F72]"
+          checked={acceptedTerms}
+          onChange={(e) => setAcceptedTerms(e.target.checked)}
+          required
+        />
+        <span>
+          Я погоджуюсь з{" "}
+          <Link
+            href="/offer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-v2-clay underline-offset-2 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            публічною офертою
+          </Link>
+          ,{" "}
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-v2-clay underline-offset-2 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            політикою конфіденційності
+          </Link>{" "}
+          та{" "}
+          <Link
+            href="/refund"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-v2-clay underline-offset-2 hover:underline"
+            onClick={(e) => e.stopPropagation()}
+          >
+            політикою повернення коштів
+          </Link>
+          .
+        </span>
+      </label>
       {error && <p className="v2-alert-error">{error}</p>}
       <div className="flex flex-col gap-3">
-        <button type="button" className="v2-btn-primary" onClick={buy} disabled={loading}>
+        <button type="button" className="v2-btn-primary" onClick={buy} disabled={loading || !acceptedTerms}>
           {loading ? "Обробка..." : "Підтвердити покупку"}
         </button>
         {onClose ? (

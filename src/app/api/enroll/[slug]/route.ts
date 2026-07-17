@@ -13,12 +13,20 @@ import { createCoursePayment } from "@/lib/payments";
 import { isSupabaseAdminConfigured } from "@/lib/supabase/config";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const profile = await getProfile();
   if (!profile) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = (await request.json().catch(() => null)) as { acceptTerms?: unknown } | null;
+  if (body?.acceptTerms !== true) {
+    return NextResponse.json(
+      { error: "Потрібно погодитись з публічною офертою та політиками сайту." },
+      { status: 400 },
+    );
   }
 
   const { slug } = await params;
