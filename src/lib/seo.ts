@@ -42,20 +42,11 @@ export const rootMetadata: Metadata = {
     siteName: businessInfo.brandName,
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
-    images: [
-      {
-        url: absoluteUrl("/hero-koban-owner.webp"),
-        width: 1200,
-        height: 630,
-        alt: "Галина Кобан — інструктор курсів манікюру Koban Nails",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
-    images: [absoluteUrl("/hero-koban-owner.webp")],
   },
   robots: {
     index: true,
@@ -94,9 +85,7 @@ export function courseMetadata(course: Course, imageUrl?: string | null): Metada
       url: absoluteUrl(`/courses/${course.slug}`),
       title: `${title} | ${businessInfo.brandName}`,
       description,
-      images: imageUrl
-        ? [{ url: imageUrl, alt: course.title }]
-        : [{ url: absoluteUrl("/hero-koban-owner.webp"), alt: businessInfo.brandName }],
+      images: imageUrl ? [{ url: imageUrl, alt: course.title }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
@@ -113,8 +102,8 @@ export function buildOrganizationSchema() {
     name: businessInfo.brandName,
     legalName: businessInfo.legalName,
     url: SITE_URL,
-    logo: absoluteUrl("/hero-koban-owner.webp"),
-    image: absoluteUrl("/hero-koban-owner.webp"),
+    logo: absoluteUrl("/apple-icon"),
+    image: absoluteUrl("/opengraph-image"),
     description: DEFAULT_DESCRIPTION,
     email: businessInfo.email,
     telephone: businessInfo.phone,
